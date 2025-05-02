@@ -1,6 +1,8 @@
 import 'package:fl_chart/fl_chart.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
+import 'package:spirobtvo/Services/FilterClass.dart';
+import 'package:spirobtvo/Services/MultiFilter.dart';
 
 class MyBigGraph extends StatefulWidget {
   final dynamic plot;
@@ -35,11 +37,18 @@ class MyBigGraphState extends State<MyBigGraph> {
   late List<dynamic> plotThresholds;
   late List<double> plotOffsets; // ✅ New
   late List<dynamic> plotGains;
+  late MultiFilter multiFilter = MultiFilter();
+  int FILT_BUF_SIZE = 3 * 6 + 7;
+  int Pos = 0; // Circular buffer position tracker
+  late List<List<double>> filterBuffs;
 
   @override
   void initState() {
     super.initState();
-
+    filterBuffs = List.generate(
+      widget.plot.length,
+          (_) => List<double>.filled(FILT_BUF_SIZE, 0.0),
+    );
     allPlotData = List.generate(widget.plot.length, (_) => []);
     allCurrentIndexes = List.generate(widget.plot.length, (_) => 0);
 
@@ -76,7 +85,71 @@ class MyBigGraphState extends State<MyBigGraph> {
         (index) => FlSpot(index.toDouble(), 0),
       );
     }
+    _refreshMultiFilter();
   }
+
+  void _refreshMultiFilter() {
+    List<Map<String, dynamic>> config = [];
+
+    for (int i = 0; i < widget.plot.length; i++) {
+      if (widget.plot[i]["filterConfig"] == null) {
+        widget.plot[i]["filterConfig"] = {
+          "filterOn": false,
+          "lpf": 3,
+          "hpf": 5,
+          "notch": 1,
+        };
+      }
+
+      config.add(widget.plot[i]["filterConfig"]);
+    }
+
+    multiFilter.init(config);
+  }
+  double applyMultiFilterToChannel(int channelIndex, double val) {
+    final filterSettings = widget.plot[channelIndex]["filterConfig"];
+    if (filterSettings == null || filterSettings["filterOn"] != true) {
+      return val; // No filtering if disabled
+    }
+
+    const int StartStageCNo = 0;
+    const int MAX_STAGES_MINUS_ONE = FilterClass.MAX_STAGES - 1;
+
+    // Init filter buffers if needed
+    if (filterBuffs.isEmpty || filterBuffs.length != multiFilter.filters.length) {
+      filterBuffs = List.generate(
+        multiFilter.filters.length,
+            (_) => List<double>.filled(FILT_BUF_SIZE, 0.0),
+      );
+    }
+
+    FilterClass currentFilter = multiFilter.getFilter(channelIndex);
+    List<double> currentBuffer = filterBuffs[channelIndex];
+
+    double localSum = 0;
+    int localPos = Pos;
+
+    currentBuffer[localPos] = val;
+
+    for (int stage = StartStageCNo; stage <= MAX_STAGES_MINUS_ONE; stage++) {
+      localSum = 0;
+      for (int c = 0; c < 5; c++) {
+        int index = (localPos + FILT_BUF_SIZE - c) % FILT_BUF_SIZE;
+        localSum += currentBuffer[index] * currentFilter.Coeff[stage][c];
+      }
+
+      localSum *= 2;
+      currentBuffer[(localPos + 1) % FILT_BUF_SIZE] = localSum;
+      currentBuffer[(localPos + 6) % FILT_BUF_SIZE] = localSum;
+
+      localPos = (localPos + 6) % FILT_BUF_SIZE;
+    }
+
+    Pos = (Pos + 2) % FILT_BUF_SIZE;
+
+    return localSum;
+  }
+
 
   void updateEverything(List<double> values) {
     setState(() {
@@ -86,6 +159,7 @@ class MyBigGraphState extends State<MyBigGraph> {
         }
 
         double value = values[i];
+        value = applyMultiFilterToChannel(i, value); // 🔄 Apply filter if enabled
 
         // ❌ NO CLIPPING HERE!
         allPlotData[i][allCurrentIndexes[i]] = FlSpot(
@@ -146,7 +220,7 @@ class MyBigGraphState extends State<MyBigGraph> {
           lines.add(
             HorizontalLine(
               y: y,
-              color: Colors.grey.shade600,
+              color: Colors.blue.shade500,
               strokeWidth: (j == 0) ? 0.6 : 0.3, // Make center 0V line darker
             ),
           );
@@ -280,6 +354,13 @@ class MyBigGraphState extends State<MyBigGraph> {
                   ),
                 ),
                 _meter(i),
+                IconButton(
+                  icon: const Icon(Icons.filter_alt, size: 16),
+                  tooltip: "Set Filters",
+                  padding: EdgeInsets.zero,
+                  constraints: const BoxConstraints(),
+                  onPressed: () => _openFilterDialog(i),
+                ),
               ],
             ),
           );
@@ -287,6 +368,134 @@ class MyBigGraphState extends State<MyBigGraph> {
       ),
     );
   }
+  void _openFilterDialog(int index) {
+      final filter = FilterClass();
+
+      final config = Map<String, dynamic>.from(widget.plot[index]["filterConfig"] ?? {
+        "filterOn": true,
+        "lpf": 3, // default: 35Hz
+        "hpf": 5, // default: 0.6Hz
+        "notch": 1,
+      });
+
+      showDialog(
+        context: context,
+        builder: (context) {
+          return AlertDialog(
+            title: const Text('Filters', textAlign: TextAlign.center),
+            content: StatefulBuilder(
+              builder: (context, setState) {
+                return Column(
+                  mainAxisSize: MainAxisSize.min,
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    SwitchListTile(
+                      title: const Text("Filter"),
+                      value: config["filterOn"] ?? true,
+                      onChanged: (val) => setState(() => config["filterOn"] = val),
+                      activeColor: Colors.deepPurple,
+                    ),
+                    if (config["filterOn"] == true) ...[
+                      const SizedBox(height: 8),
+                      const Text("Low Pass"),
+                      DropdownButton<int>(
+                        isExpanded: true,
+                        value: config["lpf"],
+                        items: List.generate(filter.mLPFCaptions.length, (i) {
+                          return DropdownMenuItem(
+                            value: i,
+                            child: Text(filter.mLPFCaptions[i]),
+                          );
+                        }),
+                        onChanged: (val) => setState(() => config["lpf"] = val ?? 0),
+                      ),
+                      const SizedBox(height: 8),
+                      const Text("High Pass"),
+                      DropdownButton<int>(
+                        isExpanded: true,
+                        value: config["hpf"],
+                        items: List.generate(filter.mHPFCaptions.length, (i) {
+                          return DropdownMenuItem(
+                            value: i,
+                            child: Text(filter.mHPFCaptions[i]),
+                          );
+                        }),
+                        onChanged: (val) => setState(() => config["hpf"] = val ?? 0),
+                      ),
+                      SwitchListTile(
+                        title: const Text("Notch"),
+                        value: config["notch"] == 1,
+                        onChanged: (val) => setState(() => config["notch"] = val ? 1 : 0),
+                        activeColor: Colors.deepPurple,
+                      ),
+                    ],
+                  ],
+                );
+              },
+            ),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.pop(context),
+                child: const Text("Cancel"),
+              ),
+              TextButton(
+                onPressed: () {
+                  setState(() {
+                    widget.plot[index]["filterConfig"] = config;
+                    _refreshMultiFilter();
+                  });
+                  print(widget.plot);
+                  Navigator.pop(context);
+                },
+                child: const Text("Apply"),
+              ),
+            ],
+          );
+        },
+      );
+    }
+
+
+    Widget _filterDropdown(String label, Map config, String key, List<dynamic> options) {
+    return DropdownButtonFormField(
+      decoration: InputDecoration(labelText: label),
+      value: config[key],
+      items: options.map<DropdownMenuItem>((option) {
+        return DropdownMenuItem(
+          value: option,
+          child: Text(option.toString()),
+        );
+      }).toList(),
+      onChanged: (val) => config[key] = val,
+    );
+  }
+
+  Widget _filterDropdownWithCaptions(String label, Map config, String key, List<String> captions) {
+    return DropdownButtonFormField(
+      decoration: InputDecoration(labelText: label),
+      value: config[key],
+      items: List.generate(captions.length, (i) {
+        return DropdownMenuItem(
+          value: i,
+          child: Text(captions[i]),
+        );
+      }),
+      onChanged: (val) => config[key] = val,
+    );
+  }
+
+  Widget _filterTextField(String label, Map config, String key) {
+    return TextFormField(
+      decoration: InputDecoration(labelText: label),
+      initialValue: config[key].toString(),
+      keyboardType: TextInputType.numberWithOptions(decimal: true),
+      onChanged: (val) {
+        double? parsed = double.tryParse(val);
+        if (parsed != null) config[key] = parsed;
+      },
+    );
+  }
+
 
   _meter(i){
     if(widget.plot[i]["meter"] == null){
@@ -313,18 +522,13 @@ class MyBigGraphState extends State<MyBigGraph> {
     );
   }
 
-
   void _adjustScale(int index, {required bool increase}) {
     setState(() {
-      double changeFactor = (4096 / 12) * 0.5; // half box change per click
-
+      double factor = 1.2; // 20% zoom per click
       if (increase) {
-        plotScales[index] -= changeFactor; // ✅ Decrease scale to magnify
-        if (plotScales[index] < changeFactor) {
-          plotScales[index] = changeFactor; // Avoid negative/zero scale
-        }
+        plotScales[index] /= factor; // zoom in (magnify)
       } else {
-        plotScales[index] += changeFactor; // ✅ Increase scale to compress
+        plotScales[index] *= factor; // zoom out (compress)
       }
     });
   }
@@ -445,13 +649,13 @@ class MyBigGraphState extends State<MyBigGraph> {
             horizontalInterval: widget.horizontalInterval,
             verticalInterval: widget.verticalInterval,
             getDrawingHorizontalLine: (value) {
-              return FlLine(color: Colors.blue.shade200, strokeWidth: 0.2);
+              return FlLine(color: Colors.blue.shade500, strokeWidth: 0.2);
             },
             getDrawingVerticalLine: (value) {
               if (value % (widget.samplingRate * 1.0) == 0) {
-                return FlLine(color: Colors.blue.shade600, strokeWidth: 0.6);
+                return FlLine(color: Colors.blue.shade500, strokeWidth: 0.2);
               } else if (value % (widget.samplingRate * 0.2) == 0) {
-                return FlLine(color: Colors.blue.shade200, strokeWidth: 0.2);
+                return FlLine(color: Colors.blue.shade500, strokeWidth: 0.2);
               } else {
                 return FlLine(color: Colors.transparent, strokeWidth: 0);
               }
