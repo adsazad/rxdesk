@@ -66,22 +66,24 @@ class _HomeState extends State<Home> {
   }
 
   Future<List<double>> loadTestData() async {
-    String rawData = await rootBundle.loadString('assets/capture.txt');
+    final byteData = await rootBundle.load('assets/capture.txt');
+    final rawBytes = byteData.buffer.asUint8List();
+    String rawData = String.fromCharCodes(rawBytes);
 
-    // Keep only hex part (first line)
-    String hexLine = rawData.trim().split('\n').first;
+    // Remove non-hex characters (keep only 0-9, A-F, a-f)
+    String hexOnly = rawData.replaceAll(RegExp(r'[^0-9A-Fa-f]'), '');
 
-    // Convert every 4 hex chars into a 16-bit signed integer (2 bytes, Little Endian)
     List<double> values = [];
-    for (int i = 0; i < hexLine.length - 4; i += 4) {
-      String hex = hexLine.substring(i, i + 4);
+    for (int i = 0; i <= hexOnly.length - 4; i += 4) {
+      String hex = hexOnly.substring(i, i + 4);
       int value = int.parse(hex, radix: 16);
-      if (value > 0x7FFF) value -= 0x10000; // Convert to signed
+      if (value > 0x7FFF) value -= 0x10000; // Handle 16-bit signed
       values.add(value.toDouble());
     }
 
     return values;
   }
+
   List<double> testData = [];
   int dataIndex = 0;
 
@@ -179,20 +181,20 @@ class _HomeState extends State<Home> {
     reader.stream.listen((data) {
       final hexString = data.map((b) => b.toRadixString(16).padLeft(2, '0')).join(' ');
       if (data[0] == 'B'.codeUnitAt(0) && data[1] == 'T'.codeUnitAt(0)) {
-        double ecg = (data[3] * 256 + data[2]) * 1.00;       // ecg = MSB * 256 + LSB
-        double o2 = (data[7] * 256 + data[6]) * 1.00;        // o2  = MSB * 256 + LSB
-        double flow = (data[11] * 256 + data[10]) * 1.00;    // flow = MSB * 256 + LSB
-        double volume = (data[13] * 256 + data[12]) * 1.00;  // volume = MSB * 256 + LSB
-        double co2 = (data[15] * 256 + data[14]) * 1.00;     // co2 = MSB * 256 + LSB
+        double ecg  = (data[3] * 256 + data[2]) * 1.0;          // ECG: ecg2 (MSB, byte 3) + ecg1 (LSB, byte 2)
+        double o2   = (data[7] * 256 + data[6]) * 1.0;          // O2:  O2_2 (MSB, byte 7) + O2_1 (LSB, byte 6)
+        double flow = (data[11] * 256 + data[10]) * 1.0;        // Flow: flow2 (MSB, byte 11) + flow1 (LSB, byte 10)
+        double co2  = (data[15] * 256 + data[14]) * 1.0;        // CO2: co2_2 (MSB, byte 15) + co2_1 (LSB, byte 14)
+        double vol = (data[13] * 256 + data[12]) * 1.0;         // Vol: Vol2 (MSB) + Vol1 (LSB)
 
         // flow = 9.82 *1000/ flow;
-
+        //
 
         rawDataFull.add(ecg);
         // print(flow);
 
         // updateEverything(scaledEcg, scaledO2, scaledFlow, scaledCo2);
-        myBigGraphKey.currentState?.updateEverything([ecg, o2, flow, co2]);
+        myBigGraphKey.currentState?.updateEverything([ecg, o2, flow, co2,vol]);
       } else {
         print("⚠️ Invalid frame header: ${data[0]}, ${data[1]}");
       }
@@ -214,137 +216,61 @@ class _HomeState extends State<Home> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.grey.shade100,
       appBar: AppBar(
-        elevation: 1,
-        title: const Text("SprioBT VO2", style: TextStyle(fontWeight: FontWeight.bold)),
+        title: Text("SprioBT VO2"),
         actions: [
-          IconButton(
-            onPressed: () {
-              Navigator.of(context).push(MaterialPageRoute(builder: (_) => GlobalSettings()));
-            },
-            icon: const Icon(Icons.settings),
-          ),
-          IconButton(
-            onPressed: () {
-              init();
-            },
-            icon: const Icon(Icons.refresh),
-          ),
+          IconButton(onPressed: (){
+            Navigator.of(context).push(MaterialPageRoute(builder: (context)=>GlobalSettings()));
+          }, icon: Icon(Icons.settings)),
+          IconButton(onPressed: (){
+            init();
+          }, icon: Icon(Icons.refresh)),
         ],
       ),
-      body: Column(
-        children: [
-          Padding(
-            padding: const EdgeInsets.all(12.0),
-            child: Row(
-              children: [
-                Expanded(
-                  child: ElevatedButton.icon(
-                    onPressed: () {
-                      init();
-
-                    },
-                    icon: const Icon(Icons.play_arrow),
-                    label: const Text("Start"),
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: Colors.green.shade600,
-                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                      padding: const EdgeInsets.symmetric(vertical: 16),
-                    ),
-                  ),
-                ),
-                const SizedBox(width: 12),
-                Expanded(
-                  child: ElevatedButton.icon(
-                    onPressed: () {
-                      Navigator.of(context).push(MaterialPageRoute(builder: (_) => GlobalSettings()));
-                    },
-                    icon: const Icon(Icons.tune),
-                    label: const Text("Settings"),
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: Colors.blueGrey,
-                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                      padding: const EdgeInsets.symmetric(vertical: 16),
-                    ),
-                  ),
-                ),
-              ],
-            ),
-          ),
-
-          // Graph Section
-          Expanded(
-            child: Padding(
-              padding: const EdgeInsets.all(12.0),
-              child: Container(
-                decoration: BoxDecoration(
-                  color: Colors.white,
-                  borderRadius: BorderRadius.circular(16),
-                  boxShadow: const [
-                    BoxShadow(color: Colors.black12, blurRadius: 6, offset: Offset(0, 2)),
-                  ],
-                ),
-                child: ClipRRect(
-                  borderRadius: BorderRadius.circular(16),
-                  child: MyBigGraph(
-                    key: myBigGraphKey,
-                    plot: [
-                      {
-                        "name": "ECG",
-                        "scale": 3,
-                        "gain": 0.4,
-                        "filterConfig": {
-                          "filterOn": true,
-                          "lpf": 3,
-                          "hpf": 5,
-                          "notch": 1,
-                        }
-                      },
-                      {
-                        "name": "O2",
-                        "scale": 3,
-                        "meter": {
-                          "unit": "%",
-                          "convert": (double x) => x * 0.013463 - 0.6,
-                        }
-                      },
-                      {
-                        "name": "Flow",
-                        "scale": 3,
-                        "meter": {
-                          "unit": "l/s",
-                          "convert": (double x) => x,
-                        }
-                      },
-                      {
-                        "name": "CO2",
-                        "scale": 3,
-                        "meter": {
-                          "unit": "%",
-                          "convert": (double x) => x / 100,
-                        }
-                      }
-                    ],
-                    windowSize: 3000,
-                    verticalLineConfigs: [
-                      { 'seconds': 0.2, 'stroke': 0.2, 'color': Colors.blue.shade500 },
-                      { 'seconds': 0.4, 'stroke': 0.2, 'color': Colors.blue.shade500 },
-                      { 'seconds': 1.0, 'stroke': 0.8, 'color': Colors.red },
-                    ],
-                    horizontalInterval: 4096 / 12,
-                    verticalInterval: 8,
-                    samplingRate: 300,
-                    minY: -(4096 / 12) * 5,
-                    maxY: (4096 / 12) * 25,
-                  ),
-                ),
-              ),
-            ),
-          ),
-        ],
+      body: SingleChildScrollView(
+        child: MyBigGraph(
+          key: myBigGraphKey,
+          plot: [
+            {"name": "ECG", "scale": 3, "gain": 0.4},
+            {"name": "O2", "scale": 3,"meter": {
+              "unit": "%",
+              // "convert": (double x) => x * 0.03005 - 4.1006 ,
+              // "convert": (double x) => x * (0.001464/4) ,
+              // "convert": (double x) => x * 0.00072105 ,
+              "convert": (double x) => x * 0.013463 - 0.6 ,
+            },
+            },
+            {"name": "Flow", "scale": 3,"meter": {
+              "unit": "l/s",
+              // "convert": (double x) => x * 0.03005 - 4.1006 ,
+              // "convert": (double x) => x * (0.001464/4) ,
+              // "convert": (double x) => x * 0.00072105 ,
+              "convert": (double x) => x ,
+            }},
+            {"name": "CO2", "scale": 3,"meter": {
+              "unit": "%",
+              "convert": (double x) => x / 100,
+            },
+            },
+            {"name": "Volume", "scale": 3,"meter": {
+              "unit": ".",
+              "convert": (double x) => x,
+            },
+            }
+          ],
+          windowSize: 900,
+          verticalLineConfigs: [
+            { 'seconds': 0.2, 'stroke': 0.5, 'color': Colors.blue },
+            { 'seconds': 0.4, 'stroke': 0.5, 'color': Colors.blue },
+            { 'seconds': 1.0, 'stroke': 0.8, 'color': Colors.red },
+          ],
+          horizontalInterval: 4096 / 12,
+          verticalInterval: 8,
+          samplingRate: 300,
+          minY: -(4096 / 12) * 5,
+          maxY: (4096 / 12) * 25,
+        ),
       ),
     );
   }
-
 }
