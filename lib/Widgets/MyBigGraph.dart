@@ -1,3 +1,4 @@
+import 'package:auto_size_text/auto_size_text.dart';
 import 'package:fl_chart/fl_chart.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
@@ -13,6 +14,9 @@ class MyBigGraph extends StatefulWidget {
   final double samplingRate;
   final double minY; // NEW ✅
   final double maxY; // NEW ✅
+  final List<Map<String,dynamic>> streamConfig;
+  final void Function(Map<String, dynamic>)? onStreamResult;
+
 
   const MyBigGraph({
     super.key,
@@ -24,6 +28,9 @@ class MyBigGraph extends StatefulWidget {
     required this.samplingRate,
     required this.minY, // NEW ✅
     required this.maxY, // NEW ✅
+    required this.streamConfig,
+    this.onStreamResult, // ✅ new
+
   });
 
   @override
@@ -41,6 +48,30 @@ class MyBigGraphState extends State<MyBigGraph> {
   int FILT_BUF_SIZE = 3 * 6 + 7;
   int Pos = 0; // Circular buffer position tracker
   late List<List<double>> filterBuffs;
+  late Stream<dynamic> stream;
+
+
+  void streamHandler(List<double> values) {
+    Map<String, dynamic> resultMap = {};
+
+    for (var map in widget.streamConfig) {
+      map.forEach((key, config) {
+        if (config["fun"] != null && config["fun"] is Function) {
+          try {
+            var result = config["fun"](values);
+            resultMap[key] = result;
+          } catch (e) {
+            debugPrint("Stream function error on [$key]: $e");
+          }
+        }
+      });
+    }
+
+    if (resultMap.isNotEmpty && widget.onStreamResult != null) {
+      widget.onStreamResult!(resultMap); // ✅ Send to parent
+    }
+  }
+
 
   @override
   void initState() {
@@ -157,6 +188,8 @@ class MyBigGraphState extends State<MyBigGraph> {
         if (allCurrentIndexes[i] >= widget.windowSize) {
           allCurrentIndexes[i] = 0;
         }
+
+        streamHandler(values);
 
         double value = values[i];
         value = applyMultiFilterToChannel(i, value); // 🔄 Apply filter if enabled
@@ -497,30 +530,64 @@ class MyBigGraphState extends State<MyBigGraph> {
   }
 
 
-  _meter(i){
-    if(widget.plot[i]["meter"] == null){
+  _meter(i) {
+    if (widget.plot[i]["meter"] == null) {
       return Container();
     }
+
+    final name = widget.plot[i]["name"] ?? "Channel ${i + 1}";
+    final liveValue = _getLiveValueLabel(i);
+
     return Expanded(
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(
-            widget.plot[i]["name"] ?? "Channel ${i + 1}",
-            style: const TextStyle(
-              fontWeight: FontWeight.bold,
-              fontSize: 12,
+      child: Container(
+        margin: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+        decoration: BoxDecoration(
+          color: Colors.grey.shade100,
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(color: Colors.grey.shade300, width: 1),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.grey.shade300,
+              blurRadius: 4,
+              offset: const Offset(0, 2),
+            )
+          ],
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            AutoSizeText(
+              name.toUpperCase(),
+              maxLines: 1,
+              minFontSize: 10,
+              style: const TextStyle(
+                fontSize: 9,
+                fontWeight: FontWeight.w700,
+                color: Colors.black87,
+                letterSpacing: 1,
+              ),
+              overflow: TextOverflow.ellipsis,
             ),
-            overflow: TextOverflow.ellipsis,
-          ),
-          Text(
-            _getLiveValueLabel(i), // 🔥 This shows the dynamic label
-            style: const TextStyle(fontSize: 15, color: Colors.grey),
-          ),
-        ],
+            const SizedBox(height: 4),
+            AutoSizeText(
+              liveValue,
+              maxLines: 1,
+              minFontSize: 14,
+              style: const TextStyle(
+                fontSize: 18,
+                fontWeight: FontWeight.bold,
+                color: Colors.deepPurple,
+              ),
+              overflow: TextOverflow.ellipsis,
+            ),
+          ],
+        ),
       ),
     );
   }
+
+
 
   void _adjustScale(int index, {required bool increase}) {
     setState(() {
