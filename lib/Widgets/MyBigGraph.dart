@@ -685,8 +685,18 @@ class MyBigGraphState extends State<MyBigGraph> {
       // padding: const EdgeInsets.all(5),
       height: (320 / 12) * 30,
       child: LineChart(
+
         duration: const Duration(milliseconds: 0),
         LineChartData(
+          lineTouchData: LineTouchData(
+            enabled: false, // disables all touch
+            touchTooltipData: LineTouchTooltipData(
+              // tooltipBgColor: Colors.transparent,
+              tooltipRoundedRadius: 0,
+              getTooltipItems: (_) => [],
+            ),
+            handleBuiltInTouches: false,
+          ),
           titlesData: FlTitlesData(
             leftTitles: AxisTitles(
               sideTitles: SideTitles(
