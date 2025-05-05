@@ -37,7 +37,7 @@ class _HomeState extends State<Home> {
 
     loadGlobalSettingsFromPrefs();
     print("INIT");
-    startTestLoop();
+    // startTestLoop();
     // init();
     // timer = Timer.periodic(Duration(milliseconds: 20), (timer) {
     //   _sendSineWaveData();
