@@ -27,6 +27,7 @@ class _HomeState extends State<Home> {
   double votwo = 0;
   double vco = 0;
   double? rer = 0;
+  double? vol = 0;
 
   List<double> rawDataFull = [];
   SharedPreferences? prefs;
@@ -206,6 +207,9 @@ class _HomeState extends State<Home> {
 
           // flow = 9.82 *1000/ flow;
           //
+          setState(() {
+            vol = vol;
+          });
 
           rawDataFull.add(ecg);
           // print(flow);
@@ -240,15 +244,50 @@ class _HomeState extends State<Home> {
   _vitals(){
     return (
         Column(
-          children: [
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceAround,
+          children: [Card(
+          elevation: 6,
+          margin: const EdgeInsets.all(12),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(12),
+          ),
+          child: Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 8.0, vertical: 8.0),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                VitalsBox(label: "VO2", value: votwo.toStringAsFixed(2), unit: "%·L/min", color: Colors.blue),
-                VitalsBox(label: "VCO2", value: vco.toStringAsFixed(2), unit: "L/min", color: Colors.blue),
-                VitalsBox(label: "RER", value: rer!.toStringAsFixed(2), unit: " ", color: Colors.blue),
+                Row(
+                  children: [
+                    IconButton(
+                      onPressed: () {
+                        init();
+                      },
+                      icon: Icon(Icons.play_circle_fill, size: 40, color: Colors.green),
+                      tooltip: "Start Monitoring",
+                    ),
+                    SizedBox(width: 16),
+
+                  ],
+                ),
+                ElevatedButton.icon(
+                  onPressed: () {},
+                  icon: Icon(Icons.person_add),
+                  label: Text("+ Patient"),
+                  style: ElevatedButton.styleFrom(
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                    padding: EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+                  ),
+                ),
               ],
             ),
+          ),
+        ),
+
+        VitalsBox(label: "VO2", value: votwo.toStringAsFixed(2), unit: "%·L/min", color: Colors.blue),
+            VitalsBox(label: "VCO2", value: vco.toStringAsFixed(2), unit: "L/min", color: Colors.blue),
+            VitalsBox(label: "RER", value: rer!.toStringAsFixed(2), unit: " ", color: Colors.blue),
+            VitalsBox(label: "Vol", value: vol!.toStringAsFixed(2), unit: "ml/L", color: Colors.blue),
           ],
         )
     );
@@ -268,108 +307,124 @@ class _HomeState extends State<Home> {
             },
             icon: Icon(Icons.settings),
           ),
-          IconButton(
-            onPressed: () {
-              init();
-            },
-            icon: Icon(Icons.refresh),
-          ),
+          // IconButton(
+          //   onPressed: () {
+          //     init();
+          //   },
+          //   icon: Icon(Icons.refresh),
+          // ),
         ],
       ),
       body: SingleChildScrollView(
         child: Column(
           children: [
-            _vitals(),
-            MyBigGraph(
-              key: myBigGraphKey,
-              streamConfig: [
-                {
-                  "vo2": {
-                    "fun": (e) {
-                      if (e.length > 2 && e[1] != null && e[2] != null) {
-                        double o2Percent = e[1] * 0.013463 - 0.6;
-                        double flow = e[2];
-                        return flow * (20.93 - o2Percent);
-                      } else {
-                        return null;
-                      }
-                    }
-                  }
-                },
-                {
-                  "vco2": {
-                    "fun": (e) {
-                      if (e.length > 3 && e[3] != null && e[2] != null) {
-                        double co2Fraction = e[3] / 100; // CO₂ %
-                        double flow = e[2];              // Flow in L/min
-                        return flow * co2Fraction;
-                      } else {
-                        return null;
-                      }
-                    }
-                  }
-                }
-              ],
-
-                onStreamResult: (resultMap) {
-                  setState(() {
-                    votwo = resultMap["vo2"];
-                    vco = resultMap["vco2"];
-
-                    if (votwo != null && votwo != null && votwo != 0) {
-                      rer = vco / votwo;
-                    } else {
-                      rer = 0; // Or 0.0 or "--"
-                    }
-                  });
-                },
-              plot: [
-                {"name": "ECG", "scale": 3, "gain": 0.4},
-                {
-                  "name": "O2",
-                  "scale": 3,
-                  "meter": {
-                    "unit": "%",
-                    // "convert": (double x) => x * 0.03005 - 4.1006 ,
-                    // "convert": (double x) => x * (0.001464/4) ,
-                    // "convert": (double x) => x * 0.00072105 ,
-                    "convert": (double x) => x * 0.013463 - 0.6,
-                  },
-                },
-                {
-                  "name": "Flow",
-                  "scale": 3,
-                  "meter": {
-                    "unit": "l/s",
-                    // "convert": (double x) => x * 0.03005 - 4.1006 ,
-                    // "convert": (double x) => x * (0.001464/4) ,
-                    // "convert": (double x) => x * 0.00072105 ,
-                    "convert": (double x) => x,
-                  },
-                },
-                {
-                  "name": "CO2",
-                  "scale": 3,
-                  "meter": {"unit": "%", "convert": (double x) => x / 100},
-                },
-                {
-                  "name": "Volume",
-                  "scale": 3,
-                  "meter": {"unit": ".", "convert": (double x) => x},
-                },
-              ],
-              windowSize: 900,
-              verticalLineConfigs: [
-                {'seconds': 0.2, 'stroke': 0.5, 'color': Colors.blue},
-                {'seconds': 0.4, 'stroke': 0.5, 'color': Colors.blue},
-                {'seconds': 1.0, 'stroke': 0.8, 'color': Colors.red},
-              ],
-              horizontalInterval: 4096 / 12,
-              verticalInterval: 8,
-              samplingRate: 300,
-              minY: -(4096 / 12) * 5,
-              maxY: (4096 / 12) * 25,
+            // bar
+            Container(
+              color: Colors.blue,
+              height: 20,
             ),
+            SizedBox(height: 3,),
+            Row(
+              children: [
+                Expanded(
+                  child: MyBigGraph(
+                    key: myBigGraphKey,
+                    streamConfig: [
+                      {
+                        "vo2": {
+                          "fun": (e) {
+                            if (e.length > 2 && e[1] != null && e[2] != null) {
+                              double o2Percent = e[1] * 0.013463 - 0.6;
+                              double flow = e[2];
+                              return flow * (20.93 - o2Percent);
+                            } else {
+                              return null;
+                            }
+                          }
+                        }
+                      },
+                      {
+                        "vco2": {
+                          "fun": (e) {
+                            if (e.length > 3 && e[3] != null && e[2] != null) {
+                              double co2Fraction = e[3] / 100; // CO₂ %
+                              double flow = e[2];              // Flow in L/min
+                              return flow * co2Fraction;
+                            } else {
+                              return null;
+                            }
+                          }
+                        }
+                      }
+                    ],
+
+                    onStreamResult: (resultMap) {
+                      print(resultMap);
+                      setState(() {
+                        votwo = resultMap["vo2"];
+                        vco = resultMap["vco2"];
+
+
+                        if (votwo != null && votwo != null && votwo != 0) {
+                          rer = vco / votwo;
+                        } else {
+                          rer = 0; // Or 0.0 or "--"
+                        }
+                      });
+                    },
+                    plot: [
+                      {"name": "ECG", "scale": 3, "gain": 0.4},
+                      {
+                        "name": "O2",
+                        "scale": 3,
+                        "meter": {
+                          "unit": "%",
+                          // "convert": (double x) => x * 0.03005 - 4.1006 ,
+                          // "convert": (double x) => x * (0.001464/4) ,
+                          // "convert": (double x) => x * 0.00072105 ,
+                          "convert": (double x) => x * 0.013463 - 0.6,
+                        },
+                      },
+                      {
+                        "name": "Flow",
+                        "scale": 3,
+                        "meter": {
+                          "unit": "l/s",
+                          // "convert": (double x) => x * 0.03005 - 4.1006 ,
+                          // "convert": (double x) => x * (0.001464/4) ,
+                          // "convert": (double x) => x * 0.00072105 ,
+                          "convert": (double x) => x,
+                        },
+                      },
+                      {
+                        "name": "CO2",
+                        "scale": 3,
+                        "meter": {"unit": "%", "convert": (double x) => x / 100},
+                      },
+                      // {
+                      //   "name": "Volume",
+                      //   "scale": 3,
+                      //   "meter": {"unit": ".", "convert": (double x) => x},
+                      // },
+                    ],
+                    windowSize: 3000,
+                    verticalLineConfigs: [
+                      {'seconds': 0.2, 'stroke': 0.5, 'color': Colors.blue},
+                      {'seconds': 0.4, 'stroke': 0.5, 'color': Colors.blue},
+                      {'seconds': 1.0, 'stroke': 0.8, 'color': Colors.red},
+                    ],
+                    horizontalInterval: 4096 / 12,
+                    verticalInterval: 8,
+                    samplingRate: 300,
+                    minY: -(4096 / 12) * 5,
+                    maxY: (4096 / 12) * 25,
+                  ),
+                ),
+                // Text("Ss")
+                _vitals(),
+
+              ],
+            )
           ],
         ),
       ),

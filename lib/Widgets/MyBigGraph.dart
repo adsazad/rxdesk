@@ -299,7 +299,7 @@ class MyBigGraphState extends State<MyBigGraph> {
 
 
   Widget _leftConsole() {
-    double totalHeight = (320 / 12) * 30;
+    double totalHeight = (250 / 12) * 30;
     double sectionHeight = totalHeight / widget.plot.length;
 
     return Container(
@@ -683,7 +683,7 @@ class MyBigGraphState extends State<MyBigGraph> {
   Widget _chart() {
     return Container(
       // padding: const EdgeInsets.all(5),
-      height: (320 / 12) * 30,
+      height: (250 / 12) * 30,
       child: LineChart(
 
         duration: const Duration(milliseconds: 0),
