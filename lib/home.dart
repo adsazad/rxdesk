@@ -27,10 +27,12 @@ class _HomeState extends State<Home> {
   double votwo = 0;
   double vco = 0;
   double? rer = 0;
-  double? vol = 0;
+  double? flow = 0;
 
   List<double> rawDataFull = [];
   SharedPreferences? prefs;
+
+  bool isPlaying = false;
 
   @override
   void initState() {
@@ -208,7 +210,7 @@ class _HomeState extends State<Home> {
           // flow = 9.82 *1000/ flow;
           //
           setState(() {
-            vol = vol;
+            flow = flow;
           });
 
           rawDataFull.add(ecg);
@@ -218,7 +220,6 @@ class _HomeState extends State<Home> {
           myBigGraphKey.currentState?.updateEverything([
             ecg,
             o2,
-            flow,
             co2,
             vol,
           ]);
@@ -240,6 +241,38 @@ class _HomeState extends State<Home> {
     timer.cancel(); // Always cancel timer!
     super.dispose();
   }
+  playPause(){
+    if(isPlaying){
+     return IconButton(
+        onPressed: () {
+          final globalSettings = Provider.of<GlobalSettingsModal>(
+            context,
+            listen: false,
+          );
+          SerialPort port = SerialPort(globalSettings.com.toString());
+          port.close();
+          setState(() {
+            isPlaying = false;
+          });
+
+        },
+        icon: Icon(Icons.pause_circle, size: 40, color: Colors.black),
+        tooltip: "Stop Monitoring",
+      );
+    }
+    if(!isPlaying){
+      return IconButton(
+        onPressed: () {
+          init();
+          setState(() {
+            isPlaying = true;
+          });
+        },
+        icon: Icon(Icons.play_circle_fill, size: 40, color: Colors.green),
+        tooltip: "Start Monitoring",
+      );
+    }
+  }
 
   _vitals(){
     return (
@@ -252,26 +285,36 @@ class _HomeState extends State<Home> {
           ),
           child: Padding(
             padding: const EdgeInsets.symmetric(horizontal: 8.0, vertical: 8.0),
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            child: Column(
               children: [
                 Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
-                    IconButton(
-                      onPressed: () {
-                        init();
-                      },
-                      icon: Icon(Icons.play_circle_fill, size: 40, color: Colors.green),
-                      tooltip: "Start Monitoring",
-                    ),
-                    SizedBox(width: 16),
+                    Row(
+                      children: [
+                        playPause(),
+                        SizedBox(width: 16),
 
+                      ],
+                    ),
+                    ElevatedButton(
+                      onPressed: () {},
+                      // icon: Icon(Icons.record),
+                      child: Text("Record"),
+                      // label: Text("Record"),
+                      style: ElevatedButton.styleFrom(
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(22),
+                        ),
+                        padding: EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+                      ),
+                    ),
                   ],
                 ),
                 ElevatedButton.icon(
                   onPressed: () {},
                   icon: Icon(Icons.person_add),
-                  label: Text("+ Patient"),
+                  label: Text("Patient"),
                   style: ElevatedButton.styleFrom(
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(8),
@@ -283,11 +326,20 @@ class _HomeState extends State<Home> {
             ),
           ),
         ),
-
-        VitalsBox(label: "VO2", value: votwo.toStringAsFixed(2), unit: "%·L/min", color: Colors.blue),
+        Row(
+          children: [
+            VitalsBox(label: "VO2", value: votwo.toStringAsFixed(2), unit: "%·L/min", color: Colors.blue),
             VitalsBox(label: "VCO2", value: vco.toStringAsFixed(2), unit: "L/min", color: Colors.blue),
-            VitalsBox(label: "RER", value: rer!.toStringAsFixed(2), unit: " ", color: Colors.blue),
-            VitalsBox(label: "Vol", value: vol!.toStringAsFixed(2), unit: "ml/L", color: Colors.blue),
+          ],
+        ),
+            Row(
+              children: [
+                VitalsBox(label: "RER", value: rer!.toStringAsFixed(2), unit: " ", color: Colors.blue),
+                VitalsBox(label: "Flow", value: flow!.toStringAsFixed(2), unit: "ml/L", color: Colors.blue),
+              ],
+            )
+
+
           ],
         )
     );
@@ -359,11 +411,9 @@ class _HomeState extends State<Home> {
                     ],
 
                     onStreamResult: (resultMap) {
-                      print(resultMap);
                       setState(() {
                         votwo = resultMap["vo2"];
                         vco = resultMap["vco2"];
-
 
                         if (votwo != null && votwo != null && votwo != 0) {
                           rer = vco / votwo;
@@ -385,27 +435,27 @@ class _HomeState extends State<Home> {
                           "convert": (double x) => x * 0.013463 - 0.6,
                         },
                       },
-                      {
-                        "name": "Flow",
-                        "scale": 3,
-                        "meter": {
-                          "unit": "l/s",
-                          // "convert": (double x) => x * 0.03005 - 4.1006 ,
-                          // "convert": (double x) => x * (0.001464/4) ,
-                          // "convert": (double x) => x * 0.00072105 ,
-                          "convert": (double x) => x,
-                        },
-                      },
+                      // {
+                      //   "name": "Flow",
+                      //   "scale": 3,
+                      //   "meter": {
+                      //     "unit": "l/s",
+                      //     // "convert": (double x) => x * 0.03005 - 4.1006 ,
+                      //     // "convert": (double x) => x * (0.001464/4) ,
+                      //     // "convert": (double x) => x * 0.00072105 ,
+                      //     "convert": (double x) => x,
+                      //   },
+                      // },
                       {
                         "name": "CO2",
                         "scale": 3,
                         "meter": {"unit": "%", "convert": (double x) => x / 100},
                       },
-                      // {
-                      //   "name": "Volume",
-                      //   "scale": 3,
-                      //   "meter": {"unit": ".", "convert": (double x) => x},
-                      // },
+                      {
+                        "name": "Volume",
+                        "scale": 3,
+                        "meter": {"unit": ".", "convert": (double x) => x},
+                      },
                     ],
                     windowSize: 3000,
                     verticalLineConfigs: [
