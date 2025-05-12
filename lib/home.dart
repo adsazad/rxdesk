@@ -8,6 +8,9 @@ import 'package:libserialport/libserialport.dart';
 import 'package:provider/provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:spirobtvo/Pages/GlobalSettings.dart';
+import 'package:spirobtvo/Pages/patient/list.dart';
+import 'package:spirobtvo/Pages/patient/patientAdd.dart';
+import 'package:spirobtvo/ProviderModals/DefaultPatientModal.dart';
 import 'package:spirobtvo/ProviderModals/GlobalSettingsModal.dart';
 import 'package:spirobtvo/Widgets/MyBigGraph.dart';
 import 'package:spirobtvo/Widgets/VitalsBox.dart';
@@ -274,10 +277,13 @@ class _HomeState extends State<Home> {
     }
   }
 
-  _vitals(){
+  _vitals({defaultPatient = null}){
     return (
         Column(
-          children: [Card(
+          children: [
+            Text(defaultPatient!= null ? 'Patient: '+defaultPatient['name']:'No Patient',style: TextStyle(fontSize: 18.5,fontWeight: FontWeight.bold),),
+            SizedBox(height: 10,),
+            Card(
           elevation: 6,
           margin: const EdgeInsets.all(12),
           shape: RoundedRectangleBorder(
@@ -287,6 +293,7 @@ class _HomeState extends State<Home> {
             padding: const EdgeInsets.symmetric(horizontal: 8.0, vertical: 8.0),
             child: Column(
               children: [
+                
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
@@ -312,7 +319,11 @@ class _HomeState extends State<Home> {
                   ],
                 ),
                 ElevatedButton.icon(
-                  onPressed: () {},
+                  onPressed: () {
+                    Navigator.of(context).push(
+                      new MaterialPageRoute(builder: (context) => Patients())
+                    );
+                  },
                   icon: Icon(Icons.person_add),
                   label: Text("Patient"),
                   style: ElevatedButton.styleFrom(
@@ -347,137 +358,154 @@ class _HomeState extends State<Home> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        title: Text("SprioBT VO2"),
-        actions: [
-          IconButton(
-            onPressed: () {
-              Navigator.of(
-                context,
-              ).push(MaterialPageRoute(builder: (context) => GlobalSettings()));
-            },
-            icon: Icon(Icons.settings),
-          ),
-          // IconButton(
-          //   onPressed: () {
-          //     init();
-          //   },
-          //   icon: Icon(Icons.refresh),
-          // ),
-        ],
-      ),
-      body: SingleChildScrollView(
-        child: Column(
-          children: [
-            // bar
-            Container(
-              color: Colors.blue,
-              height: 20,
+
+    return Consumer<DefaultPatientModal>(
+        builder: (context, defaultProvider, child)
+    {
+      final defaultPatient = defaultProvider.patient;
+      return Scaffold(
+        appBar: AppBar(
+          title: Text("SprioBT VO2"),
+          actions: [
+            IconButton(
+              onPressed: () {
+                Navigator.of(
+                  context,
+                ).push(
+                    MaterialPageRoute(builder: (context) => GlobalSettings()));
+              },
+              icon: Icon(Icons.settings),
             ),
-            SizedBox(height: 3,),
-            Row(
-              children: [
-                Expanded(
-                  child: MyBigGraph(
-                    key: myBigGraphKey,
-                    streamConfig: [
-                      {
-                        "vo2": {
-                          "fun": (e) {
-                            if (e.length > 2 && e[1] != null && e[2] != null) {
-                              double o2Percent = e[1] * 0.013463 - 0.6;
-                              double flow = e[2];
-                              return flow * (20.93 - o2Percent);
-                            } else {
-                              return null;
-                            }
-                          }
-                        }
-                      },
-                      {
-                        "vco2": {
-                          "fun": (e) {
-                            if (e.length > 3 && e[3] != null && e[2] != null) {
-                              double co2Fraction = e[3] / 100; // CO₂ %
-                              double flow = e[2];              // Flow in L/min
-                              return flow * co2Fraction;
-                            } else {
-                              return null;
-                            }
-                          }
-                        }
-                      }
-                    ],
-
-                    onStreamResult: (resultMap) {
-                      setState(() {
-                        votwo = resultMap["vo2"];
-                        vco = resultMap["vco2"];
-
-                        if (votwo != null && votwo != null && votwo != 0) {
-                          rer = vco / votwo;
-                        } else {
-                          rer = 0; // Or 0.0 or "--"
-                        }
-                      });
-                    },
-                    plot: [
-                      {"name": "ECG", "scale": 3, "gain": 0.4},
-                      {
-                        "name": "O2",
-                        "scale": 3,
-                        "meter": {
-                          "unit": "%",
-                          // "convert": (double x) => x * 0.03005 - 4.1006 ,
-                          // "convert": (double x) => x * (0.001464/4) ,
-                          // "convert": (double x) => x * 0.00072105 ,
-                          "convert": (double x) => x * 0.013463 - 0.6,
-                        },
-                      },
-                      // {
-                      //   "name": "Flow",
-                      //   "scale": 3,
-                      //   "meter": {
-                      //     "unit": "l/s",
-                      //     // "convert": (double x) => x * 0.03005 - 4.1006 ,
-                      //     // "convert": (double x) => x * (0.001464/4) ,
-                      //     // "convert": (double x) => x * 0.00072105 ,
-                      //     "convert": (double x) => x,
-                      //   },
-                      // },
-                      {
-                        "name": "CO2",
-                        "scale": 3,
-                        "meter": {"unit": "%", "convert": (double x) => x / 100},
-                      },
-                      {
-                        "name": "Volume",
-                        "scale": 3,
-                        "meter": {"unit": ".", "convert": (double x) => x},
-                      },
-                    ],
-                    windowSize: 3000,
-                    verticalLineConfigs: [
-                      {'seconds': 0.2, 'stroke': 0.5, 'color': Colors.blue},
-                      {'seconds': 0.4, 'stroke': 0.5, 'color': Colors.blue},
-                      {'seconds': 1.0, 'stroke': 0.8, 'color': Colors.red},
-                    ],
-                    horizontalInterval: 4096 / 12,
-                    verticalInterval: 8,
-                    samplingRate: 300,
-                    minY: -(4096 / 12) * 5,
-                    maxY: (4096 / 12) * 25,
-                  ),
-                ),
-                // Text("Ss")
-                _vitals(),
-
-              ],
-            )
+            // IconButton(
+            //   onPressed: () {
+            //     init();
+            //   },
+            //   icon: Icon(Icons.refresh),
+            // ),
           ],
         ),
-      ),
+        body: SingleChildScrollView(
+          child: Column(
+            children: [
+              // bar
+              Container(
+                alignment: Alignment.center,
+                color: Colors.blue,
+                height: 20,
+                width: double.infinity,
+
+              ),
+              SizedBox(height: 3,),
+              Row(
+                children: [
+                  Expanded(
+                    child: MyBigGraph(
+                      key: myBigGraphKey,
+                      streamConfig: [
+                        {
+                          "vo2": {
+                            "fun": (e) {
+                              if (e.length > 2 && e[1] != null &&
+                                  e[2] != null) {
+                                double o2Percent = e[1] * 0.013463 - 0.6;
+                                double flow = e[2];
+                                return flow * (20.93 - o2Percent);
+                              } else {
+                                return null;
+                              }
+                            }
+                          }
+                        },
+                        {
+                          "vco2": {
+                            "fun": (e) {
+                              if (e.length > 3 && e[3] != null &&
+                                  e[2] != null) {
+                                double co2Fraction = e[3] / 100; // CO₂ %
+                                double flow = e[2]; // Flow in L/min
+                                return flow * co2Fraction;
+                              } else {
+                                return null;
+                              }
+                            }
+                          }
+                        }
+                      ],
+
+                      onStreamResult: (resultMap) {
+                        setState(() {
+                          votwo = resultMap["vo2"];
+                          vco = resultMap["vco2"];
+
+                          if (votwo != null && votwo != null && votwo != 0) {
+                            rer = vco / votwo;
+                          } else {
+                            rer = 0; // Or 0.0 or "--"
+                          }
+                        });
+                      },
+                      plot: [
+                        {"name": "ECG", "scale": 3, "gain": 0.4},
+                        {
+                          "name": "O2",
+                          "scale": 3,
+                          "meter": {
+                            "unit": "%",
+                            // "convert": (double x) => x * 0.03005 - 4.1006 ,
+                            // "convert": (double x) => x * (0.001464/4) ,
+                            // "convert": (double x) => x * 0.00072105 ,
+                            "convert": (double x) => x * 0.013463 - 0.6,
+                          },
+                        },
+                        // {
+                        //   "name": "Flow",
+                        //   "scale": 3,
+                        //   "meter": {
+                        //     "unit": "l/s",
+                        //     // "convert": (double x) => x * 0.03005 - 4.1006 ,
+                        //     // "convert": (double x) => x * (0.001464/4) ,
+                        //     // "convert": (double x) => x * 0.00072105 ,
+                        //     "convert": (double x) => x,
+                        //   },
+                        // },
+                        {
+                          "name": "CO2",
+                          "scale": 3,
+                          "meter": {
+                            "unit": "%",
+                            "convert": (double x) => x / 100
+                          },
+                        },
+                        {
+                          "name": "Volume",
+                          "scale": 3,
+                          "meter": {"unit": ".", "convert": (double x) => x},
+                        },
+                      ],
+                      windowSize: 3000,
+                      verticalLineConfigs: [
+                        {'seconds': 0.2, 'stroke': 0.5, 'color': Colors.blue},
+                        {'seconds': 0.4, 'stroke': 0.5, 'color': Colors.blue},
+                        {'seconds': 1.0, 'stroke': 0.8, 'color': Colors.red},
+                      ],
+                      horizontalInterval: 4096 / 12,
+                      verticalInterval: 8,
+                      samplingRate: 300,
+                      minY: -(4096 / 12) * 5,
+                      maxY: (4096 / 12) * 25,
+                    ),
+                  ),
+                  // Text("Ss")
+
+                  _vitals(defaultPatient: defaultPatient),
+
+                ],
+              )
+            ],
+          ),
+        ),
+      );
+    }
     );
   }
 }
