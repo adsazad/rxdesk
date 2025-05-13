@@ -13,6 +13,7 @@ import 'package:spirobtvo/Pages/patient/list.dart';
 import 'package:spirobtvo/Pages/patient/patientAdd.dart';
 import 'package:spirobtvo/ProviderModals/DefaultPatientModal.dart';
 import 'package:spirobtvo/ProviderModals/GlobalSettingsModal.dart';
+import 'package:spirobtvo/Services/CPETService.dart';
 import 'package:spirobtvo/Services/DataSaver.dart';
 import 'package:spirobtvo/Widgets/MyBigGraph.dart';
 import 'package:spirobtvo/Widgets/VitalsBox.dart';
@@ -41,6 +42,8 @@ class _HomeState extends State<Home> {
   bool isPlaying = false;
   final dataSaver = DataSaver();
 
+  List<List<double>> _inMemoryData = [];
+
   @override
   void initState() {
     super.initState();
@@ -49,14 +52,28 @@ class _HomeState extends State<Home> {
     print("INIT");
     startTestLoop();
     // init();
-    // timer = Timer.periodic(Duration(milliseconds: 20), (timer) {
-    //   _sendSineWaveData();
-    // });
+    CPETService cpet = CPETService();
+    timer = Timer.periodic(Duration(seconds: 10), (timer) {
+      print("VOLPEAK");
+      var cp = cpet.init(_inMemoryData);
+      print(cp);
+      setState(() {
+        votwo = cp["averageStats"]["avgVo2"];
+        vco = cp["averageStats"]["avgVco2"];
+        rer = cp["averageStats"]["avgRer"];
+      });
+    });
   }
 
   bool _saverInitialized = false;
 
-  saver({required double ecg, required double o2, required double co2, required double vol, required double flow}) async {
+  saver({
+    required double ecg,
+    required double o2,
+    required double co2,
+    required double vol,
+    required double flow,
+  }) async {
     final patientProvider = Provider.of<DefaultPatientModal>(
       context,
       listen: false,
@@ -161,10 +178,15 @@ class _HomeState extends State<Home> {
           double vol = (data[13] << 8 | data[12]) * 1.0;
           double co2 = (data[15] << 8 | data[14]) * 1.0;
 
-          saver(ecg: ecg, o2:o2,flow: flow, vol:vol,co2: co2);
+          saver(ecg: ecg, o2: o2, flow: flow, vol: vol, co2: co2);
           // Update your graph
-          myBigGraphKey.currentState?.updateEverything([ecg, o2, co2, vol]);
-
+          List<double>? edt = myBigGraphKey.currentState?.updateEverything([
+            ecg,
+            o2,
+            co2,
+            vol,
+          ]);
+          _inMemoryData.add([edt![0], edt![1], edt![2], edt![3], flow]);
           dataIndex += 16; // move to next potential packet
           return;
         }
@@ -513,19 +535,19 @@ class _HomeState extends State<Home> {
 
                         onStreamResult: (resultMap) {
                           setState(() {
-                            votwo = resultMap["vo2"];
-                            vco = resultMap["vco2"];
-                            if (defaultPatient != null) {
-                              double weight = double.parse(
-                                defaultPatient["weight"],
-                              );
-                              votwokg = resultMap["vo2"] / weight;
-                            }
-                            if (votwo != null && votwo != null && votwo != 0) {
-                              rer = vco / votwo;
-                            } else {
-                              rer = 0; // Or 0.0 or "--"
-                            }
+                            // votwo = resultMap["vo2"];
+                            // vco = resultMap["vco2"];
+                            // if (defaultPatient != null) {
+                            //   double weight = double.parse(
+                            //     defaultPatient["weight"],
+                            //   );
+                            //   votwokg = resultMap["vo2"] / weight;
+                            // }
+                            // if (votwo != null && votwo != null && votwo != 0) {
+                            //   rer = vco / votwo;
+                            // } else {
+                            //   rer = 0; // Or 0.0 or "--"
+                            // }
                           });
                         },
                         plot: [

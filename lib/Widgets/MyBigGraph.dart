@@ -182,7 +182,9 @@ class MyBigGraphState extends State<MyBigGraph> {
   }
 
 
-  void updateEverything(List<double> values) {
+  List<double> updateEverything(List<double> values) {
+    List<double> processedValues = [];
+
     setState(() {
       for (int i = 0; i < values.length; i++) {
         if (allCurrentIndexes[i] >= widget.windowSize) {
@@ -193,8 +195,8 @@ class MyBigGraphState extends State<MyBigGraph> {
 
         double value = values[i];
         value = applyMultiFilterToChannel(i, value); // 🔄 Apply filter if enabled
+        processedValues.add(value); // ✅ store filtered value
 
-        // ❌ NO CLIPPING HERE!
         allPlotData[i][allCurrentIndexes[i]] = FlSpot(
           allCurrentIndexes[i].toDouble(),
           value,
@@ -202,7 +204,10 @@ class MyBigGraphState extends State<MyBigGraph> {
         allCurrentIndexes[i]++;
       }
     });
+
+    return processedValues;
   }
+
 
   List<VerticalLine> _generateVerticalLines() {
     List<VerticalLine> allLines = [];

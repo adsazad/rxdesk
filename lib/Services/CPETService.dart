@@ -1,0 +1,114 @@
+class CPETService {
+  Map<String, dynamic> init(List<List<double>> data) {
+    List<Map<String, dynamic>> volPeaks = getBreathVolumePeaks(data);
+    List<Map<String, dynamic>> breathStats = calculateStatsAtPeaks(data, volPeaks);
+    Map<String, dynamic> averageStats = calculateAverages(breathStats);
+
+    return {
+      "volumePeaks": volPeaks,
+      "breathStats": breathStats,
+      "averageStats": averageStats,
+    };
+  }
+
+  // Step 1: Find volume peaks (max point per breath)
+  List<Map<String, dynamic>> getBreathVolumePeaks(List<List<double>> data) {
+    List<Map<String, dynamic>> peaks = [];
+
+    if (data.isEmpty || data[0].length <= 3) return peaks;
+
+    bool rising = false;
+    double maxVal = -double.infinity;
+    int maxIndex = -1;
+
+    for (int i = 1; i < data.length; i++) {
+      if (data[i].length <= 3 || data[i - 1].length <= 3) continue;
+
+      double prev = data[i - 1][3];
+      double current = data[i][3];
+
+      if (current > prev) {
+        if (!rising) {
+          rising = true;
+          maxVal = current;
+          maxIndex = i;
+        } else if (current > maxVal) {
+          maxVal = current;
+          maxIndex = i;
+        }
+      } else if (rising && current < prev) {
+        if (maxVal > 0.1) {
+          peaks.add({
+            'index': maxIndex,
+            'value': maxVal,
+          });
+        }
+        rising = false;
+        maxVal = -double.infinity;
+        maxIndex = -1;
+      }
+    }
+
+    return peaks;
+  }
+
+  // Step 2: Calculate VO2, VCO2, RER at peak index
+  List<Map<String, dynamic>> calculateStatsAtPeaks(
+      List<List<double>> data, List<Map<String, dynamic>> peaks) {
+    List<Map<String, dynamic>> stats = [];
+
+    for (final peak in peaks) {
+      int i = peak['index'];
+
+      if (i < data.length && data[i].length >= 5) {
+        double o2 = data[i][1];     // O2 in %
+        double co2 = data[i][2];    // CO2 in %
+        double flow = data[i][4];   // Flow value at peak
+
+        double o2Percent = o2 * 0.013463 - 0.6;
+        double vo2 = flow * (20.93 - o2Percent);
+
+        double co2Fraction = co2 / 100;
+        double vco2 = flow * co2Fraction;
+
+        double rer = vo2 > 0 ? vco2 / vo2 : 0;
+
+        stats.add({
+          'index': i,
+          'vo2': vo2,
+          'vco2': vco2,
+          'rer': rer,
+        });
+      }
+    }
+
+    return stats;
+  }
+
+  // ✅ New Step 3: Calculate average VO2, VCO2, RER
+  Map<String, dynamic> calculateAverages(List<Map<String, dynamic>> stats) {
+    if (stats.isEmpty) return {
+      'avgVo2': 0.0,
+      'avgVco2': 0.0,
+      'avgRer': 0.0,
+    };
+
+    double totalVo2 = 0;
+    double totalVco2 = 0;
+    double totalRer = 0;
+
+    for (final stat in stats) {
+      totalVo2 += stat['vo2'];
+      totalVco2 += stat['vco2'];
+      totalRer += stat['rer'];
+    }
+
+    int count = stats.length;
+
+    return {
+      'avgVo2': totalVo2 / count,
+      'avgVco2': totalVco2 / count,
+      'avgRer': totalRer / count,
+    };
+  }
+}
