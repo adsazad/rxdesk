@@ -20,13 +20,13 @@ class VitalsBox extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return SizedBox(
-      width: 140, // 🔒 Fixed width
-      height: 110, // 🔒 Fixed height
+      width: 140,
+      height: 130,
       child: Card(
         elevation: 6,
         margin: const EdgeInsets.all(8),
         shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(8),
+          borderRadius: BorderRadius.circular(0),
         ),
         child: Padding(
           padding: const EdgeInsets.all(12),
@@ -43,41 +43,30 @@ class VitalsBox extends StatelessWidget {
                 ),
               ),
               const Spacer(),
-              Row(
-                crossAxisAlignment: CrossAxisAlignment.end,
-                children: [
-                  if (icon != null)
-                    Padding(
-                      padding: const EdgeInsets.only(right: 6),
-                      child: Icon(icon, color: color, size: 22),
-                    ),
-                  Expanded(
-                    child: AutoSizeText(
-                      value,
-                      maxLines: 1,
-                      minFontSize: 12,
-                      style: const TextStyle(
-                        fontSize: 26,
-                        fontWeight: FontWeight.w700,
-                        color: Colors.blue,
-                        letterSpacing: 1,
-                      ),
-                      overflow: TextOverflow.ellipsis,
-                    ),
-                  ),
-                  const SizedBox(width: 4),
-                  Padding(
-                    padding: const EdgeInsets.only(bottom: 2.0),
-                    child: Text(
-                      unit,
-                      style: TextStyle(
-                        fontSize: 15,
-                        fontWeight: FontWeight.w500,
-                        color: color.withOpacity(0.9),
-                      ),
-                    ),
-                  ),
-                ],
+              if (icon != null)
+                Padding(
+                  padding: const EdgeInsets.only(bottom: 4),
+                  child: Icon(icon, color: color, size: 22),
+                ),
+              AutoSizeText(
+                value,
+                maxLines: 1,
+                minFontSize: 18,
+                style:  TextStyle(
+                  fontSize: 32,
+                  fontWeight: FontWeight.bold,
+                  color: color,
+                  letterSpacing: 1,
+                ),
+                textAlign: TextAlign.start,
+              ),
+              Text(
+                unit,
+                style: TextStyle(
+                  fontSize: 14,
+                  fontWeight: FontWeight.w500,
+                  color: color.withOpacity(0.9),
+                ),
               ),
             ],
           ),
