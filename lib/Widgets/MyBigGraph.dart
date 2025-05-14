@@ -1,3 +1,4 @@
+
 import 'package:auto_size_text/auto_size_text.dart';
 import 'package:fl_chart/fl_chart.dart';
 import 'package:flutter/cupertino.dart';
@@ -16,6 +17,7 @@ class MyBigGraph extends StatefulWidget {
   final double maxY; // NEW ✅
   final List<Map<String,dynamic>> streamConfig;
   final void Function(Map<String, dynamic>)? onStreamResult;
+  final void Function()? onCycleComplete;
 
 
   const MyBigGraph({
@@ -30,6 +32,7 @@ class MyBigGraph extends StatefulWidget {
     required this.maxY, // NEW ✅
     required this.streamConfig,
     this.onStreamResult, // ✅ new
+    this.onCycleComplete
 
   });
 
@@ -188,6 +191,7 @@ class MyBigGraphState extends State<MyBigGraph> {
     setState(() {
       for (int i = 0; i < values.length; i++) {
         if (allCurrentIndexes[i] >= widget.windowSize) {
+          widget.onCycleComplete!();
           allCurrentIndexes[i] = 0;
         }
 

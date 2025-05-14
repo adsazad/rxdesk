@@ -55,6 +55,40 @@ class CPETService {
     return peaks;
   }
 
+  int detectO2Co2DelayFromVolumePeaks(List<List<double>> data, {int samplingRate = 300}) {
+    final peaks = getBreathVolumePeaks(data);
+
+    List<int> delays = [];
+
+    for (var peak in peaks) {
+      int volIndex = peak['index'];
+      if (volIndex >= data.length) continue;
+
+      int maxLookahead = 150; // 150 samples = 500 ms
+      int co2PeakIndex = -1;
+      double co2Max = -double.infinity;
+
+      for (int i = volIndex + 1; i <= volIndex + maxLookahead && i < data.length; i++) {
+        double co2 = data[i][2]; // CO2 index
+        if (co2 > co2Max) {
+          co2Max = co2;
+          co2PeakIndex = i;
+        }
+      }
+
+      if (co2PeakIndex != -1) {
+        int delay = co2PeakIndex - volIndex;
+        delays.add(delay);
+      }
+    }
+
+    if (delays.isEmpty) return 0;
+
+    int avgDelay = delays.reduce((a, b) => a + b) ~/ delays.length;
+    print("Delays: $delays → Avg: $avgDelay samples = ${avgDelay * 1000 / samplingRate} ms");
+    return avgDelay;
+  }
+
   // Step 2: Calculate VO2, VCO2, RER at peak index
   List<Map<String, dynamic>> calculateStatsAtPeaks(
       List<List<double>> data, List<Map<String, dynamic>> peaks) {

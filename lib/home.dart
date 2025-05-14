@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:collection';
 import 'dart:convert';
 import 'dart:math';
 import 'dart:typed_data';
@@ -48,6 +49,11 @@ class _HomeState extends State<Home> {
   List<List<double>> _inMemoryData = [];
 
   EcgBPMCalculator ecgBPMCalculator = EcgBPMCalculator();
+
+  Queue<double> o2Buffer = Queue<double>();
+  Queue<double> co2Buffer = Queue<double>();
+  int? delaySamples; // Initially null
+
 
   @override
   void initState() {
@@ -205,6 +211,7 @@ class _HomeState extends State<Home> {
             co2,
             vol,
           ]);
+
           _inMemoryData.add([edt![0], edt![1], edt![2], edt![3], flow]);
           dataIndex += 16; // move to next potential packet
           return;
@@ -521,6 +528,15 @@ class _HomeState extends State<Home> {
                     Expanded(
                       child: MyBigGraph(
                         key: myBigGraphKey,
+                        onCycleComplete: (){
+                          if(delaySamples == null) {
+                            CPETService cpet = CPETService();
+                            delaySamples = cpet.detectO2Co2DelayFromVolumePeaks(
+                                _inMemoryData);
+                            print("DELAY REQ");
+                            print(delaySamples);
+                          }
+                        },
                         streamConfig: [
                           {
                             "vo2": {
