@@ -15,6 +15,7 @@ import 'package:spirobtvo/ProviderModals/DefaultPatientModal.dart';
 import 'package:spirobtvo/ProviderModals/GlobalSettingsModal.dart';
 import 'package:spirobtvo/Services/CPETService.dart';
 import 'package:spirobtvo/Services/DataSaver.dart';
+import 'package:spirobtvo/Services/EcgBPMCalculator.dart';
 import 'package:spirobtvo/Widgets/MyBigGraph.dart';
 import 'package:spirobtvo/Widgets/VitalsBox.dart';
 
@@ -34,7 +35,9 @@ class _HomeState extends State<Home> {
   double votwokg = 0;
   double vco = 0;
   double? rer = 0;
+  double? vol = 0;
   double? flow = 0;
+  double? bpm = 0;
 
   List<double> rawDataFull = [];
   SharedPreferences? prefs;
@@ -43,6 +46,8 @@ class _HomeState extends State<Home> {
   final dataSaver = DataSaver();
 
   List<List<double>> _inMemoryData = [];
+
+  EcgBPMCalculator ecgBPMCalculator = EcgBPMCalculator();
 
   @override
   void initState() {
@@ -54,13 +59,27 @@ class _HomeState extends State<Home> {
     // init();
     CPETService cpet = CPETService();
     timer = Timer.periodic(Duration(seconds: 10), (timer) {
+      var stats = ecgBPMCalculator.getStats(_inMemoryData);
+      // print(stats);
+      final patientProvider = Provider.of<DefaultPatientModal>(
+        context,
+        listen: false,
+      );
+      final patient = patientProvider.patient;
+
       print("VOLPEAK");
       var cp = cpet.init(_inMemoryData);
-      print(cp);
+      // print(cp);
       setState(() {
-        votwo = cp["averageStats"]["avgVo2"];
-        vco = cp["averageStats"]["avgVco2"];
-        rer = cp["averageStats"]["avgRer"];
+        votwo = cp["lastBreathStat"]["vo2"];
+        vco = cp["lastBreathStat"]["vco2"];
+        rer = cp["lastBreathStat"]["rer"];
+        vol = cp["lastBreathStat"]["vol"];
+        bpm = stats["bpm"];
+        if(patient != null) {
+          double weight = double.parse(patient["weight"]);
+          votwokg = votwo / weight;
+        }
       });
     });
   }
@@ -414,7 +433,7 @@ class _HomeState extends State<Home> {
             VitalsBox(
               label: "VO2",
               value: votwo.toStringAsFixed(2),
-              unit: "%·L/min",
+              unit: "L/min",
               color: Colors.blue,
             ),
             VitalsBox(
@@ -434,8 +453,8 @@ class _HomeState extends State<Home> {
               color: Colors.blue,
             ),
             VitalsBox(
-              label: "Flow",
-              value: flow!.toStringAsFixed(2),
+              label: "Volume",
+              value: vol!.toStringAsFixed(2),
               unit: "ml/L",
               color: Colors.blue,
             ),
@@ -450,9 +469,9 @@ class _HomeState extends State<Home> {
               color: Colors.blue,
             ),
             VitalsBox(
-              label: "Flow",
-              value: flow!.toStringAsFixed(2),
-              unit: "ml/L",
+              label: "HR",
+              value: bpm!.toStringAsFixed(0),
+              unit: " ",
               color: Colors.blue,
             ),
           ],

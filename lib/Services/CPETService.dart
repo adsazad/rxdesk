@@ -4,10 +4,13 @@ class CPETService {
     List<Map<String, dynamic>> breathStats = calculateStatsAtPeaks(data, volPeaks);
     Map<String, dynamic> averageStats = calculateAverages(breathStats);
 
+    Map<String, dynamic>? lastBreathStat = breathStats.isNotEmpty ? breathStats.last : null;
+
     return {
       "volumePeaks": volPeaks,
       "breathStats": breathStats,
       "averageStats": averageStats,
+      "lastBreathStat":lastBreathStat,
     };
   }
 
@@ -63,13 +66,13 @@ class CPETService {
       if (i < data.length && data[i].length >= 5) {
         double o2 = data[i][1];     // O2 in %
         double co2 = data[i][2];    // CO2 in %
-        double flow = data[i][4];   // Flow value at peak
+        double vol = data[i][4];   // Flow value at peak
 
         double o2Percent = o2 * 0.013463 - 0.6;
-        double vo2 = flow * (20.93 - o2Percent);
+        double vo2 = vol * (20.93 - o2Percent);
 
         double co2Fraction = co2 / 100;
-        double vco2 = flow * co2Fraction;
+        double vco2 = vol * co2Fraction;
 
         double rer = vo2 > 0 ? vco2 / vo2 : 0;
 
@@ -78,6 +81,7 @@ class CPETService {
           'vo2': vo2,
           'vco2': vco2,
           'rer': rer,
+          "vol": vol,
         });
       }
     }
@@ -88,27 +92,31 @@ class CPETService {
   // ✅ New Step 3: Calculate average VO2, VCO2, RER
   Map<String, dynamic> calculateAverages(List<Map<String, dynamic>> stats) {
     if (stats.isEmpty) return {
-      'avgVo2': 0.0,
-      'avgVco2': 0.0,
-      'avgRer': 0.0,
+      'vo2': 0.0,
+      'vco2': 0.0,
+      'rer': 0.0,
+      "vol": 0.0,
     };
 
     double totalVo2 = 0;
     double totalVco2 = 0;
     double totalRer = 0;
+    double totalVol = 0;
 
     for (final stat in stats) {
       totalVo2 += stat['vo2'];
       totalVco2 += stat['vco2'];
       totalRer += stat['rer'];
+      totalVol += stat["vol"];
     }
 
     int count = stats.length;
 
     return {
-      'avgVo2': totalVo2 / count,
-      'avgVco2': totalVco2 / count,
-      'avgRer': totalRer / count,
+      'vo2': totalVo2 / count,
+      'vco2': totalVco2 / count,
+      'rer': totalRer / count,
+      'totalVol': totalVol / count,
     };
   }
 }
