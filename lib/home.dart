@@ -293,9 +293,11 @@ class _HomeState extends State<Home> {
 
           rawDataFull.add(ecg);
           // print(flow);
-
+          saver(ecg: ecg, o2: o2, flow: flow, vol: vol, co2: co2);
           // updateEverything(scaledEcg, scaledO2, scaledFlow, scaledCo2);
-          myBigGraphKey.currentState?.updateEverything([ecg, o2, co2, vol]);
+          List<double>? edt =  myBigGraphKey.currentState?.updateEverything([ecg, o2, co2, vol]);
+          // Update your graph
+          _inMemoryData.add([edt![0], edt![1], edt![2], edt![3], flow]);
         } else {
           print("⚠️ Invalid frame header: ${data[0]}, ${data[1]}");
         }
