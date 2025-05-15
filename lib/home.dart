@@ -39,6 +39,7 @@ class _HomeState extends State<Home> {
   double? vol = 0;
   double? flow = 0;
   double? bpm = 0;
+  double? respirationRate = 0;
 
   List<double> rawDataFull = [];
   SharedPreferences? prefs;
@@ -52,7 +53,8 @@ class _HomeState extends State<Home> {
 
   Queue<double> o2Buffer = Queue<double>();
   Queue<double> co2Buffer = Queue<double>();
-  int? delaySamples; // Initially null
+  int? delaySamples = 174; // Initially null
+  List<List<double>> delayBuffer = []; // holds [ecg, o2, co2, vol, flow]
 
 
   @override
@@ -61,33 +63,12 @@ class _HomeState extends State<Home> {
 
     loadGlobalSettingsFromPrefs();
     print("INIT");
-    startTestLoop();
+    // startTestLoop();
     // init();
     CPETService cpet = CPETService();
-    timer = Timer.periodic(Duration(seconds: 10), (timer) {
-      var stats = ecgBPMCalculator.getStats(_inMemoryData);
-      // print(stats);
-      final patientProvider = Provider.of<DefaultPatientModal>(
-        context,
-        listen: false,
-      );
-      final patient = patientProvider.patient;
-
-      print("VOLPEAK");
-      var cp = cpet.init(_inMemoryData);
-      // print(cp);
-      setState(() {
-        votwo = cp["lastBreathStat"]["vo2"];
-        vco = cp["lastBreathStat"]["vco2"];
-        rer = cp["lastBreathStat"]["rer"];
-        vol = cp["lastBreathStat"]["vol"];
-        bpm = stats["bpm"];
-        if(patient != null) {
-          double weight = double.parse(patient["weight"]);
-          votwokg = votwo / weight;
-        }
-      });
-    });
+    // timer = Timer.periodic(Duration(seconds: 10), (timer) {
+    //
+    // });
   }
 
   bool _saverInitialized = false;
@@ -132,22 +113,6 @@ class _HomeState extends State<Home> {
     }
   }
 
-  void _sendSineWaveData() {
-    time += 0.02; // Simulate time passing every 20ms
-
-    double ecgVal =
-        sin(2 * pi * 1 * time) * 500; // 1 Hz sine wave, 500 amplitude
-    double o2Val = sin(2 * pi * 0.5 * time) * 300; // 0.5 Hz slower wave
-    double flowVal = sin(2 * pi * 2 * time) * 200; // 2 Hz faster wave
-    double co2Val = sin(2 * pi * 0.25 * time) * 100; // 0.25 Hz very slow wave
-    ecgVal = ecgVal * 6;
-    myBigGraphKey.currentState?.updateEverything([
-      ecgVal,
-      o2Val,
-      flowVal,
-      co2Val,
-    ]);
-  }
 
   Future<List<double>> loadTestData() async {
     final byteData = await rootBundle.load('assets/capturen.txt');
@@ -173,6 +138,42 @@ class _HomeState extends State<Home> {
   List<double> testData = [];
   int dataIndex = 0;
 
+  List<double> recentVolumes = [];
+  bool wasExhaling = false;
+
+  onExhalationDetected(){
+    print("Exaust Detected");
+    try {
+      CPETService cpet = CPETService();
+
+      var stats = ecgBPMCalculator.getStats(_inMemoryData);
+      // print(stats);
+      final patientProvider = Provider.of<DefaultPatientModal>(
+        context,
+        listen: false,
+      );
+      final patient = patientProvider.patient;
+
+      print("VOLPEAK");
+      var cp = cpet.init(_inMemoryData);
+      print(cp);
+      // print(cp);
+      setState(() {
+        votwo = cp["lastBreathStat"]["vo2"];
+        vco = cp["lastBreathStat"]["vco2"];
+        rer = cp["lastBreathStat"]["rer"];
+        vol = cp["minuteVentilation"];
+        respirationRate = cp["respirationRate"];
+        bpm = stats["bpm"];
+        if (patient != null) {
+          double weight = double.parse(patient["weight"]);
+          votwokg = votwo / weight;
+        }
+      });
+    }catch(e){
+      print(e);
+    }
+  }
   void startTestLoop() async {
     testData = await loadTestData(); // List<double> representing bytes (0-255)
     dataIndex = 0;
@@ -196,23 +197,90 @@ class _HomeState extends State<Home> {
             return testData[dataIndex + i].toInt() & 0xFF;
           });
 
+
+
+          double vol = (data[13] << 8 | data[12]) * 1.0;
+
+          // Update buffer
+          recentVolumes.add(vol);
+          if (recentVolumes.length > 10) {
+            recentVolumes.removeAt(0);
+          }
+
+          // Check for exhalation pattern
+          int nonZeroCount = recentVolumes.where((v) => v > 50).length;
+          bool currentIsZero = vol <= 5;
+
+          if (nonZeroCount >= 5 && currentIsZero && wasExhaling) {
+            onExhalationDetected(); // ✅ Call your function here
+            wasExhaling = false; // Reset flag
+          }
+
+          if (vol > 50) {
+            wasExhaling = true;
+          }
+
+
           // Extract values
           double ecg = (data[3] << 8 | data[2]) * 1.0;
           double o2 = (data[7] << 8 | data[6]) * 1.0;
           double flow = (data[11] << 8 | data[10]) * 1.0;
-          double vol = (data[13] << 8 | data[12]) * 1.0;
+          // double vol = (data[13] << 8 | data[12]) * 1.0;
           double co2 = (data[15] << 8 | data[14]) * 1.0;
 
           saver(ecg: ecg, o2: o2, flow: flow, vol: vol, co2: co2);
           // Update your graph
+          // ➕ Step 1: Add incoming raw data to buffer
+          delayBuffer.add([ecg, o2, co2, vol, flow]);
+
+// 🧹 Step 2: Prevent memory leak by limiting buffer
+          int bufferSizeLimit = ((delaySamples ?? 0) + 1) * 2;
+          if (delayBuffer.length > bufferSizeLimit) {
+            delayBuffer.removeAt(0);
+          }
+
+// 🛑 Step 3: If delaySamples not available, plot raw data
+          if (delaySamples == null || delayBuffer.length <= delaySamples!) {
+            // Optional: Plot raw data until delay is known
+            List<double>? edt = myBigGraphKey.currentState?.updateEverything([
+              ecg,
+              o2,
+              co2,
+              vol,
+            ]);
+            if (edt != null) {
+              _inMemoryData.add([edt[0], edt[1], edt[2], edt[3], flow]);
+            }
+            return;
+          }
+
+// ✅ Step 4: Build delay-corrected values
+          var current = delayBuffer[0];                       // time t
+          var future = delayBuffer[delaySamples!];            // time t + delay
+
+          double correctedECG = current[0];  // live
+          double correctedVOL = current[3]; // live
+          double correctedFLOW = current[4]; // live
+          double correctedO2 = future[1];   // future O2
+          double correctedCO2 = future[2];  // future CO2
+
+// 🧼 Step 5: Remove used sample
+          delayBuffer.removeAt(0);
+
+// ✅ Step 6: Plot delay-corrected values
           List<double>? edt = myBigGraphKey.currentState?.updateEverything([
-            ecg,
-            o2,
-            co2,
-            vol,
+            correctedECG,
+            correctedO2,
+            correctedCO2,
+            correctedVOL,
           ]);
 
-          _inMemoryData.add([edt![0], edt![1], edt![2], edt![3], flow]);
+// ✅ Step 7: Store to memory
+          if (edt != null) {
+            _inMemoryData.add([edt[0], edt[1], edt[2], edt[3], correctedFLOW]);
+          }
+
+
           dataIndex += 16; // move to next potential packet
           return;
         }
@@ -296,6 +364,29 @@ class _HomeState extends State<Home> {
             .map((b) => b.toRadixString(16).padLeft(2, '0'))
             .join(' ');
         if (data[0] == 'B'.codeUnitAt(0) && data[1] == 'T'.codeUnitAt(0)) {
+
+          double vol = (data[13] << 8 | data[12]) * 1.0;
+
+          // Update buffer
+          recentVolumes.add(vol);
+          if (recentVolumes.length > 10) {
+            recentVolumes.removeAt(0);
+          }
+
+          // Check for exhalation pattern
+          int nonZeroCount = recentVolumes.where((v) => v > 50).length;
+          bool currentIsZero = vol <= 5;
+
+          if (nonZeroCount >= 5 && currentIsZero && wasExhaling) {
+            onExhalationDetected(); // ✅ Call your function here
+            wasExhaling = false; // Reset flag
+          }
+
+          if (vol > 50) {
+            wasExhaling = true;
+          }
+
+
           double ecg =
               (data[3] * 256 + data[2]) *
               1.0; // ECG: ecg2 (MSB, byte 3) + ecg1 (LSB, byte 2)
@@ -308,8 +399,8 @@ class _HomeState extends State<Home> {
           double co2 =
               (data[15] * 256 + data[14]) *
               1.0; // CO2: co2_2 (MSB, byte 15) + co2_1 (LSB, byte 14)
-          double vol =
-              (data[13] * 256 + data[12]) * 1.0; // Vol: Vol2 (MSB) + Vol1 (LSB)
+          // double vol =
+          //     (data[13] * 256 + data[12]) * 1.0; // Vol: Vol2 (MSB) + Vol1 (LSB)
 
           // flow = 9.82 *1000/ flow;
           //
@@ -320,10 +411,67 @@ class _HomeState extends State<Home> {
           rawDataFull.add(ecg);
           // print(flow);
           saver(ecg: ecg, o2: o2, flow: flow, vol: vol, co2: co2);
-          // updateEverything(scaledEcg, scaledO2, scaledFlow, scaledCo2);
-          List<double>? edt =  myBigGraphKey.currentState?.updateEverything([ecg, o2, co2, vol]);
+
+
+          // // updateEverything(scaledEcg, scaledO2, scaledFlow, scaledCo2);
+          // List<double>? edt =  myBigGraphKey.currentState?.updateEverything([ecg, o2, co2, vol]);
+          // // Update your graph
+          // _inMemoryData.add([edt![0], edt![1], edt![2], edt![3], flow]);
+
           // Update your graph
-          _inMemoryData.add([edt![0], edt![1], edt![2], edt![3], flow]);
+          // ➕ Step 1: Add incoming raw data to buffer
+          delayBuffer.add([ecg, o2, co2, vol, flow]);
+
+// 🧹 Step 2: Prevent memory leak by limiting buffer
+          int bufferSizeLimit = ((delaySamples ?? 0) + 1) * 2;
+          if (delayBuffer.length > bufferSizeLimit) {
+            delayBuffer.removeAt(0);
+          }
+
+// 🛑 Step 3: If delaySamples not available, plot raw data
+          if (delaySamples == null || delayBuffer.length <= delaySamples!) {
+            // Optional: Plot raw data until delay is known
+            List<double>? edt = myBigGraphKey.currentState?.updateEverything([
+              ecg,
+              o2,
+              co2,
+              vol,
+            ]);
+            if (edt != null) {
+              _inMemoryData.add([edt[0], edt[1], edt[2], edt[3], flow]);
+            }
+            return;
+          }
+
+// ✅ Step 4: Build delay-corrected values
+          var current = delayBuffer[0];                       // time t
+          var future = delayBuffer[delaySamples!];            // time t + delay
+
+          double correctedECG = current[0];  // live
+          double correctedVOL = current[3]; // live
+          double correctedFLOW = current[4]; // live
+          double correctedO2 = future[1];   // future O2
+          double correctedCO2 = future[2];  // future CO2
+
+// 🧼 Step 5: Remove used sample
+          delayBuffer.removeAt(0);
+
+// ✅ Step 6: Plot delay-corrected values
+          List<double>? edt = myBigGraphKey.currentState?.updateEverything([
+            correctedECG,
+            correctedO2,
+            correctedCO2,
+            correctedVOL,
+          ]);
+
+// ✅ Step 7: Store to memory
+          if (edt != null) {
+            _inMemoryData.add([edt[0], edt[1], edt[2], edt[3], correctedFLOW]);
+          }
+
+
+
+
         } else {
           print("⚠️ Invalid frame header: ${data[0]}, ${data[1]}");
         }
@@ -460,9 +608,9 @@ class _HomeState extends State<Home> {
               color: Colors.blue,
             ),
             VitalsBox(
-              label: "Volume",
-              value: vol!.toStringAsFixed(2),
-              unit: "ml/L",
+              label: "VE",
+              value: vol != null ? vol!.toStringAsFixed(2) : "0.00",
+              unit: "L/Min",
               color: Colors.blue,
             ),
           ],
@@ -479,6 +627,16 @@ class _HomeState extends State<Home> {
               label: "HR",
               value: bpm!.toStringAsFixed(0),
               unit: " ",
+              color: Colors.blue,
+            ),
+          ],
+        ),
+        Row(
+          children: [
+            VitalsBox(
+              label: "Respiration Rate",
+              value: respirationRate != null ? respirationRate!.toStringAsFixed(2) : "0.00",
+              unit: "/Min",
               color: Colors.blue,
             ),
           ],
@@ -529,13 +687,14 @@ class _HomeState extends State<Home> {
                       child: MyBigGraph(
                         key: myBigGraphKey,
                         onCycleComplete: (){
-                          if(delaySamples == null) {
-                            CPETService cpet = CPETService();
-                            delaySamples = cpet.detectO2Co2DelayFromVolumePeaks(
-                                _inMemoryData);
-                            print("DELAY REQ");
-                            print(delaySamples);
-                          }
+
+                          // if(delaySamples == null) {
+                          //   CPETService cpet = CPETService();
+                          //   delaySamples = cpet.detectO2Co2DelayFromVolumePeaks(
+                          //       _inMemoryData);
+                          //   print("DELAY REQ");
+                          //   print(delaySamples);
+                          // }
                         },
                         streamConfig: [
                           {

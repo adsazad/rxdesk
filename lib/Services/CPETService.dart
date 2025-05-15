@@ -6,11 +6,29 @@ class CPETService {
 
     Map<String, dynamic>? lastBreathStat = breathStats.isNotEmpty ? breathStats.last : null;
 
+
+    double? respirationRate;
+    double? minuteVentilation;
+
+    if (breathStats.length >= 2) {
+      int index1 = breathStats[breathStats.length - 2]['index'];
+      int index2 = breathStats[breathStats.length - 1]['index'];
+      int breathIntervalSamples = index2 - index1;
+
+      respirationRate = 60 * (300 / breathIntervalSamples);
+
+      double vol = lastBreathStat?['vol'] ?? 0;
+      vol = vol /1000;
+      minuteVentilation = respirationRate * vol;
+    }
+
     return {
       "volumePeaks": volPeaks,
       "breathStats": breathStats,
       "averageStats": averageStats,
       "lastBreathStat":lastBreathStat,
+      "respirationRate": respirationRate,
+      "minuteVentilation": minuteVentilation
     };
   }
 
