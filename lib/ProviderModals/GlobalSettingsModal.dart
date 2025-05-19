@@ -11,7 +11,11 @@ class GlobalSettingsModal with ChangeNotifier {
   bool notch = false;
   bool gridLine = true;
 
+  double voltage1 = 0.96;
+  double value1 = 20.93;
 
+  double voltage2 = 0.77;
+  double value2 = 15.93;
   String? appMode = "personal";
   String? sampleRate = '300';
 
@@ -25,57 +29,79 @@ class GlobalSettingsModal with ChangeNotifier {
     required this.lowPass,
     required this.notch,
     required this.gridLine,
+    required voltage1,
+    required value1,
+    required voltage2,
+    required value2,
     this.appMode,
-    this.sampleRate
+    this.sampleRate,
   });
 
-  void setAutoRecordOnOff(bool value){
+  void setAutoRecordOnOff(bool value) {
     autoRecordOnOff = value;
     notifyListeners();
   }
 
-  void setFilterOnOf(bool value){
+  void setFilterOnOf(bool value) {
     filterOnOf = value;
     notifyListeners();
   }
 
-  void setHighPass(int value){
+  void setHighPass(int value) {
     highPass = value;
     notifyListeners();
   }
 
-  void setSampleRate(String value){
+  void setSampleRate(String value) {
     sampleRate = value;
     notifyListeners();
   }
 
-  void setLowPass(int value){
+  void setLowPass(int value) {
     lowPass = value;
     notifyListeners();
   }
 
-  void setNotch(bool value){
+  void setNotch(bool value) {
     notch = value;
     notifyListeners();
   }
 
-  void setAppMode(String appMode){
+  void setAppMode(String appMode) {
     this.appMode = appMode;
     notifyListeners();
   }
 
-  void setAll(bool autoRecordOnOff,bool filterOnOf, int highPass, int lowPass, bool notch,recTime,bool gridLine,String com){
+  void setAll(
+    bool autoRecordOnOff,
+    bool filterOnOf,
+    int highPass,
+    int lowPass,
+    bool notch,
+    recTime,
+    bool gridLine,
+    String com,
+      double? voltage1,
+      double value1,
+      double voltage2,
+      double value2,
+  ) {
     this.autoRecordOnOff = autoRecordOnOff;
     this.filterOnOf = filterOnOf;
     this.highPass = highPass;
     this.lowPass = lowPass;
     this.notch = notch;
     this.gridLine = gridLine;
-    this.com  = com;
+    this.com = com;
+    this.voltage1 = voltage1!;
+    this.value1 = value1;
+    this.voltage2 = voltage2;
+    this.value2 = value2;
+
     notifyListeners();
   }
 
-  toJson(){
+  toJson() {
     Map<String, dynamic> json = {
       "autoRecordOnOff": autoRecordOnOff,
       "filterOnOf": filterOnOf,
@@ -84,14 +110,18 @@ class GlobalSettingsModal with ChangeNotifier {
       "notch": notch,
       "gridLine": gridLine,
       "appMode": appMode,
-      "sampleRate" : sampleRate,
-      "com":com
+      "sampleRate": sampleRate,
+      "com": com,
+      "voltage1": voltage1,
+      "value1": value1,
+      "voltage2":voltage2,
+      "value2":value2
     };
     String jsonString = jsonEncode(json);
     return jsonString;
   }
 
-  fromJson(json){
+  fromJson(json) {
     var arr = jsonDecode(json);
     autoRecordOnOff = arr["autoRecordOnOff"];
     filterOnOf = arr["filterOnOf"];
@@ -101,9 +131,13 @@ class GlobalSettingsModal with ChangeNotifier {
     gridLine = arr["gridLine"];
     appMode = arr["appMode"];
     sampleRate = arr['sampleRate'];
-    if(arr["com"] != null){
-    com = arr["com"];
+    if (arr["com"] != null) {
+      com = arr["com"];
     }
+    voltage1 = arr["voltage1"];
+    value1 = arr["value1"];
+    voltage2 = arr["voltage2"];
+    value2 = arr["value2"];
 
     // if(arr["hrvDuration"]) {
     // }else{
@@ -111,5 +145,4 @@ class GlobalSettingsModal with ChangeNotifier {
     // }
     notifyListeners();
   }
-
 }

@@ -15,6 +15,7 @@ import 'package:spirobtvo/Pages/patient/patientAdd.dart';
 import 'package:spirobtvo/ProviderModals/DefaultPatientModal.dart';
 import 'package:spirobtvo/ProviderModals/GlobalSettingsModal.dart';
 import 'package:spirobtvo/Services/CPETService.dart';
+import 'package:spirobtvo/Services/CalibrationFunction.dart';
 import 'package:spirobtvo/Services/DataSaver.dart';
 import 'package:spirobtvo/Services/EcgBPMCalculator.dart';
 import 'package:spirobtvo/Widgets/MyBigGraph.dart';
@@ -56,19 +57,32 @@ class _HomeState extends State<Home> {
   int? delaySamples = 174; // Initially null
   List<List<double>> delayBuffer = []; // holds [ecg, o2, co2, vol, flow]
 
-
+  var o2Calibrate;
   @override
   void initState() {
     super.initState();
+    initFunc();
 
-    loadGlobalSettingsFromPrefs();
-    print("INIT");
     // startTestLoop();
     // init();
-    CPETService cpet = CPETService();
+    // CPETService cpet = CPETService();
     // timer = Timer.periodic(Duration(seconds: 10), (timer) {
     //
     // });
+  }
+  initFunc()async{
+    final globalSettings = await Provider.of<GlobalSettingsModal>(
+      context,
+      listen: false,
+    );
+    o2Calibrate = generateCalibrationFunction(
+      voltage1: globalSettings.voltage1,
+      value1: globalSettings.value1,
+      voltage2: globalSettings.voltage2,
+      value2: globalSettings.value2,
+    );
+    loadGlobalSettingsFromPrefs();
+    print("INIT");
   }
 
   bool _saverInitialized = false;
@@ -155,7 +169,9 @@ class _HomeState extends State<Home> {
       final patient = patientProvider.patient;
 
       print("VOLPEAK");
-      var cp = cpet.init(_inMemoryData);
+      final globalSettings = Provider.of<GlobalSettingsModal>(context, listen: false);
+
+      var cp = cpet.init(_inMemoryData,globalSettings);
       print(cp);
       // print(cp);
       setState(() {
@@ -634,8 +650,8 @@ class _HomeState extends State<Home> {
         Row(
           children: [
             VitalsBox(
-              label: "Respiration Rate",
-              value: respirationRate != null ? respirationRate!.toStringAsFixed(2) : "0.00",
+              label: "RR",
+              value: respirationRate != null ? respirationRate!.toStringAsFixed(0) : "0",
               unit: "/Min",
               color: Colors.blue,
             ),
@@ -752,11 +768,19 @@ class _HomeState extends State<Home> {
                             "name": "O2",
                             "scale": 3,
                             "meter": {
+
+                              "decimal": 1,
                               "unit": "%",
-                              // "convert": (double x) => x * 0.03005 - 4.1006 ,
-                              // "convert": (double x) => x * (0.001464/4) ,
-                              // "convert": (double x) => x * 0.00072105 ,
-                              "convert": (double x) => x * 0.013463 - 0.6,
+                              // "convert": (double x) => x, // voltage
+                              // "convert": (double x) => x * 0.00072105 , // voltage
+                              "convert": (double x) {
+                                x = x * 0.00072105;
+                                // print("VLT: ${x}");
+                                double result = o2Calibrate(x);
+                                // print("RES: ${result}");
+                                return result;
+                              } , // voltage
+                              // "convert": (double x) => x * 0.013463 - 0.6,
                             },
                           },
                           // {
@@ -774,14 +798,17 @@ class _HomeState extends State<Home> {
                             "name": "CO2",
                             "scale": 3,
                             "meter": {
+                              "decimal": 1,
                               "unit": "%",
                               "convert": (double x) => x / 100,
                             },
                           },
                           {
-                            "name": "Volume",
+                            "name": "Tidal Volume",
                             "scale": 3,
-                            "meter": {"unit": ".", "convert": (double x) => x},
+                            "meter": {
+                              "decimal": 0,
+                              "unit": " ", "convert": (double x) => x},
                           },
                         ],
                         windowSize: 3000,

@@ -72,6 +72,11 @@ class _GlobalSettingsState extends State<GlobalSettings> {
   ];
   List<dynamic> comOptions = [
   ];
+  TextEditingController voltage1Controller = TextEditingController();
+  TextEditingController value1Controller  = TextEditingController();
+  TextEditingController voltage2Controller  = TextEditingController();
+  TextEditingController value2Controller  = TextEditingController();
+
 
   var speedValue = 25;
 
@@ -92,10 +97,18 @@ class _GlobalSettingsState extends State<GlobalSettings> {
     super.initState();
     init();
   }
+  @override
+  void dispose() {
+    voltage1Controller.dispose();
+    value1Controller.dispose();
+    voltage2Controller.dispose();
+    value2Controller.dispose();
+    super.dispose();
+  }
 
   init() async {
     prefs = await SharedPreferences.getInstance();
-    final globalSettings = Provider.of<GlobalSettingsModal>(
+    final globalSettings = await Provider.of<GlobalSettingsModal>(
       context,
       listen: false,
     );
@@ -113,14 +126,19 @@ class _GlobalSettingsState extends State<GlobalSettings> {
       print(comOptions);
       com = globalSettings.com.toString();
       if (com == null || com == "none") {
-        com = comOptions.first["value"];
+        if (comOptions.isNotEmpty) {
+          com = comOptions.first["value"];
+        }
       }
+
       filterOnOff = globalSettings.filterOnOf;
       highPassValue = globalSettings.highPass;
       lowPassValue = globalSettings.lowPass;
       notchOnOf = globalSettings.notch;
       gridlineV = globalSettings.gridLine;
       appMode = globalSettings.appMode.toString();
+
+
       sampleRate =
           globalSettings.sampleRate != null
               ? globalSettings.sampleRate.toString()
@@ -133,6 +151,12 @@ class _GlobalSettingsState extends State<GlobalSettings> {
         gridLine = "Off";
       }
     });
+    voltage1Controller = TextEditingController(text: (globalSettings.voltage1 ?? 0.96).toString());
+    value1Controller = TextEditingController(text: globalSettings.value1.toString());
+    voltage2Controller = TextEditingController(text: globalSettings.voltage2.toString());
+    value2Controller = TextEditingController(text: globalSettings.value2.toString());
+    print("voltage1");
+    print(voltage1Controller.text);
   }
 
   onChange() {
@@ -149,6 +173,10 @@ class _GlobalSettingsState extends State<GlobalSettings> {
       recTime,
       gridlineV,
       com,
+      double.parse(voltage1Controller.text),
+      double.parse(value1Controller.text),
+      double.parse(voltage2Controller.text),
+      double.parse(value2Controller.text),
     );
     globalSettings.setAppMode(appMode);
 
@@ -612,7 +640,7 @@ class _GlobalSettingsState extends State<GlobalSettings> {
                 ),
                 // SizedBox(width: 50,),
                 DropdownButton<dynamic>(
-                    value: com,
+                    value: comOptions.any((e) => e["value"] == com) ? com : null,
                     items: comOptions.map((e) {
                       return DropdownMenuItem<dynamic>(
                         child: Text(e["label"]),
@@ -627,6 +655,114 @@ class _GlobalSettingsState extends State<GlobalSettings> {
                       onChange();
                     }),
               ],
+            ),
+            Divider(),
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                children: [
+                  Text(
+                    'Callibrator Voltage 1',
+                    style: TextStyle(fontSize: 16),
+                  ),
+                  Container(
+                    width: 160, // Fixed width to match dropdowns
+                    child: TextFormField(
+                     controller: voltage1Controller,
+                      keyboardType: TextInputType.numberWithOptions(decimal: true),
+
+                      decoration: InputDecoration(
+                        hintText: 'e.g. 1.2',
+                        border: OutlineInputBorder(),
+                        contentPadding: EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                      ),
+                      onChanged: (newVal) => onChange(),
+
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                children: [
+                  Text(
+                    'Callibrator Value 1',
+                    style: TextStyle(fontSize: 16),
+                  ),
+                  Container(
+                    width: 160, // Fixed width to match dropdowns
+                    child: TextFormField(
+                     controller: value1Controller,
+                      keyboardType: TextInputType.numberWithOptions(decimal: true),
+
+                      decoration: InputDecoration(
+                        hintText: 'e.g. 1.2',
+                        border: OutlineInputBorder(),
+                        contentPadding: EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                      ),
+
+                      onChanged: (newVal) => onChange(),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                children: [
+                  Text(
+                    'Callibrator Voltage 2',
+                    style: TextStyle(fontSize: 16),
+                  ),
+                  Container(
+                    width: 160, // Fixed width to match dropdowns
+                    child: TextFormField(
+                      keyboardType: TextInputType.numberWithOptions(decimal: true),
+                      controller: voltage2Controller,
+                      decoration: InputDecoration(
+                        hintText: 'e.g. 1.2',
+                        border: OutlineInputBorder(),
+                        contentPadding: EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                      ),
+
+                      onChanged: (newVal) => onChange(),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                children: [
+                  Text(
+                    'Callibrator Value 2',
+                    style: TextStyle(fontSize: 16),
+                  ),
+                  Container(
+                    width: 160, // Fixed width to match dropdowns
+                    child: TextFormField(
+                     controller: value2Controller,
+                      keyboardType: TextInputType.numberWithOptions(decimal: true),
+
+                      decoration: InputDecoration(
+                        hintText: 'e.g. 1.2',
+                        border: OutlineInputBorder(),
+                        contentPadding: EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                      ),
+
+                      onChanged: (newVal) => onChange(),
+                    ),
+                  ),
+                ],
+              ),
             ),
             Divider(),
             SizedBox(height: 10),

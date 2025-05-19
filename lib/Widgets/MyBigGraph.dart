@@ -302,8 +302,11 @@ class MyBigGraphState extends State<MyBigGraph> {
     }
 
     String unit = meter != null && meter["unit"] != null ? meter["unit"].toString() : "";
-
+if(meter["decimal"] != null){
+  return "${displayValue.toStringAsFixed(meter["decimal"])} $unit";
+}else{
     return "${displayValue.toStringAsFixed(2)} $unit";
+  }
   }
 
 

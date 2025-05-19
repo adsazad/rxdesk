@@ -28,7 +28,11 @@ void main() async{
                 lowPass: 3,
                 notch: true,
                 gridLine: true,
-                sampleRate: '300'
+                sampleRate: '300',
+                voltage1: 0.96,
+                value1: 20.93,
+                voltage2: 0.77,
+                value2: 15.93
             )),
         pvrd.ChangeNotifierProvider<DefaultPatientModal>(
           create: (context) => DefaultPatientModal(),

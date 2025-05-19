@@ -1,12 +1,22 @@
+import 'package:spirobtvo/Services/CalibrationFunction.dart';
+
 class CPETService {
-  Map<String, dynamic> init(List<List<double>> data) {
+
+  CalibrationFunction? o2Calibrate;
+
+  Map<String, dynamic> init(List<List<double>> data,dynamic globalSettings) {
     List<Map<String, dynamic>> volPeaks = getBreathVolumePeaks(data);
     List<Map<String, dynamic>> breathStats = calculateStatsAtPeaks(data, volPeaks);
     Map<String, dynamic> averageStats = calculateAverages(breathStats);
 
     Map<String, dynamic>? lastBreathStat = breathStats.isNotEmpty ? breathStats.last : null;
 
-
+    o2Calibrate = generateCalibrationFunction(
+      voltage1: globalSettings.voltage1,
+      value1: globalSettings.value1,
+      voltage2: globalSettings.voltage2,
+      value2: globalSettings.value2,
+    );
     double? respirationRate;
     double? minuteVentilation;
 
@@ -18,7 +28,7 @@ class CPETService {
       respirationRate = 60 * (300 / breathIntervalSamples);
 
       double vol = lastBreathStat?['vol'] ?? 0;
-      vol = vol /1000;
+      // vol = vol 0;
       minuteVentilation = respirationRate * vol;
     }
 
@@ -118,9 +128,12 @@ class CPETService {
       if (i < data.length && data[i].length >= 5) {
         double o2 = data[i][1];     // O2 in %
         double co2 = data[i][2];    // CO2 in %
-        double vol = data[i][4];   // Flow value at peak
+        double vol = data[i][3] / 1000;   // vol
 
-        double o2Percent = o2 * 0.013463 - 0.6;
+        o2 = o2 * 0.00072105;
+        // print("VLT: ${x}");
+        double o2Percent = o2Calibrate?.call(o2) ?? 0.0;
+
         double vo2 = vol * (20.93 - o2Percent);
 
         double co2Fraction = co2 / 100;
