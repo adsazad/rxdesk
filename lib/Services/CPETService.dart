@@ -134,7 +134,7 @@ class CPETService {
         // print("VLT: ${x}");
         double o2Percent = o2Calibrate?.call(o2) ?? 0.0;
 
-        double vo2 = vol * (20.93 - o2Percent);
+        double vo2 = vol * (20.93 - o2Percent)/100;
 
         double co2Fraction = co2 / 100;
         double vco2 = vol * co2Fraction;
