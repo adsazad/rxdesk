@@ -18,6 +18,7 @@ import 'package:spirobtvo/Services/CPETService.dart';
 import 'package:spirobtvo/Services/CalibrationFunction.dart';
 import 'package:spirobtvo/Services/DataSaver.dart';
 import 'package:spirobtvo/Services/EcgBPMCalculator.dart';
+import 'package:spirobtvo/Widgets/CustomLineChart.dart';
 import 'package:spirobtvo/Widgets/MyBigGraph.dart';
 import 'package:spirobtvo/Widgets/VitalsBox.dart';
 
@@ -58,6 +59,8 @@ class _HomeState extends State<Home> {
   List<List<double>> delayBuffer = []; // holds [ecg, o2, co2, vol, flow]
 
   var o2Calibrate;
+
+  Map<String, dynamic>? cp;
   @override
   void initState() {
     super.initState();
@@ -171,15 +174,15 @@ class _HomeState extends State<Home> {
       print("VOLPEAK");
       final globalSettings = Provider.of<GlobalSettingsModal>(context, listen: false);
 
-      var cp = cpet.init(_inMemoryData,globalSettings);
+       cp = cpet.init(_inMemoryData,globalSettings);
       print(cp);
       // print(cp);
       setState(() {
-        votwo = cp["lastBreathStat"]["vo2"];
-        vco = cp["lastBreathStat"]["vco2"];
-        rer = cp["lastBreathStat"]["rer"];
-        vol = cp["minuteVentilation"];
-        respirationRate = cp["respirationRate"];
+        votwo = cp!["lastBreathStat"]["vo2"];
+        vco = cp!["lastBreathStat"]["vco2"];
+        rer = cp!["lastBreathStat"]["rer"];
+        vol = cp!["minuteVentilation"];
+        respirationRate = cp!["respirationRate"];
         bpm = stats["bpm"];
         if (patient != null) {
           double weight = double.parse(patient["weight"]);
@@ -540,6 +543,51 @@ class _HomeState extends State<Home> {
   }
 
   _vitals({defaultPatient = null}) {
+
+    List<double> volumes = [];
+    List<double> vo2List = [];
+
+    List<double> volx = [];
+    // vco2
+    List<double> vco2YList = [];
+
+    List<double> rerList = [];
+    List<double> rerX = [];
+    if (cp != null && cp!['breathStats'] is List) {
+      volumes = (cp!['breathStats'] as List)
+          .map((e) => (e['vol'] as num?)?.toDouble() ?? 0.0)
+          .toList();
+      // print("volumes");
+       volx = List.generate(volumes.length, (index) => index.toDouble());
+
+    //    vo2
+      vo2List = (cp!['breathStats'] as List)
+          .map((e) => (e['vo2'] as num?)?.toDouble() ?? 0.0)
+          .toList();
+
+
+      //vco2
+
+      vco2YList = (cp!['breathStats'] as List)
+          .map((e) => (e['vco2'] as num?)?.toDouble() ?? 0.0)
+          .toList();
+
+      // rer
+      rerList = (cp!['breathStats'] as List)
+          .map((e) => (e['rer'] as num?)?.toDouble() ?? 0.0)
+          .toList();
+      rerX = List.generate(rerList.length, (index)=> index.toDouble());
+
+    }
+
+
+
+
+    //
+    // List<double> list = [yAxisValue ?? 0.0];
+
+
+
     return (Column(
       children: [
         Text(
@@ -550,22 +598,78 @@ class _HomeState extends State<Home> {
         ),
         SizedBox(height: 10),
         ElevatedButton(onPressed: (){
-          showModalBottomSheet(
+          showDialog(
             context: context,
-            builder: (context) => Container(
-              padding: EdgeInsets.all(16),
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Text('Bottom Sheet Panel'),
-                  ElevatedButton(
-                    onPressed: () => Navigator.pop(context),
-                    child: Text('Close'),
-                  ),
-                ],
+            barrierDismissible: true,
+            builder: (context) => Dialog(
+              insetPadding: EdgeInsets.zero, // makes dialog full screen
+              child: Container(
+                width: MediaQuery.of(context).size.width/1.2,
+                height: MediaQuery.of(context).size.height / 1.9 ,
+                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+                child: Column(
+                  children: [
+                    const SizedBox(height: 16),
+                    Expanded(
+                      child: SingleChildScrollView(
+                        child: Column(
+                          children: [
+                            Row(
+                              children: [
+                                Expanded(
+                                  child: CustomLineChart(
+                                    xValues: volx,
+                                    yValues: volumes,
+                                    lineLabel: 'Volumes',
+                                  ),
+                                ),
+                                const SizedBox(width: 12),
+                                Expanded(
+                                  child: CustomLineChart(
+                                    xValues: vco2YList,
+                                    yValues: volumes,
+                                    lineLabel: 'VCO2',
+                                  ),
+                                ),
+                                const SizedBox(width: 12),
+
+                                Expanded(
+                                  child: CustomLineChart(
+                                    xValues: rerX,
+                                    yValues: rerList,
+                                    lineLabel: 'RER',
+                                  ),
+                                ),
+                              ],
+                            ),
+                            const SizedBox(height: 12),
+                            Row(
+                              children: [
+
+                              ],
+                            ),
+                            const SizedBox(height: 16),
+                            SafeArea(
+                              child: SizedBox(
+                                width: double.infinity,
+                                child: ElevatedButton(
+                                  onPressed: () => Navigator.pop(context),
+                                  child: const Text('Close'),
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
               ),
             ),
           );
+
+
+
 
         }, child: Text("Charts")),
         Card(
