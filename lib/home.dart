@@ -63,7 +63,7 @@ class _HomeState extends State<Home> {
     super.initState();
     initFunc();
 
-    // startTestLoop();
+    startTestLoop();
     // init();
     // CPETService cpet = CPETService();
     // timer = Timer.periodic(Duration(seconds: 10), (timer) {
@@ -549,6 +549,25 @@ class _HomeState extends State<Home> {
           style: TextStyle(fontSize: 18.5, fontWeight: FontWeight.bold),
         ),
         SizedBox(height: 10),
+        ElevatedButton(onPressed: (){
+          showModalBottomSheet(
+            context: context,
+            builder: (context) => Container(
+              padding: EdgeInsets.all(16),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Text('Bottom Sheet Panel'),
+                  ElevatedButton(
+                    onPressed: () => Navigator.pop(context),
+                    child: Text('Close'),
+                  ),
+                ],
+              ),
+            ),
+          );
+
+        }, child: Text("Charts")),
         Card(
           elevation: 6,
           margin: const EdgeInsets.all(12),
