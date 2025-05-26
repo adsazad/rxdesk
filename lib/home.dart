@@ -9,6 +9,7 @@ import 'package:flutter/services.dart';
 import 'package:libserialport/libserialport.dart';
 import 'package:provider/provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:spirobtvo/Pages/ChartGenerator.dart';
 import 'package:spirobtvo/Pages/GlobalSettings.dart';
 import 'package:spirobtvo/Pages/patient/list.dart';
 import 'package:spirobtvo/Pages/patient/patientAdd.dart';
@@ -541,6 +542,175 @@ class _HomeState extends State<Home> {
       );
     }
   }
+  Future<List<Widget>> buildChartsFromSavedPreference() async {
+    final prefs = await SharedPreferences.getInstance();
+    final String? saved = prefs.getString('saved_charts');
+
+    if (saved == null) return [Text('No saved chart found.')];
+
+    List<dynamic> charts = jsonDecode(saved);
+    if (charts.isEmpty) return [Text('Chart list is empty.')];
+
+    List<Map<String, dynamic>> dataPoints =
+    List<Map<String, dynamic>>.from(cp!['breathStats']);
+
+    List<Widget> chartWidgets = [];
+
+    for (Map<String, dynamic> chart in charts) {
+      String xKey = chart['xaxis'];
+      String yKey = chart['yaxis'];
+      String name = chart['name'];
+
+      List<double> xValues = [];
+      List<double> yValues = [];
+
+      for (int i = 0; i < dataPoints.length; i++) {
+        var point = dataPoints[i];
+
+        // Handle x-axis
+        double x;
+        if (xKey == 'time_series') {
+          x = i.toDouble();
+        } else if (point[xKey] != null) {
+          x = point[xKey].toDouble();
+        } else {
+          continue;
+        }
+
+        // Handle y-axis
+        double y;
+        if (yKey == 'time_series') {
+          y = i.toDouble();
+        } else if (point[yKey] != null) {
+          y = point[yKey].toDouble();
+        } else {
+          continue;
+        }
+
+        xValues.add(x);
+        yValues.add(y);
+      }
+
+      chartWidgets.add(
+
+        Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+
+            // Text('$name ($yKey vs $xKey)',
+                // style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+            SizedBox(height: 10),
+            Container(
+              width: 400,
+              height: MediaQuery.of(context).size.height/2,
+              child: CustomLineChart(
+                xValues: xValues,
+                yValues: yValues,
+                lineLabel: '$yKey vs $xKey',
+              ),
+            ),
+          ],
+        ),
+      );
+    }
+
+    return chartWidgets;
+  }
+  ChartDialog(){
+    return showDialog(
+      context: context,
+      barrierDismissible: true,
+      builder: (context) => Dialog(
+
+        insetPadding: EdgeInsets.zero, // makes dialog full screen
+        child: Container(
+          width: MediaQuery.of(context).size.width/1.2,
+          height: MediaQuery.of(context).size.height / 1.9 ,
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+          child: Column(
+            children: [
+              const SizedBox(height: 16),
+              Expanded(
+                child: SingleChildScrollView(
+                  child: Column(
+                    children: [
+                      FutureBuilder<List<Widget>>(
+                        future: buildChartsFromSavedPreference(),
+                        builder: (context, snapshot) {
+                          if (snapshot.connectionState == ConnectionState.waiting) {
+                            return Center(child: CircularProgressIndicator());
+                          } else if (snapshot.hasError) {
+                            return Text("Error loading charts.");
+                          } else {
+                            return SingleChildScrollView(
+                              scrollDirection: Axis.horizontal,
+                              child: Row(
+                                children: snapshot.data!
+                                    .map((chart) => Padding(
+                                  padding: const EdgeInsets.symmetric(horizontal: 12.0),
+                                  child: SizedBox(
+                                    width: 300, // Fixed width for each chart
+                                    child: chart,
+                                  ),
+                                ))
+                                    .toList(),
+                              ),
+                            );
+                          }
+                        },
+                      ),
+
+
+                      // Row(
+                      //   children: [
+                      //     Expanded(
+                      //       child: CustomLineChart(
+                      //         xValues: volx,
+                      //         yValues: volumes,
+                      //         lineLabel: 'Volumes',
+                      //       ),
+                      //     ),
+                      //     const SizedBox(width: 12),
+                      //     Expanded(
+                      //       child: CustomLineChart(
+                      //         xValues: vco2YList,
+                      //         yValues: volumes,
+                      //         lineLabel: 'VCO2',
+                      //       ),
+                      //     ),
+                      //     const SizedBox(width: 12),
+                      //
+                      //     Expanded(
+                      //       child: CustomLineChart(
+                      //         xValues: rerX,
+                      //         yValues: rerList,
+                      //         lineLabel: 'RER',
+                      //       ),
+                      //     ),
+                      //   ],
+                      // ),
+                      const SizedBox(height: 12),
+
+                      const SizedBox(height: 16),
+                      SafeArea(
+                        child: SizedBox(
+                          width: double.infinity,
+                          child: ElevatedButton(
+                            onPressed: () => Navigator.pop(context),
+                            child: const Text('Close'),
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
 
   _vitals({defaultPatient = null}) {
 
@@ -598,80 +768,23 @@ class _HomeState extends State<Home> {
         ),
         SizedBox(height: 10),
         ElevatedButton(onPressed: (){
-          showDialog(
-            context: context,
-            barrierDismissible: true,
-            builder: (context) => Dialog(
-              insetPadding: EdgeInsets.zero, // makes dialog full screen
-              child: Container(
-                width: MediaQuery.of(context).size.width/1.2,
-                height: MediaQuery.of(context).size.height / 1.9 ,
-                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
-                child: Column(
-                  children: [
-                    const SizedBox(height: 16),
-                    Expanded(
-                      child: SingleChildScrollView(
-                        child: Column(
-                          children: [
-                            Row(
-                              children: [
-                                Expanded(
-                                  child: CustomLineChart(
-                                    xValues: volx,
-                                    yValues: volumes,
-                                    lineLabel: 'Volumes',
-                                  ),
-                                ),
-                                const SizedBox(width: 12),
-                                Expanded(
-                                  child: CustomLineChart(
-                                    xValues: vco2YList,
-                                    yValues: volumes,
-                                    lineLabel: 'VCO2',
-                                  ),
-                                ),
-                                const SizedBox(width: 12),
 
-                                Expanded(
-                                  child: CustomLineChart(
-                                    xValues: rerX,
-                                    yValues: rerList,
-                                    lineLabel: 'RER',
-                                  ),
-                                ),
-                              ],
-                            ),
-                            const SizedBox(height: 12),
-                            Row(
-                              children: [
-
-                              ],
-                            ),
-                            const SizedBox(height: 16),
-                            SafeArea(
-                              child: SizedBox(
-                                width: double.infinity,
-                                child: ElevatedButton(
-                                  onPressed: () => Navigator.pop(context),
-                                  child: const Text('Close'),
-                                ),
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            ),
-          );
-
+          ChartDialog();
 
 
 
         }, child: Text("Charts")),
+        SizedBox(
+          height:10
+        ),
+        ElevatedButton(onPressed: (){
+    if (cp != null && cp!['breathStats'] is List) {
+      Navigator.of(context).push(MaterialPageRoute(builder: (context)=> ChartGenerator(
+          cp : cp
+      )));
+    }
+
+        }, child: Text('Generate Chart')),
         Card(
           elevation: 6,
           margin: const EdgeInsets.all(12),
