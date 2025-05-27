@@ -122,24 +122,33 @@ class CPETService {
       List<List<double>> data, List<Map<String, dynamic>> peaks) {
     List<Map<String, dynamic>> stats = [];
 
-    for (final peak in peaks) {
-      int i = peak['index'];
+    for (int j = 0; j < peaks.length; j++) {
+      int i = peaks[j]['index'];
 
       if (i < data.length && data[i].length >= 5) {
         double o2 = data[i][1];     // O2 in %
         double co2 = data[i][2];    // CO2 in %
-        double vol = data[i][3] / 1000;   // vol
+        double vol = data[i][3] / 1000;   // vol in liters
 
         o2 = o2 * 0.00072105;
-        // print("VLT: ${x}");
         double o2Percent = o2Calibrate?.call(o2) ?? 0.0;
 
         double vo2 = vol * (20.93 - o2Percent)/100;
-
         double co2Fraction = co2 / 100;
         double vco2 = vol * co2Fraction;
-
         double rer = vo2 > 0 ? vco2 / vo2 : 0;
+
+        double? respirationRate;
+        double? minuteVentilation;
+
+        if (j >= 1) {
+          int prevIndex = peaks[j - 1]['index'];
+          int intervalSamples = i - prevIndex;
+          if (intervalSamples > 0) {
+            respirationRate = 60 * (300 / intervalSamples); // assuming 300 Hz sampling
+            minuteVentilation = respirationRate * vol;
+          }
+        }
 
         stats.add({
           'index': i,
@@ -147,12 +156,15 @@ class CPETService {
           'vco2': vco2,
           'rer': rer,
           "vol": vol,
+          "respirationRate": respirationRate,
+          "minuteVentilation": minuteVentilation,
         });
       }
     }
 
     return stats;
   }
+
 
   // ✅ New Step 3: Calculate average VO2, VCO2, RER
   Map<String, dynamic> calculateAverages(List<Map<String, dynamic>> stats) {
