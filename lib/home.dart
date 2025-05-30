@@ -1,8 +1,12 @@
 import 'dart:async';
 import 'dart:collection';
 import 'dart:convert';
+import 'dart:io';
 import 'dart:math';
 import 'dart:typed_data';
+import 'dart:ui';
+import 'package:path_provider/path_provider.dart';
+import 'package:syncfusion_flutter_xlsio/xlsio.dart' as xlsio;
 
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -32,6 +36,9 @@ class Home extends StatefulWidget {
 
 class _HomeState extends State<Home> {
   final GlobalKey<MyBigGraphState> myBigGraphKey = GlobalKey<MyBigGraphState>();
+  final ValueNotifier<List<Map<String, dynamic>>> breathStatsNotifier =
+      ValueNotifier<List<Map<String, dynamic>>>([]);
+  Map<String, dynamic>? fullCp;
 
   double time = 0.0; // 🧠 To move the sine wave over time
   late Timer timer;
@@ -58,6 +65,7 @@ class _HomeState extends State<Home> {
   Queue<double> co2Buffer = Queue<double>();
   int? delaySamples = 174; // Initially null
   List<List<double>> delayBuffer = []; // holds [ecg, o2, co2, vol, flow]
+  void Function(void Function())? modalSetState;
 
   var o2Calibrate;
 
@@ -74,7 +82,8 @@ class _HomeState extends State<Home> {
     //
     // });
   }
-  initFunc()async{
+
+  initFunc() async {
     final globalSettings = await Provider.of<GlobalSettingsModal>(
       context,
       listen: false,
@@ -131,7 +140,6 @@ class _HomeState extends State<Home> {
     }
   }
 
-
   Future<List<double>> loadTestData() async {
     final byteData = await rootBundle.load('assets/capturen.txt');
     final rawBytes = byteData.buffer.asUint8List();
@@ -159,7 +167,7 @@ class _HomeState extends State<Home> {
   List<double> recentVolumes = [];
   bool wasExhaling = false;
 
-  onExhalationDetected(){
+  onExhalationDetected() {
     print("Exaust Detected");
     try {
       CPETService cpet = CPETService();
@@ -173,9 +181,12 @@ class _HomeState extends State<Home> {
       final patient = patientProvider.patient;
 
       print("VOLPEAK");
-      final globalSettings = Provider.of<GlobalSettingsModal>(context, listen: false);
+      final globalSettings = Provider.of<GlobalSettingsModal>(
+        context,
+        listen: false,
+      );
 
-       cp = cpet.init(_inMemoryData,globalSettings);
+      cp = cpet.init(_inMemoryData, globalSettings);
       print(cp);
       // print(cp);
       setState(() {
@@ -190,10 +201,22 @@ class _HomeState extends State<Home> {
           votwokg = votwo / weight;
         }
       });
-    }catch(e){
+      if (cp != null && cp!['breathStats'] != null) {
+        fullCp = Map<String, dynamic>.from(cp!); // stores full cp object
+        final updatedBreathStats = List<Map<String, dynamic>>.from(
+          cp!['breathStats'],
+        );
+        breathStatsNotifier.value = updatedBreathStats;
+        if (modalSetState != null)
+          modalSetState!(() {}); // manually update modal table
+      }
+
+      print("update");
+    } catch (e) {
       print(e);
     }
   }
+
   void startTestLoop() async {
     testData = await loadTestData(); // List<double> representing bytes (0-255)
     dataIndex = 0;
@@ -217,8 +240,6 @@ class _HomeState extends State<Home> {
             return testData[dataIndex + i].toInt() & 0xFF;
           });
 
-
-
           double vol = (data[13] << 8 | data[12]) * 1.0;
 
           // Update buffer
@@ -240,7 +261,6 @@ class _HomeState extends State<Home> {
             wasExhaling = true;
           }
 
-
           // Extract values
           double ecg = (data[3] << 8 | data[2]) * 1.0;
           double o2 = (data[7] << 8 | data[6]) * 1.0;
@@ -253,13 +273,13 @@ class _HomeState extends State<Home> {
           // ➕ Step 1: Add incoming raw data to buffer
           delayBuffer.add([ecg, o2, co2, vol, flow]);
 
-// 🧹 Step 2: Prevent memory leak by limiting buffer
+          // 🧹 Step 2: Prevent memory leak by limiting buffer
           int bufferSizeLimit = ((delaySamples ?? 0) + 1) * 2;
           if (delayBuffer.length > bufferSizeLimit) {
             delayBuffer.removeAt(0);
           }
 
-// 🛑 Step 3: If delaySamples not available, plot raw data
+          // 🛑 Step 3: If delaySamples not available, plot raw data
           if (delaySamples == null || delayBuffer.length <= delaySamples!) {
             // Optional: Plot raw data until delay is known
             List<double>? edt = myBigGraphKey.currentState?.updateEverything([
@@ -274,20 +294,20 @@ class _HomeState extends State<Home> {
             return;
           }
 
-// ✅ Step 4: Build delay-corrected values
-          var current = delayBuffer[0];                       // time t
-          var future = delayBuffer[delaySamples!];            // time t + delay
+          // ✅ Step 4: Build delay-corrected values
+          var current = delayBuffer[0]; // time t
+          var future = delayBuffer[delaySamples!]; // time t + delay
 
-          double correctedECG = current[0];  // live
+          double correctedECG = current[0]; // live
           double correctedVOL = current[3]; // live
           double correctedFLOW = current[4]; // live
-          double correctedO2 = future[1];   // future O2
-          double correctedCO2 = future[2];  // future CO2
+          double correctedO2 = future[1]; // future O2
+          double correctedCO2 = future[2]; // future CO2
 
-// 🧼 Step 5: Remove used sample
+          // 🧼 Step 5: Remove used sample
           delayBuffer.removeAt(0);
 
-// ✅ Step 6: Plot delay-corrected values
+          // ✅ Step 6: Plot delay-corrected values
           List<double>? edt = myBigGraphKey.currentState?.updateEverything([
             correctedECG,
             correctedO2,
@@ -295,11 +315,10 @@ class _HomeState extends State<Home> {
             correctedVOL,
           ]);
 
-// ✅ Step 7: Store to memory
+          // ✅ Step 7: Store to memory
           if (edt != null) {
             _inMemoryData.add([edt[0], edt[1], edt[2], edt[3], correctedFLOW]);
           }
-
 
           dataIndex += 16; // move to next potential packet
           return;
@@ -384,7 +403,6 @@ class _HomeState extends State<Home> {
             .map((b) => b.toRadixString(16).padLeft(2, '0'))
             .join(' ');
         if (data[0] == 'B'.codeUnitAt(0) && data[1] == 'T'.codeUnitAt(0)) {
-
           double vol = (data[13] << 8 | data[12]) * 1.0;
 
           // Update buffer
@@ -405,7 +423,6 @@ class _HomeState extends State<Home> {
           if (vol > 50) {
             wasExhaling = true;
           }
-
 
           double ecg =
               (data[3] * 256 + data[2]) *
@@ -432,7 +449,6 @@ class _HomeState extends State<Home> {
           // print(flow);
           saver(ecg: ecg, o2: o2, flow: flow, vol: vol, co2: co2);
 
-
           // // updateEverything(scaledEcg, scaledO2, scaledFlow, scaledCo2);
           // List<double>? edt =  myBigGraphKey.currentState?.updateEverything([ecg, o2, co2, vol]);
           // // Update your graph
@@ -442,13 +458,13 @@ class _HomeState extends State<Home> {
           // ➕ Step 1: Add incoming raw data to buffer
           delayBuffer.add([ecg, o2, co2, vol, flow]);
 
-// 🧹 Step 2: Prevent memory leak by limiting buffer
+          // 🧹 Step 2: Prevent memory leak by limiting buffer
           int bufferSizeLimit = ((delaySamples ?? 0) + 1) * 2;
           if (delayBuffer.length > bufferSizeLimit) {
             delayBuffer.removeAt(0);
           }
 
-// 🛑 Step 3: If delaySamples not available, plot raw data
+          // 🛑 Step 3: If delaySamples not available, plot raw data
           if (delaySamples == null || delayBuffer.length <= delaySamples!) {
             // Optional: Plot raw data until delay is known
             List<double>? edt = myBigGraphKey.currentState?.updateEverything([
@@ -463,20 +479,20 @@ class _HomeState extends State<Home> {
             return;
           }
 
-// ✅ Step 4: Build delay-corrected values
-          var current = delayBuffer[0];                       // time t
-          var future = delayBuffer[delaySamples!];            // time t + delay
+          // ✅ Step 4: Build delay-corrected values
+          var current = delayBuffer[0]; // time t
+          var future = delayBuffer[delaySamples!]; // time t + delay
 
-          double correctedECG = current[0];  // live
+          double correctedECG = current[0]; // live
           double correctedVOL = current[3]; // live
           double correctedFLOW = current[4]; // live
-          double correctedO2 = future[1];   // future O2
-          double correctedCO2 = future[2];  // future CO2
+          double correctedO2 = future[1]; // future O2
+          double correctedCO2 = future[2]; // future CO2
 
-// 🧼 Step 5: Remove used sample
+          // 🧼 Step 5: Remove used sample
           delayBuffer.removeAt(0);
 
-// ✅ Step 6: Plot delay-corrected values
+          // ✅ Step 6: Plot delay-corrected values
           List<double>? edt = myBigGraphKey.currentState?.updateEverything([
             correctedECG,
             correctedO2,
@@ -484,14 +500,10 @@ class _HomeState extends State<Home> {
             correctedVOL,
           ]);
 
-// ✅ Step 7: Store to memory
+          // ✅ Step 7: Store to memory
           if (edt != null) {
             _inMemoryData.add([edt[0], edt[1], edt[2], edt[3], correctedFLOW]);
           }
-
-
-
-
         } else {
           print("⚠️ Invalid frame header: ${data[0]}, ${data[1]}");
         }
@@ -542,6 +554,7 @@ class _HomeState extends State<Home> {
       );
     }
   }
+
   Future<List<Widget>> buildChartsFromSavedPreference() async {
     final prefs = await SharedPreferences.getInstance();
     final String? saved = prefs.getString('saved_charts');
@@ -551,8 +564,9 @@ class _HomeState extends State<Home> {
     List<dynamic> charts = jsonDecode(saved);
     if (charts.isEmpty) return [Text('Chart list is empty.')];
 
-    List<Map<String, dynamic>> dataPoints =
-    List<Map<String, dynamic>>.from(cp!['breathStats']);
+    List<Map<String, dynamic>> dataPoints = List<Map<String, dynamic>>.from(
+      cp!['breathStats'],
+    );
 
     List<Widget> chartWidgets = [];
 
@@ -592,17 +606,15 @@ class _HomeState extends State<Home> {
       }
 
       chartWidgets.add(
-
         Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-
             // Text('$name ($yKey vs $xKey)',
-                // style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+            // style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
             SizedBox(height: 10),
             Container(
               width: 400,
-              height: MediaQuery.of(context).size.height/2,
+              height: MediaQuery.of(context).size.height / 2,
               child: CustomLineChart(
                 xValues: xValues,
                 yValues: yValues,
@@ -621,92 +633,307 @@ class _HomeState extends State<Home> {
     return showDialog(
       context: context,
       barrierDismissible: true,
-      builder: (context) => Dialog(
-
-        insetPadding: EdgeInsets.zero, // makes dialog full screen
-        child: Container(
-          width: MediaQuery.of(context).size.width/1.2,
-          height: MediaQuery.of(context).size.height / 1.9 ,
-          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
-          child: Column(
-            children: [
-              const SizedBox(height: 16),
-              Expanded(
-                child: SingleChildScrollView(
-                  child: Column(
-                    children: [
-                      FutureBuilder<List<Widget>>(
-                        future: buildChartsFromSavedPreference(),
-                        builder: (context, snapshot) {
-                          if (snapshot.connectionState == ConnectionState.waiting) {
-                            return Center(child: CircularProgressIndicator());
-                          } else if (snapshot.hasError) {
-                            return Text("Error loading charts.");
-                          } else {
-                            return SingleChildScrollView(
-                              scrollDirection: Axis.horizontal,
-                              child: Row(
-                                children: snapshot.data!
-                                    .map((chart) => Padding(
-                                  padding: const EdgeInsets.symmetric(horizontal: 12.0),
-                                  child: SizedBox(
-                                    width: 300, // Fixed width for each chart
-                                    child: chart,
+      builder:
+          (context) => Dialog(
+            insetPadding: EdgeInsets.zero, // makes dialog full screen
+            child: Container(
+              width: MediaQuery.of(context).size.width / 1.2,
+              height: MediaQuery.of(context).size.height / 1.9,
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+              child: Column(
+                children: [
+                  const SizedBox(height: 16),
+                  Expanded(
+                    child: SingleChildScrollView(
+                      child: Column(
+                        children: [
+                          FutureBuilder<List<Widget>>(
+                            future: buildChartsFromSavedPreference(),
+                            builder: (context, snapshot) {
+                              if (snapshot.connectionState ==
+                                  ConnectionState.waiting) {
+                                return Center(
+                                  child: CircularProgressIndicator(),
+                                );
+                              } else if (snapshot.hasError) {
+                                return Text("Error loading charts.");
+                              } else {
+                                return SingleChildScrollView(
+                                  scrollDirection: Axis.horizontal,
+                                  child: Row(
+                                    children:
+                                        snapshot.data!
+                                            .map(
+                                              (chart) => Padding(
+                                                padding:
+                                                    const EdgeInsets.symmetric(
+                                                      horizontal: 12.0,
+                                                    ),
+                                                child: SizedBox(
+                                                  width:
+                                                      300, // Fixed width for each chart
+                                                  child: chart,
+                                                ),
+                                              ),
+                                            )
+                                            .toList(),
                                   ),
-                                ))
-                                    .toList(),
+                                );
+                              }
+                            },
+                          ),
+
+                          // Row(
+                          //   children: [
+                          //     Expanded(
+                          //       child: CustomLineChart(
+                          //         xValues: volx,
+                          //         yValues: volumes,
+                          //         lineLabel: 'Volumes',
+                          //       ),
+                          //     ),
+                          //     const SizedBox(width: 12),
+                          //     Expanded(
+                          //       child: CustomLineChart(
+                          //         xValues: vco2YList,
+                          //         yValues: volumes,
+                          //         lineLabel: 'VCO2',
+                          //       ),
+                          //     ),
+                          //     const SizedBox(width: 12),
+                          //
+                          //     Expanded(
+                          //       child: CustomLineChart(
+                          //         xValues: rerX,
+                          //         yValues: rerList,
+                          //         lineLabel: 'RER',
+                          //       ),
+                          //     ),
+                          //   ],
+                          // ),
+                          const SizedBox(height: 12),
+
+                          const SizedBox(height: 16),
+                          SafeArea(
+                            child: SizedBox(
+                              width: double.infinity,
+                              child: ElevatedButton(
+                                onPressed: () => Navigator.pop(context),
+                                child: const Text('Close'),
                               ),
-                            );
-                          }
-                        },
+                            ),
+                          ),
+                        ],
                       ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+    );
+  }
 
+  String getAvailableFilePath(
+    String basePath,
+    String baseName,
+    String extension,
+  ) {
+    int counter = 1;
+    String filePath = '$basePath/$baseName.$extension';
 
-                      // Row(
-                      //   children: [
-                      //     Expanded(
-                      //       child: CustomLineChart(
-                      //         xValues: volx,
-                      //         yValues: volumes,
-                      //         lineLabel: 'Volumes',
-                      //       ),
-                      //     ),
-                      //     const SizedBox(width: 12),
-                      //     Expanded(
-                      //       child: CustomLineChart(
-                      //         xValues: vco2YList,
-                      //         yValues: volumes,
-                      //         lineLabel: 'VCO2',
-                      //       ),
-                      //     ),
-                      //     const SizedBox(width: 12),
-                      //
-                      //     Expanded(
-                      //       child: CustomLineChart(
-                      //         xValues: rerX,
-                      //         yValues: rerList,
-                      //         lineLabel: 'RER',
-                      //       ),
-                      //     ),
-                      //   ],
-                      // ),
-                      const SizedBox(height: 12),
+    while (File(filePath).existsSync()) {
+      filePath = '$basePath/$baseName($counter).$extension';
+      counter++;
+    }
 
-                      const SizedBox(height: 16),
-                      SafeArea(
-                        child: SizedBox(
-                          width: double.infinity,
-                          child: ElevatedButton(
-                            onPressed: () => Navigator.pop(context),
-                            child: const Text('Close'),
+    return filePath;
+  }
+
+  Future<void> exportBreathStatsToExcel(Map<String, dynamic> cp) async {
+    if (cp['breathStats'] == null || !(cp['breathStats'] is List)) return;
+
+    final breathStats = List<Map<String, dynamic>>.from(cp['breathStats']);
+    final workbook = xlsio.Workbook();
+    final sheet = workbook.worksheets[0];
+
+    // ✅ Custom headers
+    final customHeaders = [
+      'O%',
+      'CO2%',
+      'HR',
+      'VO2%',
+      'VCO2%',
+      'VE MINTUE',
+      'RER',
+      'ESTIMATED CO',
+    ];
+
+    for (int i = 0; i < customHeaders.length; i++) {
+      sheet.getRangeByIndex(1, i + 1).setText(customHeaders[i]);
+    }
+
+    // Fill data according to the custom order
+    for (int r = 0; r < breathStats.length; r++) {
+      final row = breathStats[r];
+      sheet
+          .getRangeByIndex(r + 2, 1)
+          .setText(row['o2']?.toStringAsFixed(2) ?? '');
+      sheet
+          .getRangeByIndex(r + 2, 2)
+          .setText(row['co2']?.toStringAsFixed(2) ?? '');
+      sheet
+          .getRangeByIndex(r + 2, 3)
+          .setText(row['hr']?.toStringAsFixed(0) ?? '');
+      sheet
+          .getRangeByIndex(r + 2, 4)
+          .setText(row['vo2']?.toStringAsFixed(2) ?? '');
+      sheet
+          .getRangeByIndex(r + 2, 5)
+          .setText(row['vco2']?.toStringAsFixed(2) ?? '');
+      sheet
+          .getRangeByIndex(r + 2, 6)
+          .setText(row['minuteVentilation']?.toStringAsFixed(2) ?? '');
+      sheet
+          .getRangeByIndex(r + 2, 7)
+          .setText(row['rer']?.toStringAsFixed(2) ?? '');
+      sheet
+          .getRangeByIndex(r + 2, 8)
+          .setText(row['co']?.toStringAsFixed(2) ?? '');
+    }
+
+    final dir = await getDownloadsDirectory();
+    final path = getAvailableFilePath(dir!.path, 'CPET_breathstats', 'xlsx');
+    final bytes = workbook.saveAsStream();
+    File(path)
+      ..createSync(recursive: true)
+      ..writeAsBytesSync(bytes);
+    workbook.dispose();
+
+    print("✅ Excel exported to: $path");
+  }
+
+  void showBreathStatsTableModal(
+    BuildContext context,
+    Map<String, dynamic> cp,
+  ) {
+    showDialog(
+      context: context,
+      barrierDismissible: true,
+      builder:
+          (context) => Dialog(
+            insetPadding: EdgeInsets.symmetric(horizontal: 16, vertical: 32),
+            child: Container(
+              width: MediaQuery.of(context).size.width * 0.9,
+              height: MediaQuery.of(context).size.height * 0.8,
+              padding: const EdgeInsets.all(16),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+
+                  Text(
+                    "Breath Stats Table",
+                    style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                  ),
+                  Container(
+                    alignment: Alignment.topRight,
+                    child: ElevatedButton.icon(
+                      onPressed: () async {
+                        if (cp != null) {
+                          await exportBreathStatsToExcel(cp!);
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            SnackBar(content: Text('Excel downloaded successfully!')),
+                          );
+                        }
+                      },
+                      icon: Icon(Icons.download),
+                      label: Text("Download Excel"),
+                    ),
+                  ),
+                  SizedBox(height: 16),
+                  Expanded(
+                    child: StatefulBuilder(
+                      builder: (context, setState) {
+                        modalSetState = setState;
+                        return AnimatedBuilder(
+                          animation: breathStatsNotifier,
+                          builder: (context, _) {
+                            return breathStatsTable(breathStatsNotifier.value);
+                          },
+                        );
+                      },
+                    ),
+                  ),
+
+                  SizedBox(height: 12),
+                  Align(
+                    alignment: Alignment.bottomRight,
+                    child: ElevatedButton(
+                      onPressed: () => Navigator.pop(context),
+                      child: Text("Close"),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+    );
+  }
+
+  Widget breathStatsTable(List<Map<String, dynamic>> data) {
+    final headers = [
+      'O%',
+      'CO2%',
+      'HR',
+      'VO2%',
+      'VCO2%',
+      'VE MINTUE',
+      'RER',
+      'ESTIMATED CO',
+    ];
+    final verticalController = ScrollController();
+    final horizontalController = ScrollController();
+
+    return Scrollbar(
+      thumbVisibility: true,
+      controller: verticalController,
+      child: ScrollConfiguration(
+        behavior: const ScrollBehavior().copyWith(
+          dragDevices: {PointerDeviceKind.touch, PointerDeviceKind.mouse},
+        ),
+        child: SingleChildScrollView(
+          controller: verticalController,
+          scrollDirection: Axis.vertical,
+
+          child: Center(
+            child: DataTable(
+              columns:
+                  headers
+                      .map(
+                        (h) => DataColumn(
+                          label: Text(
+                            h,
+                            style: TextStyle(fontWeight: FontWeight.bold),
                           ),
                         ),
-                      ),
-                    ],
-                  ),
-                ),
-              ),
-            ],
+                      )
+                      .toList(),
+              rows:
+                  data.map((row) {
+                    return DataRow(
+                      cells: [
+                        DataCell(Text((row['o2'] ?? ''))),
+                        DataCell(Text((row['co2'] ?? ''))),
+                        DataCell(Text((row['hr'] ?? ''))),
+                        DataCell(Text((row['vo2'] ?? '').toStringAsFixed(2))),
+                        DataCell(Text((row['vco2'] ?? '').toStringAsFixed(2))),
+                        DataCell(Text((row['vol'] ?? '').toString())),
+                        DataCell(Text((row['rer'] ?? '').toStringAsFixed(2))),
+                        DataCell(Text((row['co'] ?? '').toString())),
+                      ],
+                    );
+                  }).toList(),
+            ),
           ),
         ),
       ),
@@ -714,7 +941,6 @@ class _HomeState extends State<Home> {
   }
 
   _vitals({defaultPatient = null}) {
-
     List<double> volumes = [];
     List<double> vo2List = [];
 
@@ -725,39 +951,36 @@ class _HomeState extends State<Home> {
     List<double> rerList = [];
     List<double> rerX = [];
     if (cp != null && cp!['breathStats'] is List) {
-      volumes = (cp!['breathStats'] as List)
-          .map((e) => (e['vol'] as num?)?.toDouble() ?? 0.0)
-          .toList();
+      volumes =
+          (cp!['breathStats'] as List)
+              .map((e) => (e['vol'] as num?)?.toDouble() ?? 0.0)
+              .toList();
       // print("volumes");
-       volx = List.generate(volumes.length, (index) => index.toDouble());
+      volx = List.generate(volumes.length, (index) => index.toDouble());
 
-    //    vo2
-      vo2List = (cp!['breathStats'] as List)
-          .map((e) => (e['vo2'] as num?)?.toDouble() ?? 0.0)
-          .toList();
-
+      //    vo2
+      vo2List =
+          (cp!['breathStats'] as List)
+              .map((e) => (e['vo2'] as num?)?.toDouble() ?? 0.0)
+              .toList();
 
       //vco2
 
-      vco2YList = (cp!['breathStats'] as List)
-          .map((e) => (e['vco2'] as num?)?.toDouble() ?? 0.0)
-          .toList();
+      vco2YList =
+          (cp!['breathStats'] as List)
+              .map((e) => (e['vco2'] as num?)?.toDouble() ?? 0.0)
+              .toList();
 
       // rer
-      rerList = (cp!['breathStats'] as List)
-          .map((e) => (e['rer'] as num?)?.toDouble() ?? 0.0)
-          .toList();
-      rerX = List.generate(rerList.length, (index)=> index.toDouble());
-
+      rerList =
+          (cp!['breathStats'] as List)
+              .map((e) => (e['rer'] as num?)?.toDouble() ?? 0.0)
+              .toList();
+      rerX = List.generate(rerList.length, (index) => index.toDouble());
     }
-
-
-
 
     //
     // List<double> list = [yAxisValue ?? 0.0];
-
-
 
     return (Column(
       children: [
@@ -768,24 +991,36 @@ class _HomeState extends State<Home> {
           style: TextStyle(fontSize: 18.5, fontWeight: FontWeight.bold),
         ),
         SizedBox(height: 10),
-        ElevatedButton(onPressed: (){
-
-          ChartDialog();
 
 
-
-        }, child: Text("Charts")),
-        SizedBox(
-          height:10
+        ElevatedButton.icon(
+          onPressed: () {
+            if (cp != null) {
+              showBreathStatsTableModal(context, cp!);
+            }
+          },
+          icon: Icon(Icons.table_chart),
+          label: Text("Data Mode"),
         ),
-        ElevatedButton(onPressed: (){
-    if (cp != null && cp!['breathStats'] is List) {
-      Navigator.of(context).push(MaterialPageRoute(builder: (context)=> ChartGenerator(
-          cp : cp
-      )));
-    }
+        SizedBox(height: 10),
 
-        }, child: Text('Generate Chart')),
+        ElevatedButton(
+          onPressed: () {
+            ChartDialog();
+          },
+          child: Text("Charts"),
+        ),
+        SizedBox(height: 10),
+        ElevatedButton(
+          onPressed: () {
+            if (cp != null && cp!['breathStats'] is List) {
+              Navigator.of(context).push(
+                MaterialPageRoute(builder: (context) => ChartGenerator(cp: cp)),
+              );
+            }
+          },
+          child: Text('Generate Chart'),
+        ),
         Card(
           elevation: 6,
           margin: const EdgeInsets.all(12),
@@ -888,7 +1123,10 @@ class _HomeState extends State<Home> {
           children: [
             VitalsBox(
               label: "RR",
-              value: respirationRate != null ? respirationRate!.toStringAsFixed(0) : "0",
+              value:
+                  respirationRate != null
+                      ? respirationRate!.toStringAsFixed(0)
+                      : "0",
               unit: "/Min",
               color: Colors.blue,
             ),
@@ -939,8 +1177,7 @@ class _HomeState extends State<Home> {
                     Expanded(
                       child: MyBigGraph(
                         key: myBigGraphKey,
-                        onCycleComplete: (){
-
+                        onCycleComplete: () {
                           // if(delaySamples == null) {
                           //   CPETService cpet = CPETService();
                           //   delaySamples = cpet.detectO2Co2DelayFromVolumePeaks(
@@ -1005,7 +1242,6 @@ class _HomeState extends State<Home> {
                             "name": "O2",
                             "scale": 3,
                             "meter": {
-
                               "decimal": 1,
                               "unit": "%",
                               // "convert": (double x) => x, // voltage
@@ -1016,7 +1252,7 @@ class _HomeState extends State<Home> {
                                 double result = o2Calibrate(x);
                                 // print("RES: ${result}");
                                 return result;
-                              } , // voltage
+                              }, // voltage
                               // "convert": (double x) => x * 0.013463 - 0.6,
                             },
                           },
@@ -1045,7 +1281,9 @@ class _HomeState extends State<Home> {
                             "scale": 3,
                             "meter": {
                               "decimal": 0,
-                              "unit": " ", "convert": (double x) => x},
+                              "unit": " ",
+                              "convert": (double x) => x,
+                            },
                           },
                         ],
                         windowSize: 3000,
