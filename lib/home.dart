@@ -616,6 +616,7 @@ class _HomeState extends State<Home> {
 
     return chartWidgets;
   }
+
   ChartDialog(){
     return showDialog(
       context: context,
