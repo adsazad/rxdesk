@@ -839,10 +839,16 @@ class _HomeState extends State<Home> {
                     alignment: Alignment.topRight,
                     child: ElevatedButton.icon(
                       onPressed: () async {
-                        if (cp != null) {
-                          await exportBreathStatsToExcel(cp!);
+                        final liveData = breathStatsNotifier.value;
+
+                        if (liveData != null && liveData is List<Map<String, dynamic>> && liveData.isNotEmpty) {
+                          await exportBreathStatsToExcel({'breathStats': liveData});
                           ScaffoldMessenger.of(context).showSnackBar(
                             SnackBar(content: Text('Excel downloaded successfully!')),
+                          );
+                        } else {
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            SnackBar(content: Text('No data to export')),
                           );
                         }
                       },
