@@ -629,7 +629,7 @@ class _HomeState extends State<Home> {
     return chartWidgets;
   }
 
-  ChartDialog() {
+  ChartDialog(){
     return showDialog(
       context: context,
       barrierDismissible: true,
