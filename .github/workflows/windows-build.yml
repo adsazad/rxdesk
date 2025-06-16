@@ -1,6 +1,5 @@
 name: Flutter Windows Build
 
-
 on:
   push:
     branches: [ main ]

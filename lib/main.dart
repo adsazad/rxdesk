@@ -11,9 +11,11 @@ import 'package:spirobtvo/home.dart';
 
 void main() async{
   WidgetsFlutterBinding.ensureInitialized();
+
   // SystemChrome.setPreferredOrientations([DeviceOrientation.portraitUp])
 
   //     .then((_) {
+
 
   HttpOverrides.global = new MyHttpOverrides();
   runApp(ProviderScope(
