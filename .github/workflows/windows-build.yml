@@ -7,27 +7,29 @@ on:
 
 jobs:
   build-windows:
+    name: Build Windows App
     runs-on: windows-latest
 
     steps:
-    - uses: actions/checkout@v3
+      - name: Checkout repository
+        uses: actions/checkout@v3
 
-    - name: Set up Flutter
-      uses: subosito/flutter-action@v2
-      with:
-        flutter-version: '3.19.x'
+      - name: Set up Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          flutter-version: '3.19.x'  # Change to your Flutter version if needed
 
-    - name: Enable Windows Desktop
-      run: flutter config --enable-windows-desktop
+      - name: Enable Windows Desktop support
+        run: flutter config --enable-windows-desktop
 
-    - name: Get Dependencies
-      run: flutter pub get
+      - name: Get dependencies
+        run: flutter pub get
 
-    - name: Build Windows
-      run: flutter build windows
+      - name: Build Flutter Windows App
+        run: flutter build windows
 
-    - name: Upload Executable
-      uses: actions/upload-artifact@v4
-      with:
-        name: windows-executable
-        path: build/windows/runner/Release/
+      - name: Upload Windows Executable
+        uses: actions/upload-artifact@v4
+        with:
+          name: flutter-windows-app
+          path: build/windows/runner/Release/
