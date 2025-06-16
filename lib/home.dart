@@ -397,124 +397,226 @@ class _HomeState extends State<Home> {
 
     // 42 54 67 05 00 00 67 05 00 00 14 dc f0 00 00 00 00 00
     // Listen to incoming data
+    // reader.stream.listen(
+    //   (data) {
+    //     final hexString = data
+    //         .map((b) => b.toRadixString(16).padLeft(2, '0'))
+    //         .join(' ');
+    //     if (data[0] == 'B'.codeUnitAt(0) && data[1] == 'T'.codeUnitAt(0)) {
+    //       double vol = (data[13] << 8 | data[12]) * 1.0;
+
+    //       // Update buffer
+    //       recentVolumes.add(vol);
+    //       if (recentVolumes.length > 10) {
+    //         recentVolumes.removeAt(0);
+    //       }
+
+    //       // Check for exhalation pattern
+    //       int nonZeroCount = recentVolumes.where((v) => v > 50).length;
+    //       bool currentIsZero = vol <= 5;
+
+    //       if (nonZeroCount >= 5 && currentIsZero && wasExhaling) {
+    //         onExhalationDetected(); // ✅ Call your function here
+    //         wasExhaling = false; // Reset flag
+    //       }
+
+    //       if (vol > 50) {
+    //         wasExhaling = true;
+    //       }
+
+    //       double ecg =
+    //           (data[3] * 256 + data[2]) *
+    //           1.0; // ECG: ecg2 (MSB, byte 3) + ecg1 (LSB, byte 2)
+    //       double o2 =
+    //           (data[7] * 256 + data[6]) *
+    //           1.0; // O2:  O2_2 (MSB, byte 7) + O2_1 (LSB, byte 6)
+    //       double flow =
+    //           (data[11] * 256 + data[10]) *
+    //           1.0; // Flow: flow2 (MSB, byte 11) + flow1 (LSB, byte 10)
+    //       double co2 =
+    //           (data[15] * 256 + data[14]) *
+    //           1.0; // CO2: co2_2 (MSB, byte 15) + co2_1 (LSB, byte 14)
+    //       // double vol =
+    //       //     (data[13] * 256 + data[12]) * 1.0; // Vol: Vol2 (MSB) + Vol1 (LSB)
+
+    //       // flow = 9.82 *1000/ flow;
+    //       //
+    //       setState(() {
+    //         flow = flow;
+    //       });
+
+    //       rawDataFull.add(ecg);
+    //       // print(flow);
+    //       saver(ecg: ecg, o2: o2, flow: flow, vol: vol, co2: co2);
+
+    //       // // updateEverything(scaledEcg, scaledO2, scaledFlow, scaledCo2);
+    //       // List<double>? edt =  myBigGraphKey.currentState?.updateEverything([ecg, o2, co2, vol]);
+    //       // // Update your graph
+    //       // _inMemoryData.add([edt![0], edt![1], edt![2], edt![3], flow]);
+
+    //       // Update your graph
+    //       // ➕ Step 1: Add incoming raw data to buffer
+    //       delayBuffer.add([ecg, o2, co2, vol, flow]);
+
+    //       // 🧹 Step 2: Prevent memory leak by limiting buffer
+    //       int bufferSizeLimit = ((delaySamples ?? 0) + 1) * 2;
+    //       if (delayBuffer.length > bufferSizeLimit) {
+    //         delayBuffer.removeAt(0);
+    //       }
+
+    //       // 🛑 Step 3: If delaySamples not available, plot raw data
+    //       if (delaySamples == null || delayBuffer.length <= delaySamples!) {
+    //         // Optional: Plot raw data until delay is known
+    //         List<double>? edt = myBigGraphKey.currentState?.updateEverything([
+    //           ecg,
+    //           o2,
+    //           co2,
+    //           vol,
+    //         ]);
+    //         if (edt != null) {
+    //           _inMemoryData.add([edt[0], edt[1], edt[2], edt[3], flow]);
+    //         }
+    //         return;
+    //       }
+
+    //       // ✅ Step 4: Build delay-corrected values
+    //       var current = delayBuffer[0]; // time t
+    //       var future = delayBuffer[delaySamples!]; // time t + delay
+
+    //       double correctedECG = current[0]; // live
+    //       double correctedVOL = current[3]; // live
+    //       double correctedFLOW = current[4]; // live
+    //       double correctedO2 = future[1]; // future O2
+    //       double correctedCO2 = future[2]; // future CO2
+
+    //       // 🧼 Step 5: Remove used sample
+    //       delayBuffer.removeAt(0);
+
+    //       // ✅ Step 6: Plot delay-corrected values
+    //       List<double>? edt = myBigGraphKey.currentState?.updateEverything([
+    //         correctedECG,
+    //         correctedO2,
+    //         correctedCO2,
+    //         correctedVOL,
+    //       ]);
+
+    //       // ✅ Step 7: Store to memory
+    //       if (edt != null) {
+    //         _inMemoryData.add([edt[0], edt[1], edt[2], edt[3], correctedFLOW]);
+    //       }
+    //     } else {
+    //       print("⚠️ Invalid frame header: ${data[0]}, ${data[1]}");
+    //     }
+    //   },
+    //   onDone: () {
+    //     print("Serial Done");
+    //   },
+    //   onError: (e) {
+    //     print("❌ Serial port error: $e");
+    //   },
+    // );
     reader.stream.listen(
-      (data) {
-        final hexString = data
-            .map((b) => b.toRadixString(16).padLeft(2, '0'))
-            .join(' ');
-        if (data[0] == 'B'.codeUnitAt(0) && data[1] == 'T'.codeUnitAt(0)) {
-          double vol = (data[13] << 8 | data[12]) * 1.0;
+  (data) {
+    final hexString = data
+        .map((b) => b.toRadixString(16).padLeft(2, '0'))
+        .join(' ');
 
-          // Update buffer
-          recentVolumes.add(vol);
-          if (recentVolumes.length > 10) {
-            recentVolumes.removeAt(0);
-          }
+    const frameLength = 18;
+    for (int i = 0; i <= data.length - frameLength; i += frameLength) {
+      final frame = data.sublist(i, i + frameLength);
 
-          // Check for exhalation pattern
-          int nonZeroCount = recentVolumes.where((v) => v > 50).length;
-          bool currentIsZero = vol <= 5;
+      if (frame[0] == 'B'.codeUnitAt(0) && frame[1] == 'T'.codeUnitAt(0)) {
+        double vol = (frame[13] << 8 | frame[12]) * 1.0;
 
-          if (nonZeroCount >= 5 && currentIsZero && wasExhaling) {
-            onExhalationDetected(); // ✅ Call your function here
-            wasExhaling = false; // Reset flag
-          }
-
-          if (vol > 50) {
-            wasExhaling = true;
-          }
-
-          double ecg =
-              (data[3] * 256 + data[2]) *
-              1.0; // ECG: ecg2 (MSB, byte 3) + ecg1 (LSB, byte 2)
-          double o2 =
-              (data[7] * 256 + data[6]) *
-              1.0; // O2:  O2_2 (MSB, byte 7) + O2_1 (LSB, byte 6)
-          double flow =
-              (data[11] * 256 + data[10]) *
-              1.0; // Flow: flow2 (MSB, byte 11) + flow1 (LSB, byte 10)
-          double co2 =
-              (data[15] * 256 + data[14]) *
-              1.0; // CO2: co2_2 (MSB, byte 15) + co2_1 (LSB, byte 14)
-          // double vol =
-          //     (data[13] * 256 + data[12]) * 1.0; // Vol: Vol2 (MSB) + Vol1 (LSB)
-
-          // flow = 9.82 *1000/ flow;
-          //
-          setState(() {
-            flow = flow;
-          });
-
-          rawDataFull.add(ecg);
-          // print(flow);
-          saver(ecg: ecg, o2: o2, flow: flow, vol: vol, co2: co2);
-
-          // // updateEverything(scaledEcg, scaledO2, scaledFlow, scaledCo2);
-          // List<double>? edt =  myBigGraphKey.currentState?.updateEverything([ecg, o2, co2, vol]);
-          // // Update your graph
-          // _inMemoryData.add([edt![0], edt![1], edt![2], edt![3], flow]);
-
-          // Update your graph
-          // ➕ Step 1: Add incoming raw data to buffer
-          delayBuffer.add([ecg, o2, co2, vol, flow]);
-
-          // 🧹 Step 2: Prevent memory leak by limiting buffer
-          int bufferSizeLimit = ((delaySamples ?? 0) + 1) * 2;
-          if (delayBuffer.length > bufferSizeLimit) {
-            delayBuffer.removeAt(0);
-          }
-
-          // 🛑 Step 3: If delaySamples not available, plot raw data
-          if (delaySamples == null || delayBuffer.length <= delaySamples!) {
-            // Optional: Plot raw data until delay is known
-            List<double>? edt = myBigGraphKey.currentState?.updateEverything([
-              ecg,
-              o2,
-              co2,
-              vol,
-            ]);
-            if (edt != null) {
-              _inMemoryData.add([edt[0], edt[1], edt[2], edt[3], flow]);
-            }
-            return;
-          }
-
-          // ✅ Step 4: Build delay-corrected values
-          var current = delayBuffer[0]; // time t
-          var future = delayBuffer[delaySamples!]; // time t + delay
-
-          double correctedECG = current[0]; // live
-          double correctedVOL = current[3]; // live
-          double correctedFLOW = current[4]; // live
-          double correctedO2 = future[1]; // future O2
-          double correctedCO2 = future[2]; // future CO2
-
-          // 🧼 Step 5: Remove used sample
-          delayBuffer.removeAt(0);
-
-          // ✅ Step 6: Plot delay-corrected values
-          List<double>? edt = myBigGraphKey.currentState?.updateEverything([
-            correctedECG,
-            correctedO2,
-            correctedCO2,
-            correctedVOL,
-          ]);
-
-          // ✅ Step 7: Store to memory
-          if (edt != null) {
-            _inMemoryData.add([edt[0], edt[1], edt[2], edt[3], correctedFLOW]);
-          }
-        } else {
-          print("⚠️ Invalid frame header: ${data[0]}, ${data[1]}");
+        recentVolumes.add(vol);
+        if (recentVolumes.length > 10) {
+          recentVolumes.removeAt(0);
         }
-      },
-      onDone: () {
-        print("Serial Done");
-      },
-      onError: (e) {
-        print("❌ Serial port error: $e");
-      },
-    );
+
+        int nonZeroCount = recentVolumes.where((v) => v > 50).length;
+        bool currentIsZero = vol <= 5;
+
+        if (nonZeroCount >= 5 && currentIsZero && wasExhaling) {
+          onExhalationDetected();
+          wasExhaling = false;
+        }
+
+        if (vol > 50) {
+          wasExhaling = true;
+        }
+
+        double ecg = (frame[3] * 256 + frame[2]) * 1.0;
+        double o2 = (frame[7] * 256 + frame[6]) * 1.0;
+        double flow = (frame[11] * 256 + frame[10]) * 1.0;
+        double co2 = (frame[15] * 256 + frame[14]) * 1.0;
+
+        setState(() {
+          flow = flow;
+        });
+
+        rawDataFull.add(ecg);
+        saver(ecg: ecg, o2: o2, flow: flow, vol: vol, co2: co2);
+
+        delayBuffer.add([ecg, o2, co2, vol, flow]);
+
+        int bufferSizeLimit = ((delaySamples ?? 0) + 1) * 2;
+        if (delayBuffer.length > bufferSizeLimit) {
+          delayBuffer.removeAt(0);
+        }
+
+        if (delaySamples == null || delayBuffer.length <= delaySamples!) {
+          List<double>? edt = myBigGraphKey.currentState?.updateEverything([
+            ecg,
+            o2,
+            co2,
+            vol,
+          ]);
+          if (edt != null) {
+            _inMemoryData.add([edt[0], edt[1], edt[2], edt[3], flow]);
+          }
+          continue;
+        }
+
+        var current = delayBuffer[0];
+        var future = delayBuffer[delaySamples!];
+
+        double correctedECG = current[0];
+        double correctedVOL = current[3];
+        double correctedFLOW = current[4];
+        double correctedO2 = future[1];
+        double correctedCO2 = future[2];
+
+        delayBuffer.removeAt(0);
+
+        List<double>? edt = myBigGraphKey.currentState?.updateEverything([
+          correctedECG,
+          correctedO2,
+          correctedCO2,
+          correctedVOL,
+        ]);
+
+        if (edt != null) {
+          _inMemoryData.add([
+            edt[0],
+            edt[1],
+            edt[2],
+            edt[3],
+            correctedFLOW,
+          ]);
+        }
+      } else {
+        print("⚠️ Invalid frame header at index $i: ${frame[0]}, ${frame[1]}");
+      }
+    }
+  },
+  onDone: () {
+    print("Serial Done");
+  },
+  onError: (e) {
+    print("❌ Serial port error: $e");
+  },
+);
+
   }
 
   @override
