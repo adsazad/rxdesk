@@ -17,7 +17,7 @@ jobs:
       - name: Set up Flutter
         uses: subosito/flutter-action@v2
         with:
-          flutter-version: '3.19.x'  # Change to your Flutter version if needed
+          flutter-version: '3.32.x'  # Change to your Flutter version if needed
 
       - name: Enable Windows Desktop support
         run: flutter config --enable-windows-desktop
