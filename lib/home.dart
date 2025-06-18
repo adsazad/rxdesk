@@ -516,107 +516,108 @@ class _HomeState extends State<Home> {
     //   },
     // );
     reader.stream.listen(
-  (data) {
-    final hexString = data
-        .map((b) => b.toRadixString(16).padLeft(2, '0'))
-        .join(' ');
+      (data) {
+        final hexString = data
+            .map((b) => b.toRadixString(16).padLeft(2, '0'))
+            .join(' ');
 
-    const frameLength = 18;
-    for (int i = 0; i <= data.length - frameLength; i += frameLength) {
-      final frame = data.sublist(i, i + frameLength);
+        const frameLength = 18;
+        for (int i = 0; i <= data.length - frameLength; i += frameLength) {
+          final frame = data.sublist(i, i + frameLength);
 
-      if (frame[0] == 'B'.codeUnitAt(0) && frame[1] == 'T'.codeUnitAt(0)) {
-        double vol = (frame[13] << 8 | frame[12]) * 1.0;
+          if (frame[0] == 'B'.codeUnitAt(0) && frame[1] == 'T'.codeUnitAt(0)) {
+            double vol = (frame[13] << 8 | frame[12]) * 1.0;
 
-        recentVolumes.add(vol);
-        if (recentVolumes.length > 10) {
-          recentVolumes.removeAt(0);
-        }
+            recentVolumes.add(vol);
+            if (recentVolumes.length > 10) {
+              recentVolumes.removeAt(0);
+            }
 
-        int nonZeroCount = recentVolumes.where((v) => v > 50).length;
-        bool currentIsZero = vol <= 5;
+            int nonZeroCount = recentVolumes.where((v) => v > 50).length;
+            bool currentIsZero = vol <= 5;
 
-        if (nonZeroCount >= 5 && currentIsZero && wasExhaling) {
-          onExhalationDetected();
-          wasExhaling = false;
-        }
+            if (nonZeroCount >= 5 && currentIsZero && wasExhaling) {
+              onExhalationDetected();
+              wasExhaling = false;
+            }
 
-        if (vol > 50) {
-          wasExhaling = true;
-        }
+            if (vol > 50) {
+              wasExhaling = true;
+            }
 
-        double ecg = (frame[3] * 256 + frame[2]) * 1.0;
-        double o2 = (frame[7] * 256 + frame[6]) * 1.0;
-        double flow = (frame[11] * 256 + frame[10]) * 1.0;
-        double co2 = (frame[15] * 256 + frame[14]) * 1.0;
+            double ecg = (frame[3] * 256 + frame[2]) * 1.0;
+            double o2 = (frame[7] * 256 + frame[6]) * 1.0;
+            double flow = (frame[11] * 256 + frame[10]) * 1.0;
+            double co2 = (frame[15] * 256 + frame[14]) * 1.0;
 
-        setState(() {
-          flow = flow;
-        });
+            setState(() {
+              flow = flow;
+            });
 
-        rawDataFull.add(ecg);
-        saver(ecg: ecg, o2: o2, flow: flow, vol: vol, co2: co2);
+            rawDataFull.add(ecg);
+            saver(ecg: ecg, o2: o2, flow: flow, vol: vol, co2: co2);
 
-        delayBuffer.add([ecg, o2, co2, vol, flow]);
+            delayBuffer.add([ecg, o2, co2, vol, flow]);
 
-        int bufferSizeLimit = ((delaySamples ?? 0) + 1) * 2;
-        if (delayBuffer.length > bufferSizeLimit) {
-          delayBuffer.removeAt(0);
-        }
+            int bufferSizeLimit = ((delaySamples ?? 0) + 1) * 2;
+            if (delayBuffer.length > bufferSizeLimit) {
+              delayBuffer.removeAt(0);
+            }
 
-        if (delaySamples == null || delayBuffer.length <= delaySamples!) {
-          List<double>? edt = myBigGraphKey.currentState?.updateEverything([
-            ecg,
-            o2,
-            co2,
-            vol,
-          ]);
-          if (edt != null) {
-            _inMemoryData.add([edt[0], edt[1], edt[2], edt[3], flow]);
+            if (delaySamples == null || delayBuffer.length <= delaySamples!) {
+              List<double>? edt = myBigGraphKey.currentState?.updateEverything([
+                ecg,
+                o2,
+                co2,
+                vol,
+              ]);
+              if (edt != null) {
+                _inMemoryData.add([edt[0], edt[1], edt[2], edt[3], flow]);
+              }
+              continue;
+            }
+
+            var current = delayBuffer[0];
+            var future = delayBuffer[delaySamples!];
+
+            double correctedECG = current[0];
+            double correctedVOL = current[3];
+            double correctedFLOW = current[4];
+            double correctedO2 = future[1];
+            double correctedCO2 = future[2];
+
+            delayBuffer.removeAt(0);
+
+            List<double>? edt = myBigGraphKey.currentState?.updateEverything([
+              correctedECG,
+              correctedO2,
+              correctedCO2,
+              correctedVOL,
+            ]);
+
+            if (edt != null) {
+              _inMemoryData.add([
+                edt[0],
+                edt[1],
+                edt[2],
+                edt[3],
+                correctedFLOW,
+              ]);
+            }
+          } else {
+            print(
+              "⚠️ Invalid frame header at index $i: ${frame[0]}, ${frame[1]}",
+            );
           }
-          continue;
         }
-
-        var current = delayBuffer[0];
-        var future = delayBuffer[delaySamples!];
-
-        double correctedECG = current[0];
-        double correctedVOL = current[3];
-        double correctedFLOW = current[4];
-        double correctedO2 = future[1];
-        double correctedCO2 = future[2];
-
-        delayBuffer.removeAt(0);
-
-        List<double>? edt = myBigGraphKey.currentState?.updateEverything([
-          correctedECG,
-          correctedO2,
-          correctedCO2,
-          correctedVOL,
-        ]);
-
-        if (edt != null) {
-          _inMemoryData.add([
-            edt[0],
-            edt[1],
-            edt[2],
-            edt[3],
-            correctedFLOW,
-          ]);
-        }
-      } else {
-        print("⚠️ Invalid frame header at index $i: ${frame[0]}, ${frame[1]}");
-      }
-    }
-  },
-  onDone: () {
-    print("Serial Done");
-  },
-  onError: (e) {
-    print("❌ Serial port error: $e");
-  },
-);
-
+      },
+      onDone: () {
+        print("Serial Done");
+      },
+      onError: (e) {
+        print("❌ Serial port error: $e");
+      },
+    );
   }
 
   @override
@@ -731,7 +732,7 @@ class _HomeState extends State<Home> {
     return chartWidgets;
   }
 
-  ChartDialog(){
+  ChartDialog() {
     return showDialog(
       context: context,
       barrierDismissible: true,
@@ -932,7 +933,6 @@ class _HomeState extends State<Home> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-
                   Text(
                     "Breath Stats Table",
                     style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
@@ -943,10 +943,16 @@ class _HomeState extends State<Home> {
                       onPressed: () async {
                         final liveData = breathStatsNotifier.value;
 
-                        if (liveData != null && liveData is List<Map<String, dynamic>> && liveData.isNotEmpty) {
-                          await exportBreathStatsToExcel({'breathStats': liveData});
+                        if (liveData != null &&
+                            liveData is List<Map<String, dynamic>> &&
+                            liveData.isNotEmpty) {
+                          await exportBreathStatsToExcel({
+                            'breathStats': liveData,
+                          });
                           ScaffoldMessenger.of(context).showSnackBar(
-                            SnackBar(content: Text('Excel downloaded successfully!')),
+                            SnackBar(
+                              content: Text('Excel downloaded successfully!'),
+                            ),
                           );
                         } else {
                           ScaffoldMessenger.of(context).showSnackBar(
@@ -1100,85 +1106,6 @@ class _HomeState extends State<Home> {
         ),
         SizedBox(height: 10),
 
-
-        ElevatedButton.icon(
-          onPressed: () {
-            if (cp != null) {
-              showBreathStatsTableModal(context, cp!);
-            }
-          },
-          icon: Icon(Icons.table_chart),
-          label: Text("Data Mode"),
-        ),
-        SizedBox(height: 10),
-
-        ElevatedButton(
-          onPressed: () {
-            ChartDialog();
-          },
-          child: Text("Charts"),
-        ),
-        SizedBox(height: 10),
-        ElevatedButton(
-          onPressed: () {
-            if (cp != null && cp!['breathStats'] is List) {
-              Navigator.of(context).push(
-                MaterialPageRoute(builder: (context) => ChartGenerator(cp: cp)),
-              );
-            }
-          },
-          child: Text('Generate Chart'),
-        ),
-        Card(
-          elevation: 6,
-          margin: const EdgeInsets.all(12),
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(12),
-          ),
-          child: Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 8.0, vertical: 8.0),
-            child: Column(
-              children: [
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    Row(children: [playPause(), SizedBox(width: 16)]),
-                    ElevatedButton(
-                      onPressed: () {},
-                      // icon: Icon(Icons.record),
-                      child: Text("Record"),
-                      // label: Text("Record"),
-                      style: ElevatedButton.styleFrom(
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(22),
-                        ),
-                        padding: EdgeInsets.symmetric(
-                          horizontal: 20,
-                          vertical: 12,
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-                ElevatedButton.icon(
-                  onPressed: () {
-                    Navigator.of(context).push(
-                      new MaterialPageRoute(builder: (context) => Patients()),
-                    );
-                  },
-                  icon: Icon(Icons.person_add),
-                  label: Text("Patient"),
-                  style: ElevatedButton.styleFrom(
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(8),
-                    ),
-                    padding: EdgeInsets.symmetric(horizontal: 20, vertical: 12),
-                  ),
-                ),
-              ],
-            ),
-          ),
-        ),
         Row(
           children: [
             VitalsBox(
@@ -1244,41 +1171,155 @@ class _HomeState extends State<Home> {
     ));
   }
 
+  Widget _iconButtonColumn({
+    required IconData icon,
+    required String label,
+    required VoidCallback onPressed,
+  }) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 6),
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          ElevatedButton(
+            onPressed: onPressed,
+            style: ElevatedButton.styleFrom(
+              shape: const CircleBorder(),
+              backgroundColor: Colors.white,
+              foregroundColor: Colors.blue.shade700,
+              padding: const EdgeInsets.all(14),
+              elevation: 3,
+            ),
+            child: Icon(icon, size: 28),
+          ),
+          const SizedBox(height: 4),
+          Text(
+            label,
+            style: const TextStyle(fontSize: 11, color: Colors.white),
+          ),
+        ],
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return Consumer<DefaultPatientModal>(
       builder: (context, defaultProvider, child) {
         final defaultPatient = defaultProvider.patient;
         return Scaffold(
-          appBar: AppBar(
-            title: Text("SprioBT VO2"),
-            actions: [
-              IconButton(
-                onPressed: () {
-                  Navigator.of(context).push(
-                    MaterialPageRoute(builder: (context) => GlobalSettings()),
-                  );
-                },
-                icon: Icon(Icons.settings),
-              ),
-              // IconButton(
-              //   onPressed: () {
-              //     init();
-              //   },
-              //   icon: Icon(Icons.refresh),
-              // ),
-            ],
-          ),
+          // appBar: AppBar(
+          //   title: Text("SprioBT VO2"),
+          //   actions: [
+          //     IconButton(
+          //       onPressed: () {
+          //         Navigator.of(context).push(
+          //           MaterialPageRoute(builder: (context) => GlobalSettings()),
+          //         );
+          //       },
+          //       icon: Icon(Icons.settings),
+          //     ),
+          //     // IconButton(
+          //     //   onPressed: () {
+          //     //     init();
+          //     //   },
+          //     //   icon: Icon(Icons.refresh),
+          //     // ),
+          //   ],
+          // ),
           body: SingleChildScrollView(
             child: Column(
               children: [
                 // bar
                 Container(
                   alignment: Alignment.center,
-                  color: Colors.blue,
-                  height: 20,
+                  color: Colors.blue.shade700,
+                  height: 70,
                   width: double.infinity,
+                  padding: const EdgeInsets.symmetric(horizontal: 8),
+                  child: SingleChildScrollView(
+                    scrollDirection: Axis.horizontal,
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        _iconButtonColumn(
+                          icon: isPlaying ? Icons.pause : Icons.play_arrow,
+                          label: "Play",
+                          onPressed: () {
+                            final globalSettings = Provider.of<GlobalSettingsModal>(
+                              context,
+                              listen: false,
+                            );
+                            SerialPort port = SerialPort(globalSettings.com.toString());
+                            port.close();
+                            setState(() {
+                              isPlaying = !isPlaying;
+                            }); // Replace with your actual toggle logic
+                          },
+                        ),
+                        _iconButtonColumn(
+                          icon: Icons.fiber_manual_record,
+                          label: "Record",
+                          onPressed: () {
+
+                          },
+                        ),
+                        _iconButtonColumn(
+                          icon: Icons.table_chart,
+                          label: "Data Mode",
+                          onPressed: () {
+                            if (cp != null) {
+                              showBreathStatsTableModal(context, cp!);
+                            }
+                          },
+                        ),
+                        _iconButtonColumn(
+                          icon: Icons.bar_chart,
+                          label: "Charts",
+                          onPressed: () {
+                            ChartDialog();
+                          },
+                        ),
+                        _iconButtonColumn(
+                          icon: Icons.auto_graph,
+                          label: "Generate",
+                          onPressed: () {
+                            if (cp != null && cp!['breathStats'] is List) {
+                              Navigator.of(context).push(
+                                MaterialPageRoute(
+                                  builder: (context) => ChartGenerator(cp: cp),
+                                ),
+                              );
+                            }
+                          },
+                        ),
+                        _iconButtonColumn(
+                          icon: Icons.person_add,
+                          label: "Patient",
+                          onPressed: () {
+                            Navigator.of(context).push(
+                              MaterialPageRoute(
+                                builder: (context) => Patients(),
+                              ),
+                            );
+                          },
+                        ),
+                        _iconButtonColumn(
+                          icon: Icons.settings,
+                          label: 'Settings',
+                          onPressed: () {
+                            Navigator.of(context).push(
+                              MaterialPageRoute(
+                                builder: (context) => GlobalSettings(),
+                              ),
+                            );
+                          },
+                        ),
+                      ],
+                    ),
+                  ),
                 ),
+
                 SizedBox(height: 3),
                 Row(
                   children: [
