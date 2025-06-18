@@ -90,6 +90,7 @@ class _GlobalSettingsState extends State<GlobalSettings> {
   var availablePorts = [];
 
   String com = "none";
+  bool applyConversion = false;
 
   @override
   void initState() {
@@ -155,6 +156,7 @@ class _GlobalSettingsState extends State<GlobalSettings> {
     value1Controller = TextEditingController(text: globalSettings.value1.toString());
     voltage2Controller = TextEditingController(text: globalSettings.voltage2.toString());
     value2Controller = TextEditingController(text: globalSettings.value2.toString());
+    applyConversion = globalSettings.applyConversion;
     print("voltage1");
     print(voltage1Controller.text);
   }
@@ -177,10 +179,13 @@ class _GlobalSettingsState extends State<GlobalSettings> {
       double.parse(value1Controller.text),
       double.parse(voltage2Controller.text),
       double.parse(value2Controller.text),
+      applyConversion
+
     );
     globalSettings.setAppMode(appMode);
 
     globalSettings.setSampleRate(sampleRate.toString());
+    globalSettings.setapplyConversion(applyConversion);
     print(autoRecordOnOff);
     print(globalSettings);
     String settingJson = globalSettings.toJson();
@@ -656,6 +661,22 @@ class _GlobalSettingsState extends State<GlobalSettings> {
                     }),
               ],
             ),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+              children: [
+                Text("Apply Conversion", style: TextStyle(fontSize: 20)),
+                // SizedBox(width: 50,),
+                Switch(
+                  value: applyConversion,
+                  onChanged: (d) {
+                    setState(() {
+                      applyConversion = d;
+                    });
+                    onChange();
+                  },
+                ),
+              ],
+            ),
             Divider(),
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
@@ -664,7 +685,7 @@ class _GlobalSettingsState extends State<GlobalSettings> {
                 children: [
                   Text(
                     'Callibrator Voltage 1',
-                    style: TextStyle(fontSize: 16),
+                    style: TextStyle(fontSize: 20),
                   ),
                   Container(
                     width: 160, // Fixed width to match dropdowns
@@ -691,7 +712,7 @@ class _GlobalSettingsState extends State<GlobalSettings> {
                 children: [
                   Text(
                     'Callibrator Value 1',
-                    style: TextStyle(fontSize: 16),
+                    style: TextStyle(fontSize: 20),
                   ),
                   Container(
                     width: 160, // Fixed width to match dropdowns
@@ -718,7 +739,7 @@ class _GlobalSettingsState extends State<GlobalSettings> {
                 children: [
                   Text(
                     'Callibrator Voltage 2',
-                    style: TextStyle(fontSize: 16),
+                    style: TextStyle(fontSize: 20),
                   ),
                   Container(
                     width: 160, // Fixed width to match dropdowns
@@ -744,7 +765,7 @@ class _GlobalSettingsState extends State<GlobalSettings> {
                 children: [
                   Text(
                     'Callibrator Value 2',
-                    style: TextStyle(fontSize: 16),
+                    style: TextStyle(fontSize: 20),
                   ),
                   Container(
                     width: 160, // Fixed width to match dropdowns

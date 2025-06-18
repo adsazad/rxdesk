@@ -49,6 +49,7 @@ void main() async {
                   value1: 20.93,
                   voltage2: 0.77,
                   value2: 15.93,
+                  applyConversion: false
                 ),
           ),
           pvrd.ChangeNotifierProvider<DefaultPatientModal>(

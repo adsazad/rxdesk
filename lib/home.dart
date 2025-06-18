@@ -66,6 +66,7 @@ class _HomeState extends State<Home> {
   int? delaySamples = 174; // Initially null
   List<List<double>> delayBuffer = []; // holds [ecg, o2, co2, vol, flow]
   void Function(void Function())? modalSetState;
+  late GlobalSettingsModal globalSettings;
 
   var o2Calibrate;
 
@@ -84,17 +85,19 @@ class _HomeState extends State<Home> {
   }
 
   initFunc() async {
-    final globalSettings = await Provider.of<GlobalSettingsModal>(
+    globalSettings =  Provider.of<GlobalSettingsModal>(
       context,
       listen: false,
     );
+    print('here');
+    print(globalSettings.applyConversion);
     o2Calibrate = generateCalibrationFunction(
       voltage1: globalSettings.voltage1,
       value1: globalSettings.value1,
       voltage2: globalSettings.voltage2,
       value2: globalSettings.value2,
     );
-    loadGlobalSettingsFromPrefs();
+    // await loadGlobalSettingsFromPrefs();
     print("INIT");
   }
 
@@ -129,14 +132,9 @@ class _HomeState extends State<Home> {
 
   loadGlobalSettingsFromPrefs() async {
     prefs = await SharedPreferences.getInstance();
-    final globalSettings = Provider.of<GlobalSettingsModal>(
-      context,
-      listen: false,
-    );
     if (prefs!.containsKey("globalSettings")) {
       var globalSettingsJson = prefs!.getString("globalSettings");
-
-      globalSettings.fromJson(globalSettingsJson);
+      globalSettings.fromJson(globalSettingsJson); // ✅ using global
     }
   }
 
@@ -1265,6 +1263,28 @@ class _HomeState extends State<Home> {
                           },
                         ),
                         _iconButtonColumn(
+                          icon: Icons.person,
+                          label: "Patients",
+                          onPressed: () {
+                            Navigator.of(context).push(
+                              MaterialPageRoute(
+                                builder: (context) => Patients(),
+                              ),
+                            );
+                          },
+                        ),
+                        _iconButtonColumn(
+                          icon: Icons.person_add,
+                          label: "Add Patient",
+                          onPressed: () {
+                            Navigator.of(context).push(
+                              MaterialPageRoute(
+                                builder: (context) => PatientAdd(),
+                              ),
+                            );
+                          },
+                        ),
+                        _iconButtonColumn(
                           icon: Icons.table_chart,
                           label: "Data Mode",
                           onPressed: () {
@@ -1293,17 +1313,7 @@ class _HomeState extends State<Home> {
                             }
                           },
                         ),
-                        _iconButtonColumn(
-                          icon: Icons.person_add,
-                          label: "Patient",
-                          onPressed: () {
-                            Navigator.of(context).push(
-                              MaterialPageRoute(
-                                builder: (context) => Patients(),
-                              ),
-                            );
-                          },
-                        ),
+
                         _iconButtonColumn(
                           icon: Icons.settings,
                           label: 'Settings',
@@ -1369,6 +1379,7 @@ class _HomeState extends State<Home> {
                         ],
 
                         onStreamResult: (resultMap) {
+
                           setState(() {
                             // votwo = resultMap["vo2"];
                             // vco = resultMap["vco2"];
@@ -1392,15 +1403,27 @@ class _HomeState extends State<Home> {
                             "scale": 3,
                             "meter": {
                               "decimal": 1,
-                              "unit": "%",
+                              "unit": Provider.of<GlobalSettingsModal>(context).applyConversion
+                                  ? " %"
+                                  : " mV",
                               // "convert": (double x) => x, // voltage
                               // "convert": (double x) => x * 0.00072105 , // voltage
                               "convert": (double x) {
                                 x = x * 0.00072105;
                                 // print("VLT: ${x}");
-                                double result = o2Calibrate(x);
+                                globalSettings = Provider.of<GlobalSettingsModal>(
+                                  context,
+                                  listen: false,
+                                );
+
+                                if(globalSettings != null && globalSettings.applyConversion == true){
+                                  double result = o2Calibrate(x);
+                                  return result;
+                                }
+
+
                                 // print("RES: ${result}");
-                                return result;
+                                return x;
                               }, // voltage
                               // "convert": (double x) => x * 0.013463 - 0.6,
                             },

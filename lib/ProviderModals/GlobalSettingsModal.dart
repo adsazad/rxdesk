@@ -20,6 +20,7 @@ class GlobalSettingsModal with ChangeNotifier {
   String? sampleRate = '300';
 
   String? com = "none";
+  bool applyConversion = false;
 
   GlobalSettingsModal({
     required this.com,
@@ -35,6 +36,8 @@ class GlobalSettingsModal with ChangeNotifier {
     required value2,
     this.appMode,
     this.sampleRate,
+    required this.applyConversion
+
   });
 
   void setAutoRecordOnOff(bool value) {
@@ -55,6 +58,13 @@ class GlobalSettingsModal with ChangeNotifier {
   void setSampleRate(String value) {
     sampleRate = value;
     notifyListeners();
+  }
+
+ void setapplyConversion(bool val) {
+    if (applyConversion != val) {
+      applyConversion = val;
+      notifyListeners(); // ✅ this triggers UI refresh wherever Consumer is used
+    }
   }
 
   void setLowPass(int value) {
@@ -85,6 +95,7 @@ class GlobalSettingsModal with ChangeNotifier {
       double value1,
       double voltage2,
       double value2,
+      bool applyConversion
   ) {
     this.autoRecordOnOff = autoRecordOnOff;
     this.filterOnOf = filterOnOf;
@@ -97,6 +108,8 @@ class GlobalSettingsModal with ChangeNotifier {
     this.value1 = value1;
     this.voltage2 = voltage2;
     this.value2 = value2;
+    this.applyConversion = applyConversion;
+    // setapplyConversion(applyConversion);
 
     notifyListeners();
   }
@@ -115,7 +128,8 @@ class GlobalSettingsModal with ChangeNotifier {
       "voltage1": voltage1,
       "value1": value1,
       "voltage2":voltage2,
-      "value2":value2
+      "value2":value2,
+      "applyConversion": applyConversion
     };
     String jsonString = jsonEncode(json);
     return jsonString;
@@ -138,6 +152,7 @@ class GlobalSettingsModal with ChangeNotifier {
     value1 = arr["value1"];
     voltage2 = arr["voltage2"];
     value2 = arr["value2"];
+    applyConversion = arr['applyConversion'];
 
     // if(arr["hrvDuration"]) {
     // }else{
