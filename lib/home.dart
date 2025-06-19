@@ -85,10 +85,7 @@ class _HomeState extends State<Home> {
   }
 
   initFunc() async {
-    globalSettings =  Provider.of<GlobalSettingsModal>(
-      context,
-      listen: false,
-    );
+    globalSettings = Provider.of<GlobalSettingsModal>(context, listen: false);
     print('here');
     print(globalSettings.applyConversion);
     o2Calibrate = generateCalibrationFunction(
@@ -1244,23 +1241,32 @@ class _HomeState extends State<Home> {
                           icon: isPlaying ? Icons.pause : Icons.play_arrow,
                           label: "Play",
                           onPressed: () {
-                            final globalSettings = Provider.of<GlobalSettingsModal>(
-                              context,
-                              listen: false,
-                            );
-                            SerialPort port = SerialPort(globalSettings.com.toString());
-                            port.close();
-                            setState(() {
-                              isPlaying = !isPlaying;
-                            }); // Replace with your actual toggle logic
+                            if (isPlaying) {
+                              final globalSettings =
+                                  Provider.of<GlobalSettingsModal>(
+                                    context,
+                                    listen: false,
+                                  );
+                              SerialPort port = SerialPort(
+                                globalSettings.com.toString(),
+                              );
+                              port.close();
+                              setState(() {
+                                isPlaying = !isPlaying;
+                              });
+                            } else {
+                              init();
+                              setState(() {
+                                isPlaying = !isPlaying;
+                              });
+                            }
+                            // Replace with your actual toggle logic
                           },
                         ),
                         _iconButtonColumn(
                           icon: Icons.fiber_manual_record,
                           label: "Record",
-                          onPressed: () {
-
-                          },
+                          onPressed: () {},
                         ),
                         _iconButtonColumn(
                           icon: Icons.person,
@@ -1379,7 +1385,6 @@ class _HomeState extends State<Home> {
                         ],
 
                         onStreamResult: (resultMap) {
-
                           setState(() {
                             // votwo = resultMap["vo2"];
                             // vco = resultMap["vco2"];
@@ -1403,24 +1408,28 @@ class _HomeState extends State<Home> {
                             "scale": 3,
                             "meter": {
                               "decimal": 1,
-                              "unit": Provider.of<GlobalSettingsModal>(context).applyConversion
-                                  ? " %"
-                                  : " mV",
+                              "unit":
+                                  Provider.of<GlobalSettingsModal>(
+                                        context,
+                                      ).applyConversion
+                                      ? " %"
+                                      : " mV",
                               // "convert": (double x) => x, // voltage
                               // "convert": (double x) => x * 0.00072105 , // voltage
                               "convert": (double x) {
                                 x = x * 0.00072105;
                                 // print("VLT: ${x}");
-                                globalSettings = Provider.of<GlobalSettingsModal>(
-                                  context,
-                                  listen: false,
-                                );
+                                globalSettings =
+                                    Provider.of<GlobalSettingsModal>(
+                                      context,
+                                      listen: false,
+                                    );
 
-                                if(globalSettings != null && globalSettings.applyConversion == true){
+                                if (globalSettings != null &&
+                                    globalSettings.applyConversion == true) {
                                   double result = o2Calibrate(x);
                                   return result;
                                 }
-
 
                                 // print("RES: ${result}");
                                 return x;
