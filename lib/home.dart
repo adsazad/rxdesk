@@ -970,7 +970,10 @@ class _HomeState extends State<Home> {
                         return AnimatedBuilder(
                           animation: breathStatsNotifier,
                           builder: (context, _) {
-                            return breathStatsTable(breathStatsNotifier.value);
+                            return breathStatsTable(
+                              breathStatsNotifier.value?.reversed.toList() ?? [],
+                            );
+
                           },
                         );
                       },
