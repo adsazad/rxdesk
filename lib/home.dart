@@ -554,7 +554,7 @@ class _HomeState extends State<Home> {
               double flow = (frame[11] * 256 + frame[10]) * 1.0;
               double co2 = (frame[15] * 256 + frame[14]) * 1.0;
 
-              flow = 9.82 * 1000 / flow;
+              // flow = 9.82 * 1000 / flow;
 
               setState(() {
                 flow = flow;
