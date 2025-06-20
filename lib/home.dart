@@ -308,6 +308,7 @@ class _HomeState extends State<Home> {
             correctedECG,
             correctedO2,
             correctedCO2,
+            correctedFLOW,
             correctedVOL,
           ]);
 
@@ -553,6 +554,8 @@ class _HomeState extends State<Home> {
               double flow = (frame[11] * 256 + frame[10]) * 1.0;
               double co2 = (frame[15] * 256 + frame[14]) * 1.0;
 
+              flow = 9.82 * 1000 / flow;
+
               setState(() {
                 flow = flow;
               });
@@ -569,7 +572,7 @@ class _HomeState extends State<Home> {
 
               if (delaySamples == null || delayBuffer.length <= delaySamples!) {
                 List<double>? edt = myBigGraphKey.currentState
-                    ?.updateEverything([ecg, o2, co2, vol]);
+                    ?.updateEverything([ecg, o2, co2, flow, vol]);
                 if (edt != null) {
                   _inMemoryData.add([edt[0], edt[1], edt[2], edt[3], flow]);
                 }
@@ -592,6 +595,7 @@ class _HomeState extends State<Home> {
                 correctedECG,
                 correctedO2,
                 correctedCO2,
+                correctedFLOW,
                 correctedVOL,
               ]);
 
