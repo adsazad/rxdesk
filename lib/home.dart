@@ -512,12 +512,12 @@ class _HomeState extends State<Home> {
     // );
     reader.stream.listen(
       (data) {
-        final hexString = data
-            .map((b) => b.toRadixString(16).padLeft(2, '0'))
-            .join(' ');
-        print("Packet Start");
-        print(hexString);
-        print("Packet End");
+        // final hexString = data
+        //     .map((b) => b.toRadixString(16).padLeft(2, '0'))
+        //     .join(' ');
+        // print("Packet Start");
+        // print(hexString);
+        // print("Packet End");
         int frameLength = 18;
         for (int i = 0; i <= data.length - frameLength;) {
           // Look for a valid frame header
@@ -559,7 +559,7 @@ class _HomeState extends State<Home> {
               rawDataFull.add(ecg);
               saver(ecg: ecg, o2: o2, flow: flow, vol: vol, co2: co2);
 
-              delayBuffer.add([ecg, o2, co2, vol, flow]);
+              // delayBuffer.add([ecg, o2, co2, vol, flow]);  // commenting this stop delay correction
 
               int bufferSizeLimit = ((delaySamples ?? 0) + 1) * 2;
               if (delayBuffer.length > bufferSizeLimit) {
@@ -1418,6 +1418,12 @@ class _HomeState extends State<Home> {
                           {
                             "name": "O2",
                             "scale": 3,
+                            "filterConfig": {
+                              "filterOn": false,
+                              "lpf": 3,
+                              "hpf": 5,
+                              "notch": 1,
+                            },
                             "meter": {
                               "decimal": 1,
                               "unit":
@@ -1463,6 +1469,12 @@ class _HomeState extends State<Home> {
                           {
                             "name": "CO2",
                             "scale": 3,
+                            "filterConfig": {
+                              "filterOn": false,
+                              "lpf": 3,
+                              "hpf": 5,
+                              "notch": 1,
+                            },
                             "meter": {
                               "decimal": 1,
                               "unit": "%",
