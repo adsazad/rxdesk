@@ -515,94 +515,103 @@ class _HomeState extends State<Home> {
         final hexString = data
             .map((b) => b.toRadixString(16).padLeft(2, '0'))
             .join(' ');
+        print("Packet Start");
+        print(hexString);
+        print("Packet End");
+        int frameLength = 18;
+        for (int i = 0; i <= data.length - frameLength;) {
+          // Look for a valid frame header
+          if (data[i] == 'B'.codeUnitAt(0) &&
+              data[i + 1] == 'T'.codeUnitAt(0)) {
+            // Check that we have a full frame ahead
+            if (i + frameLength <= data.length) {
+              final frame = data.sublist(i, i + frameLength);
 
-        const frameLength = 18;
-        for (int i = 0; i <= data.length - frameLength; i += frameLength) {
-          final frame = data.sublist(i, i + frameLength);
+              // Your existing logic here
+              double vol = (frame[13] << 8 | frame[12]) * 1.0;
 
-          if (frame[0] == 'B'.codeUnitAt(0) && frame[1] == 'T'.codeUnitAt(0)) {
-            double vol = (frame[13] << 8 | frame[12]) * 1.0;
-
-            recentVolumes.add(vol);
-            if (recentVolumes.length > 10) {
-              recentVolumes.removeAt(0);
-            }
-
-            int nonZeroCount = recentVolumes.where((v) => v > 50).length;
-            bool currentIsZero = vol <= 5;
-
-            if (nonZeroCount >= 5 && currentIsZero && wasExhaling) {
-              onExhalationDetected();
-              wasExhaling = false;
-            }
-
-            if (vol > 50) {
-              wasExhaling = true;
-            }
-
-            double ecg = (frame[3] * 256 + frame[2]) * 1.0;
-            double o2 = (frame[7] * 256 + frame[6]) * 1.0;
-            double flow = (frame[11] * 256 + frame[10]) * 1.0;
-            double co2 = (frame[15] * 256 + frame[14]) * 1.0;
-
-            setState(() {
-              flow = flow;
-            });
-
-            rawDataFull.add(ecg);
-            saver(ecg: ecg, o2: o2, flow: flow, vol: vol, co2: co2);
-
-            delayBuffer.add([ecg, o2, co2, vol, flow]);
-
-            int bufferSizeLimit = ((delaySamples ?? 0) + 1) * 2;
-            if (delayBuffer.length > bufferSizeLimit) {
-              delayBuffer.removeAt(0);
-            }
-
-            if (delaySamples == null || delayBuffer.length <= delaySamples!) {
-              List<double>? edt = myBigGraphKey.currentState?.updateEverything([
-                ecg,
-                o2,
-                co2,
-                vol,
-              ]);
-              if (edt != null) {
-                _inMemoryData.add([edt[0], edt[1], edt[2], edt[3], flow]);
+              recentVolumes.add(vol);
+              if (recentVolumes.length > 10) {
+                recentVolumes.removeAt(0);
               }
-              continue;
-            }
 
-            var current = delayBuffer[0];
-            var future = delayBuffer[delaySamples!];
+              int nonZeroCount = recentVolumes.where((v) => v > 50).length;
+              bool currentIsZero = vol <= 5;
 
-            double correctedECG = current[0];
-            double correctedVOL = current[3];
-            double correctedFLOW = current[4];
-            double correctedO2 = future[1];
-            double correctedCO2 = future[2];
+              if (nonZeroCount >= 5 && currentIsZero && wasExhaling) {
+                onExhalationDetected();
+                wasExhaling = false;
+              }
 
-            delayBuffer.removeAt(0);
+              if (vol > 50) {
+                wasExhaling = true;
+              }
 
-            List<double>? edt = myBigGraphKey.currentState?.updateEverything([
-              correctedECG,
-              correctedO2,
-              correctedCO2,
-              correctedVOL,
-            ]);
+              double ecg = (frame[3] * 256 + frame[2]) * 1.0;
+              double o2 = (frame[7] * 256 + frame[6]) * 1.0;
+              double flow = (frame[11] * 256 + frame[10]) * 1.0;
+              double co2 = (frame[15] * 256 + frame[14]) * 1.0;
 
-            if (edt != null) {
-              _inMemoryData.add([
-                edt[0],
-                edt[1],
-                edt[2],
-                edt[3],
-                correctedFLOW,
+              setState(() {
+                flow = flow;
+              });
+
+              rawDataFull.add(ecg);
+              saver(ecg: ecg, o2: o2, flow: flow, vol: vol, co2: co2);
+
+              delayBuffer.add([ecg, o2, co2, vol, flow]);
+
+              int bufferSizeLimit = ((delaySamples ?? 0) + 1) * 2;
+              if (delayBuffer.length > bufferSizeLimit) {
+                delayBuffer.removeAt(0);
+              }
+
+              if (delaySamples == null || delayBuffer.length <= delaySamples!) {
+                List<double>? edt = myBigGraphKey.currentState
+                    ?.updateEverything([ecg, o2, co2, vol]);
+                if (edt != null) {
+                  _inMemoryData.add([edt[0], edt[1], edt[2], edt[3], flow]);
+                }
+                i += frameLength;
+                continue;
+              }
+
+              var current = delayBuffer[0];
+              var future = delayBuffer[delaySamples!];
+
+              double correctedECG = current[0];
+              double correctedVOL = current[3];
+              double correctedFLOW = current[4];
+              double correctedO2 = future[1];
+              double correctedCO2 = future[2];
+
+              delayBuffer.removeAt(0);
+
+              List<double>? edt = myBigGraphKey.currentState?.updateEverything([
+                correctedECG,
+                correctedO2,
+                correctedCO2,
+                correctedVOL,
               ]);
+
+              if (edt != null) {
+                _inMemoryData.add([
+                  edt[0],
+                  edt[1],
+                  edt[2],
+                  edt[3],
+                  correctedFLOW,
+                ]);
+              }
+
+              i += frameLength; // move to next possible frame
+            } else {
+              // Not enough bytes for a full frame, break to wait for next chunk
+              break;
             }
           } else {
-            print(
-              "⚠️ Invalid frame header at index $i: ${frame[0]}, ${frame[1]}",
-            );
+            // Not a valid frame header, move forward by 1 byte and search again
+            i++;
           }
         }
       },
@@ -968,9 +977,9 @@ class _HomeState extends State<Home> {
                           animation: breathStatsNotifier,
                           builder: (context, _) {
                             return breathStatsTable(
-                              breathStatsNotifier.value?.reversed.toList() ?? [],
+                              breathStatsNotifier.value?.reversed.toList() ??
+                                  [],
                             );
-
                           },
                         );
                       },
