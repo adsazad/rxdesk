@@ -1,4 +1,3 @@
-
 import 'package:auto_size_text/auto_size_text.dart';
 import 'package:fl_chart/fl_chart.dart';
 import 'package:flutter/cupertino.dart';
@@ -15,10 +14,9 @@ class MyBigGraph extends StatefulWidget {
   final double samplingRate;
   final double minY; // NEW ✅
   final double maxY; // NEW ✅
-  final List<Map<String,dynamic>> streamConfig;
+  final List<Map<String, dynamic>> streamConfig;
   final void Function(Map<String, dynamic>)? onStreamResult;
   final void Function()? onCycleComplete;
-
 
   const MyBigGraph({
     super.key,
@@ -32,8 +30,7 @@ class MyBigGraph extends StatefulWidget {
     required this.maxY, // NEW ✅
     required this.streamConfig,
     this.onStreamResult, // ✅ new
-    this.onCycleComplete
-
+    this.onCycleComplete,
   });
 
   @override
@@ -52,7 +49,6 @@ class MyBigGraphState extends State<MyBigGraph> {
   int Pos = 0; // Circular buffer position tracker
   late List<List<double>> filterBuffs;
   late Stream<dynamic> stream;
-
 
   void streamHandler(List<double> values) {
     Map<String, dynamic> resultMap = {};
@@ -75,13 +71,12 @@ class MyBigGraphState extends State<MyBigGraph> {
     }
   }
 
-
   @override
   void initState() {
     super.initState();
     filterBuffs = List.generate(
       widget.plot.length,
-          (_) => List<double>.filled(FILT_BUF_SIZE, 0.0),
+      (_) => List<double>.filled(FILT_BUF_SIZE, 0.0),
     );
     allPlotData = List.generate(widget.plot.length, (_) => []);
     allCurrentIndexes = List.generate(widget.plot.length, (_) => 0);
@@ -140,6 +135,7 @@ class MyBigGraphState extends State<MyBigGraph> {
 
     multiFilter.init(config);
   }
+
   double applyMultiFilterToChannel(int channelIndex, double val) {
     final filterSettings = widget.plot[channelIndex]["filterConfig"];
     if (filterSettings == null || filterSettings["filterOn"] != true) {
@@ -150,10 +146,11 @@ class MyBigGraphState extends State<MyBigGraph> {
     const int MAX_STAGES_MINUS_ONE = FilterClass.MAX_STAGES - 1;
 
     // Init filter buffers if needed
-    if (filterBuffs.isEmpty || filterBuffs.length != multiFilter.filters.length) {
+    if (filterBuffs.isEmpty ||
+        filterBuffs.length != multiFilter.filters.length) {
       filterBuffs = List.generate(
         multiFilter.filters.length,
-            (_) => List<double>.filled(FILT_BUF_SIZE, 0.0),
+        (_) => List<double>.filled(FILT_BUF_SIZE, 0.0),
       );
     }
 
@@ -184,7 +181,6 @@ class MyBigGraphState extends State<MyBigGraph> {
     return localSum;
   }
 
-
   List<double> updateEverything(List<double> values) {
     List<double> processedValues = [];
 
@@ -198,7 +194,10 @@ class MyBigGraphState extends State<MyBigGraph> {
         streamHandler(values);
 
         double value = values[i];
-        value = applyMultiFilterToChannel(i, value); // 🔄 Apply filter if enabled
+        value = applyMultiFilterToChannel(
+          i,
+          value,
+        ); // 🔄 Apply filter if enabled
         processedValues.add(value); // ✅ store filtered value
 
         allPlotData[i][allCurrentIndexes[i]] = FlSpot(
@@ -211,7 +210,6 @@ class MyBigGraphState extends State<MyBigGraph> {
 
     return processedValues;
   }
-
 
   List<VerticalLine> _generateVerticalLines() {
     List<VerticalLine> allLines = [];
@@ -283,7 +281,8 @@ class MyBigGraphState extends State<MyBigGraph> {
   String _getLiveValueLabel(int index) {
     if (allPlotData[index].isEmpty) return "--";
 
-    final latestPoint = allPlotData[index][(allCurrentIndexes[index] - 1) % widget.windowSize];
+    final latestPoint =
+        allPlotData[index][(allCurrentIndexes[index] - 1) % widget.windowSize];
 
     double raw = latestPoint.y;
     double scaled = raw * plotGains[index];
@@ -293,25 +292,29 @@ class MyBigGraphState extends State<MyBigGraph> {
     var meter = widget.plot[index]["meter"];
     double displayValue = offsetAdjusted;
 
-    if (meter != null && meter["convert"] != null && meter["convert"] is Function) {
+    if (meter != null &&
+        meter["convert"] != null &&
+        meter["convert"] is Function) {
       try {
-        displayValue = meter["convert"](scaled); // Optional: use raw or scaled here
+        displayValue = meter["convert"](
+          scaled,
+        ); // Optional: use raw or scaled here
       } catch (_) {
         displayValue = scaled;
       }
     }
 
-    String unit = meter != null && meter["unit"] != null ? meter["unit"].toString() : "";
-if(meter["decimal"] != null){
-  return "${displayValue.toStringAsFixed(meter["decimal"])} $unit";
-}else{
-    return "${displayValue.toStringAsFixed(2)} $unit";
+    String unit =
+        meter != null && meter["unit"] != null ? meter["unit"].toString() : "";
+    if (meter["decimal"] != null) {
+      return "${displayValue.toStringAsFixed(meter["decimal"])} $unit";
+    } else {
+      return "${displayValue.toStringAsFixed(2)} $unit";
+    }
   }
-  }
-
 
   Widget _leftConsole() {
-    double totalHeight = (250 / 12) * 30;
+    double totalHeight = (250 / 12) * 35;
     double sectionHeight = totalHeight / widget.plot.length;
 
     return Container(
@@ -413,117 +416,133 @@ if(meter["decimal"] != null){
       ),
     );
   }
+
   void _openFilterDialog(int index) {
-      final filter = FilterClass();
+    final filter = FilterClass();
 
-      final config = Map<String, dynamic>.from(widget.plot[index]["filterConfig"] ?? {
-        "filterOn": true,
-        "lpf": 3, // default: 35Hz
-        "hpf": 5, // default: 0.6Hz
-        "notch": 1,
-      });
+    final config = Map<String, dynamic>.from(
+      widget.plot[index]["filterConfig"] ??
+          {
+            "filterOn": true,
+            "lpf": 3, // default: 35Hz
+            "hpf": 5, // default: 0.6Hz
+            "notch": 1,
+          },
+    );
 
-      showDialog(
-        context: context,
-        builder: (context) {
-          return AlertDialog(
-            title: const Text('Filters', textAlign: TextAlign.center),
-            content: StatefulBuilder(
-              builder: (context, setState) {
-                return Column(
-                  mainAxisSize: MainAxisSize.min,
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
+    showDialog(
+      context: context,
+      builder: (context) {
+        return AlertDialog(
+          title: const Text('Filters', textAlign: TextAlign.center),
+          content: StatefulBuilder(
+            builder: (context, setState) {
+              return Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  SwitchListTile(
+                    title: const Text("Filter"),
+                    value: config["filterOn"] ?? true,
+                    onChanged:
+                        (val) => setState(() => config["filterOn"] = val),
+                    activeColor: Colors.deepPurple,
+                  ),
+                  if (config["filterOn"] == true) ...[
+                    const SizedBox(height: 8),
+                    const Text("Low Pass"),
+                    DropdownButton<int>(
+                      isExpanded: true,
+                      value: config["lpf"],
+                      items: List.generate(filter.mLPFCaptions.length, (i) {
+                        return DropdownMenuItem(
+                          value: i,
+                          child: Text(filter.mLPFCaptions[i]),
+                        );
+                      }),
+                      onChanged:
+                          (val) => setState(() => config["lpf"] = val ?? 0),
+                    ),
+                    const SizedBox(height: 8),
+                    const Text("High Pass"),
+                    DropdownButton<int>(
+                      isExpanded: true,
+                      value: config["hpf"],
+                      items: List.generate(filter.mHPFCaptions.length, (i) {
+                        return DropdownMenuItem(
+                          value: i,
+                          child: Text(filter.mHPFCaptions[i]),
+                        );
+                      }),
+                      onChanged:
+                          (val) => setState(() => config["hpf"] = val ?? 0),
+                    ),
                     SwitchListTile(
-                      title: const Text("Filter"),
-                      value: config["filterOn"] ?? true,
-                      onChanged: (val) => setState(() => config["filterOn"] = val),
+                      title: const Text("Notch"),
+                      value: config["notch"] == 1,
+                      onChanged:
+                          (val) =>
+                              setState(() => config["notch"] = val ? 1 : 0),
                       activeColor: Colors.deepPurple,
                     ),
-                    if (config["filterOn"] == true) ...[
-                      const SizedBox(height: 8),
-                      const Text("Low Pass"),
-                      DropdownButton<int>(
-                        isExpanded: true,
-                        value: config["lpf"],
-                        items: List.generate(filter.mLPFCaptions.length, (i) {
-                          return DropdownMenuItem(
-                            value: i,
-                            child: Text(filter.mLPFCaptions[i]),
-                          );
-                        }),
-                        onChanged: (val) => setState(() => config["lpf"] = val ?? 0),
-                      ),
-                      const SizedBox(height: 8),
-                      const Text("High Pass"),
-                      DropdownButton<int>(
-                        isExpanded: true,
-                        value: config["hpf"],
-                        items: List.generate(filter.mHPFCaptions.length, (i) {
-                          return DropdownMenuItem(
-                            value: i,
-                            child: Text(filter.mHPFCaptions[i]),
-                          );
-                        }),
-                        onChanged: (val) => setState(() => config["hpf"] = val ?? 0),
-                      ),
-                      SwitchListTile(
-                        title: const Text("Notch"),
-                        value: config["notch"] == 1,
-                        onChanged: (val) => setState(() => config["notch"] = val ? 1 : 0),
-                        activeColor: Colors.deepPurple,
-                      ),
-                    ],
                   ],
-                );
-              },
+                ],
+              );
+            },
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(context),
+              child: const Text("Cancel"),
             ),
-            actions: [
-              TextButton(
-                onPressed: () => Navigator.pop(context),
-                child: const Text("Cancel"),
-              ),
-              TextButton(
-                onPressed: () {
-                  setState(() {
-                    widget.plot[index]["filterConfig"] = config;
-                    _refreshMultiFilter();
-                  });
-                  print(widget.plot);
-                  Navigator.pop(context);
-                },
-                child: const Text("Apply"),
-              ),
-            ],
-          );
-        },
-      );
-    }
+            TextButton(
+              onPressed: () {
+                setState(() {
+                  widget.plot[index]["filterConfig"] = config;
+                  _refreshMultiFilter();
+                });
+                print(widget.plot);
+                Navigator.pop(context);
+              },
+              child: const Text("Apply"),
+            ),
+          ],
+        );
+      },
+    );
+  }
 
-
-    Widget _filterDropdown(String label, Map config, String key, List<dynamic> options) {
+  Widget _filterDropdown(
+    String label,
+    Map config,
+    String key,
+    List<dynamic> options,
+  ) {
     return DropdownButtonFormField(
       decoration: InputDecoration(labelText: label),
       value: config[key],
-      items: options.map<DropdownMenuItem>((option) {
-        return DropdownMenuItem(
-          value: option,
-          child: Text(option.toString()),
-        );
-      }).toList(),
+      items:
+          options.map<DropdownMenuItem>((option) {
+            return DropdownMenuItem(
+              value: option,
+              child: Text(option.toString()),
+            );
+          }).toList(),
       onChanged: (val) => config[key] = val,
     );
   }
 
-  Widget _filterDropdownWithCaptions(String label, Map config, String key, List<String> captions) {
+  Widget _filterDropdownWithCaptions(
+    String label,
+    Map config,
+    String key,
+    List<String> captions,
+  ) {
     return DropdownButtonFormField(
       decoration: InputDecoration(labelText: label),
       value: config[key],
       items: List.generate(captions.length, (i) {
-        return DropdownMenuItem(
-          value: i,
-          child: Text(captions[i]),
-        );
+        return DropdownMenuItem(value: i, child: Text(captions[i]));
       }),
       onChanged: (val) => config[key] = val,
     );
@@ -540,7 +559,6 @@ if(meter["decimal"] != null){
       },
     );
   }
-
 
   _meter(i) {
     if (widget.plot[i]["meter"] == null) {
@@ -563,24 +581,12 @@ if(meter["decimal"] != null){
               color: Colors.grey.shade300,
               blurRadius: 4,
               offset: const Offset(0, 2),
-            )
+            ),
           ],
         ),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            AutoSizeText(
-              name.toUpperCase(),
-              maxLines: 1,
-              minFontSize: 10,
-              style: const TextStyle(
-                fontSize: 9,
-                fontWeight: FontWeight.w700,
-                color: Colors.black87,
-                letterSpacing: 1,
-              ),
-              overflow: TextOverflow.ellipsis,
-            ),
             const SizedBox(height: 4),
             AutoSizeText(
               liveValue,
@@ -598,8 +604,6 @@ if(meter["decimal"] != null){
       ),
     );
   }
-
-
 
   void _adjustScale(int index, {required bool increase}) {
     setState(() {
@@ -695,9 +699,8 @@ if(meter["decimal"] != null){
   Widget _chart() {
     return Container(
       // padding: const EdgeInsets.all(5),
-      height: (250 / 12) * 30,
+      height: (250 / 12) * 35,
       child: LineChart(
-
         duration: const Duration(milliseconds: 0),
         LineChartData(
           lineTouchData: LineTouchData(

@@ -281,6 +281,7 @@ class _HomeState extends State<Home> {
               ecg,
               o2,
               co2,
+              flow,
               vol,
             ]);
             if (edt != null) {
@@ -1479,6 +1480,15 @@ class _HomeState extends State<Home> {
                               "decimal": 1,
                               "unit": "%",
                               "convert": (double x) => x / 100,
+                            },
+                          },
+                          {
+                            "name": "Flow",
+                            "scale": 3,
+                            "meter": {
+                              "decimal": 0,
+                              "unit": " ",
+                              "convert": (double x) => x,
                             },
                           },
                           {
