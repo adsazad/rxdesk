@@ -16,7 +16,7 @@ void main() async {
 
   // Set fullscreen mode on app launch
   WindowOptions windowOptions = WindowOptions(
-    title: 'My App',
+    title: 'SpiroBT',
     size: Size(1920, 1080), // Optional starting size
     center: true,
     minimumSize: Size(800, 600),
@@ -49,7 +49,7 @@ void main() async {
                   value1: 20.93,
                   voltage2: 0.77,
                   value2: 15.93,
-                  applyConversion: false
+                  applyConversion: false,
                 ),
           ),
           pvrd.ChangeNotifierProvider<DefaultPatientModal>(

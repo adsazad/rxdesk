@@ -85,10 +85,7 @@ class _HomeState extends State<Home> {
   }
 
   initFunc() async {
-    globalSettings =  Provider.of<GlobalSettingsModal>(
-      context,
-      listen: false,
-    );
+    globalSettings = Provider.of<GlobalSettingsModal>(context, listen: false);
     print('here');
     print(globalSettings.applyConversion);
     o2Calibrate = generateCalibrationFunction(
@@ -284,6 +281,7 @@ class _HomeState extends State<Home> {
               ecg,
               o2,
               co2,
+              flow,
               vol,
             ]);
             if (edt != null) {
@@ -310,6 +308,7 @@ class _HomeState extends State<Home> {
             correctedECG,
             correctedO2,
             correctedCO2,
+            correctedFLOW,
             correctedVOL,
           ]);
 
@@ -515,97 +514,109 @@ class _HomeState extends State<Home> {
     // );
     reader.stream.listen(
       (data) {
-        final hexString = data
-            .map((b) => b.toRadixString(16).padLeft(2, '0'))
-            .join(' ');
+        // final hexString = data
+        //     .map((b) => b.toRadixString(16).padLeft(2, '0'))
+        //     .join(' ');
+        // print("Packet Start");
+        // print(hexString);
+        // print("Packet End");
+        int frameLength = 18;
+        for (int i = 0; i <= data.length - frameLength;) {
+          // Look for a valid frame header
+          if (data[i] == 'B'.codeUnitAt(0) &&
+              data[i + 1] == 'T'.codeUnitAt(0)) {
+            // Check that we have a full frame ahead
+            if (i + frameLength <= data.length) {
+              final frame = data.sublist(i, i + frameLength);
 
-        const frameLength = 18;
-        for (int i = 0; i <= data.length - frameLength; i += frameLength) {
-          final frame = data.sublist(i, i + frameLength);
+              // Your existing logic here
+              double vol = (frame[13] << 8 | frame[12]) * 1.0;
 
-          if (frame[0] == 'B'.codeUnitAt(0) && frame[1] == 'T'.codeUnitAt(0)) {
-            double vol = (frame[13] << 8 | frame[12]) * 1.0;
-
-            recentVolumes.add(vol);
-            if (recentVolumes.length > 10) {
-              recentVolumes.removeAt(0);
-            }
-
-            int nonZeroCount = recentVolumes.where((v) => v > 50).length;
-            bool currentIsZero = vol <= 5;
-
-            if (nonZeroCount >= 5 && currentIsZero && wasExhaling) {
-              onExhalationDetected();
-              wasExhaling = false;
-            }
-
-            if (vol > 50) {
-              wasExhaling = true;
-            }
-
-            double ecg = (frame[3] * 256 + frame[2]) * 1.0;
-            double o2 = (frame[7] * 256 + frame[6]) * 1.0;
-            double flow = (frame[11] * 256 + frame[10]) * 1.0;
-            double co2 = (frame[15] * 256 + frame[14]) * 1.0;
-
-            setState(() {
-              flow = flow;
-            });
-
-            rawDataFull.add(ecg);
-            saver(ecg: ecg, o2: o2, flow: flow, vol: vol, co2: co2);
-
-            delayBuffer.add([ecg, o2, co2, vol, flow]);
-
-            int bufferSizeLimit = ((delaySamples ?? 0) + 1) * 2;
-            if (delayBuffer.length > bufferSizeLimit) {
-              delayBuffer.removeAt(0);
-            }
-
-            if (delaySamples == null || delayBuffer.length <= delaySamples!) {
-              List<double>? edt = myBigGraphKey.currentState?.updateEverything([
-                ecg,
-                o2,
-                co2,
-                vol,
-              ]);
-              if (edt != null) {
-                _inMemoryData.add([edt[0], edt[1], edt[2], edt[3], flow]);
+              recentVolumes.add(vol);
+              if (recentVolumes.length > 10) {
+                recentVolumes.removeAt(0);
               }
-              continue;
-            }
 
-            var current = delayBuffer[0];
-            var future = delayBuffer[delaySamples!];
+              int nonZeroCount = recentVolumes.where((v) => v > 50).length;
+              bool currentIsZero = vol <= 5;
 
-            double correctedECG = current[0];
-            double correctedVOL = current[3];
-            double correctedFLOW = current[4];
-            double correctedO2 = future[1];
-            double correctedCO2 = future[2];
+              if (nonZeroCount >= 5 && currentIsZero && wasExhaling) {
+                onExhalationDetected();
+                wasExhaling = false;
+              }
 
-            delayBuffer.removeAt(0);
+              if (vol > 50) {
+                wasExhaling = true;
+              }
 
-            List<double>? edt = myBigGraphKey.currentState?.updateEverything([
-              correctedECG,
-              correctedO2,
-              correctedCO2,
-              correctedVOL,
-            ]);
+              double ecg = (frame[3] * 256 + frame[2]) * 1.0;
+              double o2 = (frame[7] * 256 + frame[6]) * 1.0;
+              double flow = (frame[11] * 256 + frame[10]) * 1.0;
+              double co2 = (frame[15] * 256 + frame[14]) * 1.0;
 
-            if (edt != null) {
-              _inMemoryData.add([
-                edt[0],
-                edt[1],
-                edt[2],
-                edt[3],
+              // flow = 9.82 * 1000 / flow;
+
+              setState(() {
+                flow = flow;
+              });
+
+              rawDataFull.add(ecg);
+              saver(ecg: ecg, o2: o2, flow: flow, vol: vol, co2: co2);
+
+              // delayBuffer.add([ecg, o2, co2, vol, flow]);  // commenting this stop delay correction
+
+              int bufferSizeLimit = ((delaySamples ?? 0) + 1) * 2;
+              if (delayBuffer.length > bufferSizeLimit) {
+                delayBuffer.removeAt(0);
+              }
+
+              if (delaySamples == null || delayBuffer.length <= delaySamples!) {
+                List<double>? edt = myBigGraphKey.currentState
+                    ?.updateEverything([ecg, o2, co2, flow, vol]);
+                if (edt != null) {
+                  _inMemoryData.add([edt[0], edt[1], edt[2], edt[3], flow]);
+                }
+                i += frameLength;
+                continue;
+              }
+
+              var current = delayBuffer[0];
+              var future = delayBuffer[delaySamples!];
+
+              double correctedECG = current[0];
+              double correctedVOL = current[3];
+              double correctedFLOW = current[4];
+              double correctedO2 = future[1];
+              double correctedCO2 = future[2];
+
+              delayBuffer.removeAt(0);
+
+              List<double>? edt = myBigGraphKey.currentState?.updateEverything([
+                correctedECG,
+                correctedO2,
+                correctedCO2,
                 correctedFLOW,
+                correctedVOL,
               ]);
+
+              if (edt != null) {
+                _inMemoryData.add([
+                  edt[0],
+                  edt[1],
+                  edt[2],
+                  edt[3],
+                  correctedFLOW,
+                ]);
+              }
+
+              i += frameLength; // move to next possible frame
+            } else {
+              // Not enough bytes for a full frame, break to wait for next chunk
+              break;
             }
           } else {
-            print(
-              "⚠️ Invalid frame header at index $i: ${frame[0]}, ${frame[1]}",
-            );
+            // Not a valid frame header, move forward by 1 byte and search again
+            i++;
           }
         }
       },
@@ -971,9 +982,9 @@ class _HomeState extends State<Home> {
                           animation: breathStatsNotifier,
                           builder: (context, _) {
                             return breathStatsTable(
-                              breathStatsNotifier.value?.reversed.toList() ?? [],
+                              breathStatsNotifier.value?.reversed.toList() ??
+                                  [],
                             );
-
                           },
                         );
                       },
@@ -1247,23 +1258,32 @@ class _HomeState extends State<Home> {
                           icon: isPlaying ? Icons.pause : Icons.play_arrow,
                           label: "Play",
                           onPressed: () {
-                            final globalSettings = Provider.of<GlobalSettingsModal>(
-                              context,
-                              listen: false,
-                            );
-                            SerialPort port = SerialPort(globalSettings.com.toString());
-                            port.close();
-                            setState(() {
-                              isPlaying = !isPlaying;
-                            }); // Replace with your actual toggle logic
+                            if (isPlaying) {
+                              final globalSettings =
+                                  Provider.of<GlobalSettingsModal>(
+                                    context,
+                                    listen: false,
+                                  );
+                              SerialPort port = SerialPort(
+                                globalSettings.com.toString(),
+                              );
+                              port.close();
+                              setState(() {
+                                isPlaying = !isPlaying;
+                              });
+                            } else {
+                              init();
+                              setState(() {
+                                isPlaying = !isPlaying;
+                              });
+                            }
+                            // Replace with your actual toggle logic
                           },
                         ),
                         _iconButtonColumn(
                           icon: Icons.fiber_manual_record,
                           label: "Record",
-                          onPressed: () {
-
-                          },
+                          onPressed: () {},
                         ),
                         _iconButtonColumn(
                           icon: Icons.person,
@@ -1382,7 +1402,6 @@ class _HomeState extends State<Home> {
                         ],
 
                         onStreamResult: (resultMap) {
-
                           setState(() {
                             // votwo = resultMap["vo2"];
                             // vco = resultMap["vco2"];
@@ -1404,26 +1423,36 @@ class _HomeState extends State<Home> {
                           {
                             "name": "O2",
                             "scale": 3,
+                            "filterConfig": {
+                              "filterOn": false,
+                              "lpf": 3,
+                              "hpf": 5,
+                              "notch": 1,
+                            },
                             "meter": {
                               "decimal": 1,
-                              "unit": Provider.of<GlobalSettingsModal>(context).applyConversion
-                                  ? " %"
-                                  : " mV",
+                              "unit":
+                                  Provider.of<GlobalSettingsModal>(
+                                        context,
+                                      ).applyConversion
+                                      ? " %"
+                                      : " mV",
                               // "convert": (double x) => x, // voltage
                               // "convert": (double x) => x * 0.00072105 , // voltage
                               "convert": (double x) {
                                 x = x * 0.00072105;
                                 // print("VLT: ${x}");
-                                globalSettings = Provider.of<GlobalSettingsModal>(
-                                  context,
-                                  listen: false,
-                                );
+                                globalSettings =
+                                    Provider.of<GlobalSettingsModal>(
+                                      context,
+                                      listen: false,
+                                    );
 
-                                if(globalSettings != null && globalSettings.applyConversion == true){
+                                if (globalSettings != null &&
+                                    globalSettings.applyConversion == true) {
                                   double result = o2Calibrate(x);
                                   return result;
                                 }
-
 
                                 // print("RES: ${result}");
                                 return x;
@@ -1445,10 +1474,25 @@ class _HomeState extends State<Home> {
                           {
                             "name": "CO2",
                             "scale": 3,
+                            "filterConfig": {
+                              "filterOn": false,
+                              "lpf": 3,
+                              "hpf": 5,
+                              "notch": 1,
+                            },
                             "meter": {
                               "decimal": 1,
                               "unit": "%",
                               "convert": (double x) => x / 100,
+                            },
+                          },
+                          {
+                            "name": "Flow",
+                            "scale": 3,
+                            "meter": {
+                              "decimal": 0,
+                              "unit": " ",
+                              "convert": (double x) => x,
                             },
                           },
                           {
