@@ -25,11 +25,14 @@ class _PatientsState extends State<Patients> {
   @override
   void initState() {
     super.initState();
+
     _loadPatients();
+
   }
 
   Future<void> _loadPatients() async {
     final prefs = await SharedPreferences.getInstance();
+
     final String? data = prefs.getString('patients');
     if (data != null) {
       final List decoded = jsonDecode(data);
