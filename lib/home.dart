@@ -6,6 +6,7 @@ import 'dart:math';
 import 'dart:typed_data';
 import 'dart:ui';
 import 'package:path_provider/path_provider.dart';
+import 'package:spirobtvo/Widgets/MyBigGraphScrollable.dart';
 import 'package:syncfusion_flutter_xlsio/xlsio.dart' as xlsio;
 
 import 'package:flutter/material.dart';
@@ -26,6 +27,9 @@ import 'package:spirobtvo/Services/EcgBPMCalculator.dart';
 import 'package:spirobtvo/Widgets/CustomLineChart.dart';
 import 'package:spirobtvo/Widgets/MyBigGraph.dart';
 import 'package:spirobtvo/Widgets/VitalsBox.dart';
+import 'package:file_selector/file_selector.dart';
+import 'package:file_picker/file_picker.dart';
+import 'dart:typed_data';
 
 class Home extends StatefulWidget {
   const Home({super.key});
@@ -35,7 +39,8 @@ class Home extends StatefulWidget {
 }
 
 class _HomeState extends State<Home> {
-  final GlobalKey<MyBigGraphState> myBigGraphKey = GlobalKey<MyBigGraphState>();
+  final GlobalKey<MyBigGraphV2State> myBigGraphKey =
+      GlobalKey<MyBigGraphV2State>();
   final ValueNotifier<List<Map<String, dynamic>>> breathStatsNotifier =
       ValueNotifier<List<Map<String, dynamic>>>([]);
   Map<String, dynamic>? fullCp;
@@ -68,7 +73,15 @@ class _HomeState extends State<Home> {
   void Function(void Function())? modalSetState;
   late GlobalSettingsModal globalSettings;
 
+  bool isImported = false;
+
   var o2Calibrate;
+
+  // Recorder
+  int sampleCounter = 0;
+  int? recordStartIndex;
+  int? recordEndIndex;
+  bool isRecording = false;
 
   Map<String, dynamic>? cp;
   @override
@@ -112,19 +125,21 @@ class _HomeState extends State<Home> {
       listen: false,
     );
     final patient = patientProvider.patient;
-
     if (patient == null) return;
 
-    // Initialize once
+    // ❗ Prevent reinitialization
     if (!_saverInitialized) {
+      _saverInitialized = true;
+      print("✅ Initializing DataSaver...");
       await dataSaver.init(
         filename: "spirobt-${DateTime.now().microsecondsSinceEpoch}.bin",
         patientInfo: patient,
       );
-      _saverInitialized = true;
+      sampleCounter = 0; // reset counter for new file
     }
 
     await dataSaver.append(ecg: ecg, o2: o2, co2: co2, vol: vol, flow: flow);
+    sampleCounter++;
   }
 
   loadGlobalSettingsFromPrefs() async {
@@ -1214,6 +1229,148 @@ class _HomeState extends State<Home> {
     );
   }
 
+  Future<Map<String, dynamic>?> importBinFile() async {
+    // Step 1: Let user pick a file
+    FilePickerResult? result = await FilePicker.platform.pickFiles(
+      dialogTitle: 'Select .bin file to import',
+      type: FileType.custom,
+      allowedExtensions: ['bin'],
+    );
+
+    if (result == null || result.files.single.path == null) {
+      print("⚠️ User cancelled or no file selected.");
+      return null;
+    }
+
+    final path = result.files.single.path!;
+    final file = File(path);
+    final bytes = await file.readAsBytes();
+
+    if (bytes.length < 4) {
+      print("❌ File too short to contain header.");
+      return null;
+    }
+
+    // Step 2: Read header length
+    final headerLen = ByteData.sublistView(
+      bytes,
+      0,
+      4,
+    ).getUint32(0, Endian.little);
+    if (headerLen <= 0 || headerLen > 8192) {
+      print("❌ Invalid header length: $headerLen");
+      return null;
+    }
+
+    if (bytes.length < 4 + headerLen) {
+      print("❌ File doesn't contain full header.");
+      return null;
+    }
+
+    // Step 3: Decode patient JSON
+    final jsonBytes = bytes.sublist(4, 4 + headerLen);
+    final String jsonText = utf8.decode(jsonBytes);
+    final Map<String, dynamic> patientInfo = jsonDecode(jsonText);
+
+    // Step 4: Read samples
+    const bytesPerSample = 5 * 8;
+    final sampleData = bytes.sublist(4 + headerLen);
+    final int sampleCount = sampleData.length ~/ bytesPerSample;
+
+    List<List<double>> samples = [];
+
+    for (int i = 0; i < sampleCount; i++) {
+      final start = i * bytesPerSample;
+      final chunk = sampleData.sublist(start, start + bytesPerSample);
+      final bd = ByteData.sublistView(chunk);
+
+      samples.add([
+        bd.getFloat64(0, Endian.little), // ECG
+        bd.getFloat64(8, Endian.little), // O2
+        bd.getFloat64(16, Endian.little), // CO2
+        bd.getFloat64(24, Endian.little), // Vol
+        bd.getFloat64(32, Endian.little), // Flow
+      ]);
+    }
+
+    print("✅ Imported ${samples.length} samples from $path");
+    return {"patient": patientInfo, "samples": samples};
+  }
+
+  Future<void> saveRecordingSlice() async {
+    if (!_saverInitialized) {
+      print("❌ DataSaver not initialized.");
+      return;
+    }
+
+    final file = File(dataSaver.path);
+    if (!file.existsSync()) {
+      print("❌ File does not exist.");
+      return;
+    }
+
+    final fullBytes = await file.readAsBytes();
+
+    if (fullBytes.length < 4) {
+      print("❌ File too small to contain header.");
+      return;
+    }
+
+    final headerLen = ByteData.sublistView(
+      fullBytes,
+      0,
+      4,
+    ).getUint32(0, Endian.little);
+    if (headerLen <= 0 || headerLen > 8192) {
+      print("❌ Invalid JSON header length: $headerLen");
+      return;
+    }
+
+    final headerEnd = 4 + headerLen;
+    if (headerEnd >= fullBytes.length) {
+      print("❌ File doesn't contain enough bytes for header + samples.");
+      return;
+    }
+
+    final sampleBytes = fullBytes.sublist(headerEnd);
+    const bytesPerSample = 5 * 8; // 5 float64 values
+
+    final maxSamples = sampleBytes.length ~/ bytesPerSample;
+    final clampedEndIndex = min(recordEndIndex ?? 0, maxSamples);
+    final clampedStartIndex = min(recordStartIndex ?? 0, clampedEndIndex);
+
+    final startByte = clampedStartIndex * bytesPerSample;
+    final endByte = clampedEndIndex * bytesPerSample;
+
+    if (startByte >= endByte || endByte > sampleBytes.length) {
+      print("❌ Invalid byte range. Start: $startByte, End: $endByte");
+      return;
+    }
+
+    final selectedBytes = sampleBytes.sublist(startByte, endByte);
+    final headerJsonBytes = fullBytes.sublist(4, headerEnd);
+    final lengthBytes = fullBytes.sublist(0, 4);
+
+    // ✅ Ask user where to save using FilePicker
+    String? savePath = await FilePicker.platform.saveFile(
+      dialogTitle: 'Save your recorded file',
+      fileName: 'recorded_data.bin',
+    );
+
+    if (savePath == null) {
+      print("⚠️ User cancelled save dialog.");
+      return;
+    }
+
+    await File(
+      savePath,
+    ).writeAsBytes(lengthBytes + headerJsonBytes + selectedBytes);
+    print("✅ Saved recording to: $savePath");
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text("Recording saved to file successfully.")),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return Consumer<DefaultPatientModal>(
@@ -1281,9 +1438,85 @@ class _HomeState extends State<Home> {
                           },
                         ),
                         _iconButtonColumn(
-                          icon: Icons.fiber_manual_record,
-                          label: "Record",
-                          onPressed: () {},
+                          icon:
+                              isRecording
+                                  ? Icons.stop
+                                  : Icons.fiber_manual_record,
+                          label: isRecording ? "Stop" : "Record",
+                          onPressed: () async {
+                            if (!isRecording) {
+                              recordStartIndex = sampleCounter;
+                              setState(() {
+                                isRecording = true;
+                              });
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                SnackBar(content: Text("Recording started")),
+                              );
+                            } else {
+                              recordEndIndex = sampleCounter;
+                              setState(() {
+                                isRecording = false;
+                              });
+                              await saveRecordingSlice(); // implement next
+                            }
+                          },
+                        ),
+
+                        _iconButtonColumn(
+                          icon: Icons.file_upload_outlined,
+                          label: "Import Data",
+                          onPressed: () async {
+                            setState(() {
+                              isImported = true;
+                            });
+
+                            try {
+                              // Step 1: Import file
+                              final result = await importBinFile();
+
+                              if (result == null ||
+                                  !result.containsKey('samples') ||
+                                  !result.containsKey('patient')) {
+                                print("Invalid file structure");
+                                return;
+                              }
+
+                              // Step 2: Set patient info
+                              // setState(() {
+                              //   defaultPatient = result['patient'];
+                              // });
+
+                              final samples =
+                                  result['samples'] as List<dynamic>;
+
+                              // Step 3: Push all samples to graph and memory
+                              for (final sample in samples) {
+                                if (sample is List && sample.length >= 5) {
+                                  final List<double> numericSample =
+                                      sample
+                                          .map((e) => (e as num).toDouble())
+                                          .toList();
+
+                                  final edt = myBigGraphKey.currentState
+                                      ?.updateEverything(numericSample);
+                                  if (edt != null && edt.length >= 5) {
+                                    _inMemoryData.add([
+                                      edt[0],
+                                      edt[1],
+                                      edt[2],
+                                      edt[3],
+                                      edt[4],
+                                    ]);
+                                  }
+                                }
+                              }
+
+                              print("Imported ${samples.length} samples.");
+                              onExhalationDetected();
+                            } catch (e) {
+                              print("❌ Error while importing: $e");
+                            }
+                          },
                         ),
                         _iconButtonColumn(
                           icon: Icons.person,
@@ -1357,8 +1590,9 @@ class _HomeState extends State<Home> {
                 Row(
                   children: [
                     Expanded(
-                      child: MyBigGraph(
+                      child: MyBigGraphV2(
                         key: myBigGraphKey,
+                        isImported: isImported,
                         onCycleComplete: () {
                           // if(delaySamples == null) {
                           //   CPETService cpet = CPETService();

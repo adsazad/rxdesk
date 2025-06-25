@@ -7,28 +7,29 @@ class DataSaver {
   late File _file;
   bool _initialized = false;
 
-
-
-
   /// Initialize the file with a JSON patient/session header
   Future<void> init({
     required String filename,
     required var patientInfo,
   }) async {
+    if (_initialized) {
+      print("⚠️ DataSaver is already initialized. Skipping re-init.");
+      return;
+    }
+
     final dir = await getApplicationDocumentsDirectory();
     _file = File('${dir.path}/$filename');
-    print(_file.path);
-
-    if (!await _file.exists()) {
-      await _file.create(recursive: true);
-    }
+    print('Initializing DataSaver with file: ${_file.path}');
 
     final jsonString = jsonEncode(patientInfo);
     final jsonBytes = utf8.encode(jsonString);
-    final lengthBytes = ByteData(4)..setUint32(0, jsonBytes.length, Endian.little);
 
-    await _file.writeAsBytes(lengthBytes.buffer.asUint8List(), mode: FileMode.write);
-    await _file.writeAsBytes(jsonBytes, mode: FileMode.append);
+    final lengthBytes = ByteData(4)
+      ..setUint32(0, jsonBytes.length, Endian.little);
+    final allBytes =
+        lengthBytes.buffer.asUint8List() + Uint8List.fromList(jsonBytes);
+
+    await _file.writeAsBytes(allBytes, mode: FileMode.write); // only once!
 
     _initialized = true;
   }
@@ -52,7 +53,10 @@ class DataSaver {
     byteData.setFloat64(24, vol, Endian.little);
     byteData.setFloat64(32, flow, Endian.little);
 
-    await _file.writeAsBytes(byteData.buffer.asUint8List(), mode: FileMode.append);
+    await _file.writeAsBytes(
+      byteData.buffer.asUint8List(),
+      mode: FileMode.append,
+    );
   }
 
   /// Optional: Get path to the file
