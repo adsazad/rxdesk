@@ -869,7 +869,7 @@ class MyBigGraphV2State extends State<MyBigGraphV2> {
                                   allPlotData[0].isNotEmpty)
                               ? allPlotData[0].last.x * 0.4
                               : widget.windowSize.toDouble())
-                          : widget.windowSize.toDouble(),
+                          : widget.windowSize.toDouble() * 0.5,
                   child: _chart(),
                 ),
               ),
