@@ -140,8 +140,7 @@ class _PatientAddState extends State<PatientAdd> {
                             prefs.setString(
                                 'default_patient', jsonEncode(patient));
                             defaultProvider.setDefault(patient);
-                            Navigator.of(context).push(new MaterialPageRoute(
-                                builder: (context) => Patients()));
+                            Navigator.of(context).pop();
                           }
                         },
                       ),
