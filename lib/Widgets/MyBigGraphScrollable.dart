@@ -214,6 +214,7 @@ class MyBigGraphV2State extends State<MyBigGraphV2> {
           // print("Appending value $value at x=$x for channel $i");
           allPlotData[i].add(FlSpot(x, value));
         } else {
+          // print("CYCLIC MODE: Channel $i, value: $value");
           // 🔄 Cyclic mode
           if (allCurrentIndexes[i] >= widget.windowSize) {
             widget.onCycleComplete?.call();

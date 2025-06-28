@@ -543,6 +543,7 @@ class _HomeState extends State<Home> {
             // Check that we have a full frame ahead
             if (i + frameLength <= data.length) {
               final frame = data.sublist(i, i + frameLength);
+              // print("DATACOM HERE");
 
               // Your existing logic here
               double vol = (frame[13] << 8 | frame[12]) * 1.0;
@@ -586,6 +587,7 @@ class _HomeState extends State<Home> {
               }
 
               if (delaySamples == null || delayBuffer.length <= delaySamples!) {
+                // print("DATACOMHERE2");
                 List<double>? edt = myBigGraphKey.currentState
                     ?.updateEverything([ecg, o2, co2, flow, vol]);
                 if (edt != null) {
