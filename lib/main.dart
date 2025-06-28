@@ -99,28 +99,7 @@ void main() async {
               foregroundColor: Colors.white,
             ),
           ),
-          routes: {
-            '/':
-                (context) => Scaffold(
-                  body: AnimatedSplashScreen(
-                    backgroundColor: Colors.black,
-                    splash: Container(
-                      child: Column(
-                        children: [
-                          Image(
-                            image: AssetImage("assets/smallbiobtsplash.gif"),
-                            width: 150,
-                          ),
-                        ],
-                      ),
-                    ),
-                    splashTransition: SplashTransition.scaleTransition,
-                    duration: 3000,
-                    curve: Curves.decelerate,
-                    nextScreen: Home(),
-                  ),
-                ),
-          },
+          routes: {'/': (context) => Scaffold(body: Home())},
         ),
       ),
     ),

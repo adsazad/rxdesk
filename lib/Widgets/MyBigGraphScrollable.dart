@@ -235,21 +235,23 @@ class MyBigGraphV2State extends State<MyBigGraphV2> {
   List<VerticalLine> _generateVerticalLines() {
     List<VerticalLine> allLines = [];
 
+    // ✅ Dynamic max X: depends on mode
+    double maxX =
+        widget.isImported
+            ? (allPlotData.isNotEmpty && allPlotData[0].isNotEmpty
+                ? allPlotData[0].last.x
+                : widget.windowSize.toDouble())
+            : widget.windowSize.toDouble();
+
     for (var config in widget.verticalLineConfigs) {
       double seconds = config['seconds'] ?? 0.0;
       double stroke = config['stroke'] ?? 0.5;
       double xInterval = seconds * widget.samplingRate;
-      Color color = config['color'] ?? Colors.red; // NEW: get color from config
+      Color color = config['color'] ?? Colors.red;
 
       if (xInterval > 0) {
-        for (double x = 0; x <= widget.windowSize.toDouble(); x += xInterval) {
-          allLines.add(
-            VerticalLine(
-              x: x,
-              color: color, // NEW: use config color
-              strokeWidth: stroke,
-            ),
-          );
+        for (double x = 0; x <= maxX; x += xInterval) {
+          allLines.add(VerticalLine(x: x, color: color, strokeWidth: stroke));
         }
       }
     }

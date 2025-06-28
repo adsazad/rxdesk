@@ -1463,8 +1463,8 @@ class _HomeState extends State<Home> {
                         ),
 
                         _iconButtonColumn(
-                          icon: Icons.file_upload_outlined,
-                          label: "Import Data",
+                          icon: Icons.save_alt,
+                          label: "Load Data",
                           onPressed: () async {
                             setState(() {
                               isImported = true;
