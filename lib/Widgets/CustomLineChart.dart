@@ -6,6 +6,8 @@ class CustomLineChart extends StatelessWidget {
   final List<double> yValues;
   final String lineLabel;
   final Color lineColor;
+  final String xLabel;
+  final String yLabel;
 
   const CustomLineChart({
     Key? key,
@@ -13,81 +15,159 @@ class CustomLineChart extends StatelessWidget {
     required this.yValues,
     required this.lineLabel,
     this.lineColor = Colors.blue,
-  })  : assert(xValues.length == yValues.length, "X and Y arrays must have the same length"),
-        super(key: key);
-
-
+    this.xLabel = 'X-axis',
+    this.yLabel = 'Y-axis',
+  }) : assert(
+         xValues.length == yValues.length,
+         "X and Y arrays must have the same length",
+       ),
+       super(key: key);
 
   @override
   Widget build(BuildContext context) {
-    List<FlSpot> spots = List.generate(
+    final List<FlSpot> spots = List.generate(
       xValues.length,
-          (index) => FlSpot(xValues[index], yValues[index]),
+      (index) => FlSpot(xValues[index], yValues[index]),
     );
+
+    final xInterval = _calculateInterval(xValues);
+    final yInterval = _calculateInterval(yValues);
 
     return LayoutBuilder(
       builder: (context, constraints) {
+        final chartHeight = constraints.maxWidth * 0.6;
         return Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
+          crossAxisAlignment: CrossAxisAlignment.center,
           children: [
             Text(
               lineLabel,
-              style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                fontWeight: FontWeight.bold,
-              ),
+              style: Theme.of(
+                context,
+              ).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold),
             ),
             const SizedBox(height: 12),
-            Container(
-              width: constraints.maxWidth,
-              height: constraints.maxWidth * 0.6, // maintain a 3:2 ratio
-              child: LineChart(
-                LineChartData(
-                  gridData: FlGridData(show: true),
-                  titlesData: FlTitlesData(
-                    leftTitles: AxisTitles(
-                      sideTitles: SideTitles(
-                        showTitles: true,
-                        reservedSize: 50, // ← increase this to prevent label cutoff
-                        interval: _calculateInterval(yValues),
-                        getTitlesWidget: (value, meta) => Padding(
-                          padding: const EdgeInsets.only(right: 4), // Optional spacing
-                          child: Text(
-                            value.toStringAsFixed(2), // keeps label width consistent
-                            style: const TextStyle(fontSize: 10),
-                            textAlign: TextAlign.right,
+            Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                RotatedBox(
+                  quarterTurns: -1,
+                  child: Text(
+                    yLabel,
+                    style: const TextStyle(
+                      fontSize: 12,
+                      fontWeight: FontWeight.w500,
+                    ),
+                  ),
+                ),
+                const SizedBox(width: 4),
+                Expanded(
+                  child: Column(
+                    children: [
+                      SizedBox(
+                        height: chartHeight,
+                        child: LineChart(
+                          LineChartData(
+                            gridData: FlGridData(show: true),
+                            titlesData: FlTitlesData(
+                              leftTitles: AxisTitles(
+                                sideTitles: SideTitles(
+                                  showTitles: true,
+                                  interval: yInterval,
+                                  getTitlesWidget: (value, meta) {
+                                    return Text(
+                                      value.toStringAsFixed(1),
+                                      style: const TextStyle(
+                                        fontSize: 10,
+                                        color: Colors.black87,
+                                      ),
+                                    );
+                                  },
+                                ),
+                              ),
+                              bottomTitles: AxisTitles(
+                                sideTitles: SideTitles(
+                                  showTitles: true,
+                                  interval: xInterval,
+                                  getTitlesWidget: (value, meta) {
+                                    return Text(
+                                      value.toStringAsFixed(1),
+                                      style: const TextStyle(
+                                        fontSize: 10,
+                                        color: Colors.black87,
+                                      ),
+                                    );
+                                  },
+                                ),
+                              ),
+                              topTitles: AxisTitles(
+                                sideTitles: SideTitles(showTitles: false),
+                              ),
+                              rightTitles: AxisTitles(
+                                sideTitles: SideTitles(showTitles: false),
+                              ),
+                            ),
+                            borderData: FlBorderData(show: true),
+                            lineBarsData: [
+                              LineChartBarData(
+                                spots: spots,
+                                isCurved: false,
+                                show: true,
+                                barWidth: 0,
+                                color: Colors.transparent,
+                                dotData: FlDotData(
+                                  show: true,
+                                  getDotPainter: (
+                                    spot,
+                                    percent,
+                                    barData,
+                                    index,
+                                  ) {
+                                    return FlDotCirclePainter(
+                                      radius: 3,
+                                      color: lineColor,
+                                    );
+                                  },
+                                ),
+                                belowBarData: BarAreaData(show: false),
+                              ),
+                            ],
                           ),
                         ),
                       ),
-                    ),
-
-                    bottomTitles: AxisTitles(
-                      sideTitles: SideTitles(showTitles: true),
-                    ),
+                      const SizedBox(height: 8),
+                      Text(
+                        xLabel,
+                        style: const TextStyle(
+                          fontSize: 12,
+                          fontWeight: FontWeight.w500,
+                        ),
+                      ),
+                    ],
                   ),
-                  borderData: FlBorderData(show: true),
-                  lineBarsData: [
-                    LineChartBarData(
-                      isCurved: true,
-                      color: lineColor,
-                      barWidth: 3,
-                      dotData: FlDotData(show: true),
-                      belowBarData: BarAreaData(show: false),
-                      spots: spots,
-                    ),
-                  ],
                 ),
-              ),
+              ],
             ),
           ],
         );
       },
     );
   }
-}
-double _calculateInterval(List<double> values) {
-  if (values.isEmpty) return 1.0;
-  final max = values.reduce((a, b) => a > b ? a : b);
-  final min = values.reduce((a, b) => a < b ? a : b);
-  final range = max - min;
-  return (range / 5).clamp(1, double.infinity);
+
+  double _calculateInterval(List<double> values) {
+    if (values.isEmpty) return 1.0;
+
+    final max = values.reduce((a, b) => a > b ? a : b);
+    final min = values.reduce((a, b) => a < b ? a : b);
+    final range = max - min;
+
+    // Prevent interval from being 0
+    if (range == 0) return max == 0 ? 1.0 : max / 4;
+
+    final rawInterval = (range / 4).abs();
+
+    // Clamp to avoid 0
+    return rawInterval == 0
+        ? 1.0
+        : double.parse(rawInterval.toStringAsFixed(2));
+  }
 }

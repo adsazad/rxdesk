@@ -745,6 +745,8 @@ class _HomeState extends State<Home> {
               width: 400,
               height: MediaQuery.of(context).size.height / 2,
               child: CustomLineChart(
+                xLabel: xKey,
+                yLabel: yKey,
                 xValues: xValues,
                 yValues: yValues,
                 lineLabel: '$yKey vs $xKey',
