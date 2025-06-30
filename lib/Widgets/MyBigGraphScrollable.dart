@@ -303,16 +303,18 @@ class MyBigGraphV2State extends State<MyBigGraphV2> {
   }
 
   String _getLiveValueLabel(int index) {
-    if (allPlotData[index].isEmpty) return "--";
+    final dataList = allPlotData[index];
+    if (dataList.isEmpty) return "--";
 
     final latestPoint =
-        allPlotData[index][(allCurrentIndexes[index] - 1) % widget.windowSize];
+        widget.isImported
+            ? dataList.last
+            : dataList[(allCurrentIndexes[index] - 1) % widget.windowSize];
 
     double raw = latestPoint.y;
     double scaled = raw * plotGains[index];
     double offsetAdjusted = scaled + plotOffsets[index];
 
-    // Apply unit conversion if available
     var meter = widget.plot[index]["meter"];
     double displayValue = offsetAdjusted;
 
@@ -320,17 +322,17 @@ class MyBigGraphV2State extends State<MyBigGraphV2> {
         meter["convert"] != null &&
         meter["convert"] is Function) {
       try {
-        displayValue = meter["convert"](
-          scaled,
-        ); // Optional: use raw or scaled here
+        displayValue = meter["convert"](scaled);
       } catch (_) {
         displayValue = scaled;
       }
     }
 
+    if (displayValue.isNaN || displayValue.isInfinite) return "--";
+
     String unit =
         meter != null && meter["unit"] != null ? meter["unit"].toString() : "";
-    if (meter["decimal"] != null) {
+    if (meter != null && meter["decimal"] != null) {
       return "${displayValue.toStringAsFixed(meter["decimal"])} $unit";
     } else {
       return "${displayValue.toStringAsFixed(2)} $unit";
