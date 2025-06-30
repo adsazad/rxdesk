@@ -1,15 +1,18 @@
 import 'package:spirobtvo/Services/CalibrationFunction.dart';
 
 class CPETService {
-
   CalibrationFunction? o2Calibrate;
 
-  Map<String, dynamic> init(List<List<double>> data,dynamic globalSettings) {
+  Map<String, dynamic> init(List<List<double>> data, dynamic globalSettings) {
     List<Map<String, dynamic>> volPeaks = getBreathVolumePeaks(data);
-    List<Map<String, dynamic>> breathStats = calculateStatsAtPeaks(data, volPeaks);
+    List<Map<String, dynamic>> breathStats = calculateStatsAtPeaks(
+      data,
+      volPeaks,
+    );
     Map<String, dynamic> averageStats = calculateAverages(breathStats);
 
-    Map<String, dynamic>? lastBreathStat = breathStats.isNotEmpty ? breathStats.last : null;
+    Map<String, dynamic>? lastBreathStat =
+        breathStats.isNotEmpty ? breathStats.last : null;
 
     o2Calibrate = generateCalibrationFunction(
       voltage1: globalSettings.voltage1,
@@ -36,9 +39,9 @@ class CPETService {
       "volumePeaks": volPeaks,
       "breathStats": breathStats,
       "averageStats": averageStats,
-      "lastBreathStat":lastBreathStat,
+      "lastBreathStat": lastBreathStat,
       "respirationRate": respirationRate,
-      "minuteVentilation": minuteVentilation
+      "minuteVentilation": minuteVentilation,
     };
   }
 
@@ -55,8 +58,8 @@ class CPETService {
     for (int i = 1; i < data.length; i++) {
       if (data[i].length <= 3 || data[i - 1].length <= 3) continue;
 
-      double prev = data[i - 1][3];
-      double current = data[i][3];
+      double prev = data[i - 1][4];
+      double current = data[i][4];
 
       if (current > prev) {
         if (!rising) {
@@ -69,10 +72,7 @@ class CPETService {
         }
       } else if (rising && current < prev) {
         if (maxVal > 0.1) {
-          peaks.add({
-            'index': maxIndex,
-            'value': maxVal,
-          });
+          peaks.add({'index': maxIndex, 'value': maxVal});
         }
         rising = false;
         maxVal = -double.infinity;
@@ -83,7 +83,10 @@ class CPETService {
     return peaks;
   }
 
-  int detectO2Co2DelayFromVolumePeaks(List<List<double>> data, {int samplingRate = 300}) {
+  int detectO2Co2DelayFromVolumePeaks(
+    List<List<double>> data, {
+    int samplingRate = 300,
+  }) {
     final peaks = getBreathVolumePeaks(data);
 
     List<int> delays = [];
@@ -96,7 +99,11 @@ class CPETService {
       int co2PeakIndex = -1;
       double co2Max = -double.infinity;
 
-      for (int i = volIndex + 1; i <= volIndex + maxLookahead && i < data.length; i++) {
+      for (
+        int i = volIndex + 1;
+        i <= volIndex + maxLookahead && i < data.length;
+        i++
+      ) {
         double co2 = data[i][2]; // CO2 index
         if (co2 > co2Max) {
           co2Max = co2;
@@ -113,27 +120,31 @@ class CPETService {
     if (delays.isEmpty) return 0;
 
     int avgDelay = delays.reduce((a, b) => a + b) ~/ delays.length;
-    print("Delays: $delays → Avg: $avgDelay samples = ${avgDelay * 1000 / samplingRate} ms");
+    print(
+      "Delays: $delays → Avg: $avgDelay samples = ${avgDelay * 1000 / samplingRate} ms",
+    );
     return avgDelay;
   }
 
   // Step 2: Calculate VO2, VCO2, RER at peak index
   List<Map<String, dynamic>> calculateStatsAtPeaks(
-      List<List<double>> data, List<Map<String, dynamic>> peaks) {
+    List<List<double>> data,
+    List<Map<String, dynamic>> peaks,
+  ) {
     List<Map<String, dynamic>> stats = [];
 
     for (int j = 0; j < peaks.length; j++) {
       int i = peaks[j]['index'];
 
       if (i < data.length && data[i].length >= 5) {
-        double o2 = data[i][1];     // O2 in %
-        double co2 = data[i][2];    // CO2 in %
-        double vol = data[i][3] / 1000;   // vol in liters
+        double o2 = data[i][1]; // O2 in %
+        double co2 = data[i][2]; // CO2 in %
+        double vol = data[i][4] / 1000; // vol in liters
 
         o2 = o2 * 0.00072105;
         double o2Percent = o2Calibrate?.call(o2) ?? 0.0;
 
-        double vo2 = vol * (20.93 - o2Percent)/100;
+        double vo2 = vol * (20.93 - o2Percent) / 100;
         double co2Fraction = co2 / 100;
         double vco2 = vol * co2Fraction;
         double rer = vo2 > 0 ? vco2 / vo2 : 0;
@@ -145,7 +156,8 @@ class CPETService {
           int prevIndex = peaks[j - 1]['index'];
           int intervalSamples = i - prevIndex;
           if (intervalSamples > 0) {
-            respirationRate = 60 * (300 / intervalSamples); // assuming 300 Hz sampling
+            respirationRate =
+                60 * (300 / intervalSamples); // assuming 300 Hz sampling
             minuteVentilation = respirationRate * vol;
           }
         }
@@ -165,15 +177,9 @@ class CPETService {
     return stats;
   }
 
-
   // ✅ New Step 3: Calculate average VO2, VCO2, RER
   Map<String, dynamic> calculateAverages(List<Map<String, dynamic>> stats) {
-    if (stats.isEmpty) return {
-      'vo2': 0.0,
-      'vco2': 0.0,
-      'rer': 0.0,
-      "vol": 0.0,
-    };
+    if (stats.isEmpty) return {'vo2': 0.0, 'vco2': 0.0, 'rer': 0.0, "vol": 0.0};
 
     double totalVo2 = 0;
     double totalVco2 = 0;
