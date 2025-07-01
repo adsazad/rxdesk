@@ -564,7 +564,8 @@ class _HomeState extends State<Home> {
               // print("DATACOM HERE");
 
               // Your existing logic here
-              double vol = (frame[13] << 8 | frame[12]) * 1.0;
+              // double vol = (frame[13] << 8 | frame[12]) * 1.0;
+              double vol = (frame[13] * 256 + frame[12]) * 1.0;
 
               recentVolumes.add(vol);
               if (recentVolumes.length > 10) {
