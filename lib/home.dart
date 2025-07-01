@@ -89,7 +89,7 @@ class _HomeState extends State<Home> {
     super.initState();
     initFunc();
 
-    startTestLoop();
+    // startTestLoop();
     // init();
     // CPETService cpet = CPETService();
     // timer = Timer.periodic(Duration(seconds: 10), (timer) {
@@ -112,8 +112,10 @@ class _HomeState extends State<Home> {
   }
 
   bool _saverInitialized = false;
-
-  saver({
+  List<double> _buffer = []; // Store [ecg, o2, co2, vol, flow, ecg, o2, ...]
+  final int _samplesPerBatch = 300 * 5; // 5 seconds worth of data
+  int bufSampleCounter = 0; // Reset this to 0 when starting a new batch
+  Future<void> saver({
     required double ecg,
     required double o2,
     required double co2,
@@ -127,19 +129,35 @@ class _HomeState extends State<Home> {
     final patient = patientProvider.patient;
     if (patient == null) return;
 
-    // ❗ Prevent reinitialization
+    // 🛠 Make sure init is awaited before marking initialized
     if (!_saverInitialized) {
-      _saverInitialized = true;
       print("✅ Initializing DataSaver...");
       await dataSaver.init(
         filename: "spirobt-${DateTime.now().microsecondsSinceEpoch}.bin",
         patientInfo: patient,
       );
-      sampleCounter = 0; // reset counter for new file
+      _saverInitialized = true; // ✅ Set this *after* init completes
+      sampleCounter = 0;
     }
 
-    await dataSaver.append(ecg: ecg, o2: o2, co2: co2, vol: vol, flow: flow);
+    _buffer.addAll([ecg, o2, co2, vol, flow]);
     sampleCounter++;
+    bufSampleCounter++;
+
+    if (bufSampleCounter >= _samplesPerBatch) {
+      print("Batch of ${_buffer.length ~/ 5} samples ready to save.");
+      await dataSaver.appendBatch(_buffer);
+      _buffer.clear();
+      bufSampleCounter = 0; // Reset buffer sample counter
+    }
+  }
+
+  Future<void> flushRemainingData() async {
+    if (_buffer.isNotEmpty) {
+      await dataSaver.appendBatch(_buffer);
+      print("✅ Flushed ${_buffer.length ~/ 5} samples.");
+      _buffer.clear();
+    }
   }
 
   loadGlobalSettingsFromPrefs() async {
@@ -1340,6 +1358,9 @@ class _HomeState extends State<Home> {
     const bytesPerSample = 5 * 8; // 5 float64 values
 
     final maxSamples = sampleBytes.length ~/ bytesPerSample;
+    print("Max samples in file: $maxSamples");
+    print(recordStartIndex);
+    print(recordEndIndex);
     final clampedEndIndex = min(recordEndIndex ?? 0, maxSamples);
     final clampedStartIndex = min(recordStartIndex ?? 0, clampedEndIndex);
 
@@ -1450,6 +1471,9 @@ class _HomeState extends State<Home> {
                           onPressed: () async {
                             if (!isRecording) {
                               recordStartIndex = sampleCounter;
+                              print(
+                                "Recording started at index: $recordStartIndex",
+                              );
                               setState(() {
                                 isRecording = true;
                               });
@@ -1458,9 +1482,13 @@ class _HomeState extends State<Home> {
                               );
                             } else {
                               recordEndIndex = sampleCounter;
+                              print(
+                                "Recording stopped at index: $recordEndIndex",
+                              );
                               setState(() {
                                 isRecording = false;
                               });
+                              await flushRemainingData();
                               await saveRecordingSlice(); // implement next
                             }
                           },
@@ -1508,8 +1536,8 @@ class _HomeState extends State<Home> {
                                       edt[0],
                                       edt[1],
                                       edt[2],
-                                      edt[3],
                                       edt[4],
+                                      edt[3],
                                     ]);
                                   }
                                 }

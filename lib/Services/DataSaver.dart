@@ -34,6 +34,25 @@ class DataSaver {
     _initialized = true;
   }
 
+  Future<void> appendBatch(List<double> data) async {
+    if (!_initialized) {
+      throw Exception("DataSaver not initialized. Call init() first.");
+    }
+
+    final byteData = ByteData(8 * data.length);
+    for (int i = 0; i < data.length; i++) {
+      byteData.setFloat64(i * 8, data[i], Endian.little);
+    }
+
+    await _file.writeAsBytes(
+      byteData.buffer.asUint8List(),
+      mode: FileMode.append,
+    );
+    print(
+      "📦 Wrote batch: ${data.length ~/ 5} samples (${data.length} values)",
+    );
+  }
+
   /// Append one sample of [ecg, o2, co2, vol, flow] as float64
   Future<void> append({
     required double ecg,
