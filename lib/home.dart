@@ -89,7 +89,7 @@ class _HomeState extends State<Home> {
     super.initState();
     initFunc();
 
-    // startTestLoop();
+    startTestLoop();
     // init();
     // CPETService cpet = CPETService();
     // timer = Timer.periodic(Duration(seconds: 10), (timer) {

@@ -54,7 +54,7 @@ class CPETService {
     bool rising = false;
     double maxVal = -double.infinity;
     int maxIndex = -1;
-    const int minSamplesBetweenPeaks = 90;
+    const int minSamplesBetweenPeaks = 240;
 
     for (int i = 1; i < data.length; i++) {
       if (data[i].length <= 3 || data[i - 1].length <= 3) continue;
