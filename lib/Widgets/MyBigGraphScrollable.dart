@@ -286,7 +286,7 @@ class MyBigGraphV2State extends State<MyBigGraphV2> {
           lines.add(
             HorizontalLine(
               y: y,
-              color: Colors.blue.shade500,
+              color: Colors.blue.shade300,
               strokeWidth: (j == 0) ? 0.6 : 0.3, // Make center 0V line darker
             ),
           );
@@ -786,7 +786,7 @@ class MyBigGraphV2State extends State<MyBigGraphV2> {
           ),
           borderData: FlBorderData(
             show: true,
-            border: Border.all(color: Colors.blue.shade500, width: 0.6),
+            border: Border.all(color: Colors.blue.shade300, width: 0.2),
           ),
           clipData: FlClipData.all(),
           gridData: FlGridData(
@@ -796,13 +796,13 @@ class MyBigGraphV2State extends State<MyBigGraphV2> {
             horizontalInterval: widget.horizontalInterval,
             verticalInterval: widget.verticalInterval,
             getDrawingHorizontalLine: (value) {
-              return FlLine(color: Colors.blue.shade500, strokeWidth: 0.2);
+              return FlLine(color: Colors.blue.shade300, strokeWidth: 0.2);
             },
             getDrawingVerticalLine: (value) {
               if (value % (widget.samplingRate * 1.0) == 0) {
-                return FlLine(color: Colors.blue.shade500, strokeWidth: 0.2);
+                return FlLine(color: Colors.blue.shade300, strokeWidth: 0.2);
               } else if (value % (widget.samplingRate * 0.2) == 0) {
-                return FlLine(color: Colors.blue.shade500, strokeWidth: 0.2);
+                return FlLine(color: Colors.blue.shade300, strokeWidth: 0.2);
               } else {
                 return FlLine(color: Colors.transparent, strokeWidth: 0);
               }

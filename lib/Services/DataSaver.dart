@@ -4,18 +4,23 @@ import 'dart:typed_data';
 import 'package:path_provider/path_provider.dart';
 
 class DataSaver {
+  static final DataSaver _instance = DataSaver._internal();
+  factory DataSaver() => _instance;
+  DataSaver._internal();
+
   late File _file;
-  bool _initialized = false;
+  bool initialized = false;
 
   /// Initialize the file with a JSON patient/session header
   Future<void> init({
     required String filename,
     required var patientInfo,
   }) async {
-    if (_initialized) {
+    if (initialized) {
       print("⚠️ DataSaver is already initialized. Skipping re-init.");
       return;
     }
+    initialized = true;
 
     final dir = await getApplicationDocumentsDirectory();
     _file = File('${dir.path}/$filename');
@@ -30,12 +35,10 @@ class DataSaver {
         lengthBytes.buffer.asUint8List() + Uint8List.fromList(jsonBytes);
 
     await _file.writeAsBytes(allBytes, mode: FileMode.write); // only once!
-
-    _initialized = true;
   }
 
   Future<void> appendBatch(List<double> data) async {
-    if (!_initialized) {
+    if (!initialized) {
       throw Exception("DataSaver not initialized. Call init() first.");
     }
 
@@ -61,7 +64,7 @@ class DataSaver {
     required double vol,
     required double flow,
   }) async {
-    if (!_initialized) {
+    if (!initialized) {
       throw Exception("DataSaver not initialized. Call init() first.");
     }
 

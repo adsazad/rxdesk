@@ -132,13 +132,15 @@ class _HomeState extends State<Home> {
 
     // 🛠 Make sure init is awaited before marking initialized
     if (!_saverInitialized) {
-      print("✅ Initializing DataSaver...");
-      await dataSaver.init(
-        filename: "spirobt-${DateTime.now().microsecondsSinceEpoch}.bin",
-        patientInfo: patient,
-      );
-      _saverInitialized = true; // ✅ Set this *after* init completes
-      sampleCounter = 0;
+      if (!dataSaver.initialized) {
+        print("✅ Initializing DataSaver...");
+        await dataSaver.init(
+          filename: "spirobt-${DateTime.now().microsecondsSinceEpoch}.bin",
+          patientInfo: patient,
+        );
+        _saverInitialized = true; // ✅ Set this *after* init completes
+        sampleCounter = 0;
+      }
     }
 
     _buffer.addAll([ecg, o2, co2, vol, flow]);
@@ -1523,15 +1525,21 @@ class _HomeState extends State<Home> {
                                 SnackBar(content: Text("Recording started")),
                               );
                             } else {
+                              // Stop recording
+                              port.close();
+                              print("Stopping recording...");
+
                               recordEndIndex = sampleCounter;
                               print(
                                 "Recording stopped at index: $recordEndIndex",
                               );
                               setState(() {
                                 isRecording = false;
+                                isPlaying = false;
                               });
                               await flushRemainingData();
                               await saveRecordingSlice(); // implement next
+                              resetAllData();
                             }
                           },
                         ),
