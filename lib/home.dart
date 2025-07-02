@@ -669,6 +669,7 @@ class _HomeState extends State<Home> {
   @override
   void dispose() {
     timer.cancel(); // Always cancel timer!
+    port.close(); // Close the serial port
     super.dispose();
   }
 

@@ -53,6 +53,7 @@ class MyBigGraphV2State extends State<MyBigGraphV2> {
   late List<List<double>> filterBuffs;
   late Stream<dynamic> stream;
   bool _clearedForImport = false;
+  int _cycleCount = 0;
 
   void streamHandler(List<double> values) {
     Map<String, dynamic> resultMap = {};
@@ -219,6 +220,7 @@ class MyBigGraphV2State extends State<MyBigGraphV2> {
           if (allCurrentIndexes[i] >= widget.windowSize) {
             widget.onCycleComplete?.call();
             allCurrentIndexes[i] = 0;
+            if (i == 0) _cycleCount++; // ✅ Only increment once per cycle
           }
 
           allPlotData[i][allCurrentIndexes[i]] = FlSpot(
@@ -722,6 +724,23 @@ class MyBigGraphV2State extends State<MyBigGraphV2> {
     );
   }
 
+  Widget _buildTimeLabel(double sampleIndex) {
+    // base time from completed cycles, in seconds:
+    final baseSeconds = _cycleCount * widget.windowSize / widget.samplingRate;
+    // current sample’s time within this cycle:
+    final cycleSeconds = sampleIndex / widget.samplingRate;
+    final totalSeconds = baseSeconds + cycleSeconds;
+
+    final minutes = totalSeconds ~/ 60;
+    final secs = (totalSeconds % 60).toInt();
+
+    return Text(
+      "${minutes.toString().padLeft(2, '0')}:${secs.toString().padLeft(2, '0')}",
+      style: const TextStyle(fontSize: 10, color: Colors.black),
+      textAlign: TextAlign.center,
+    );
+  }
+
   Widget _chart() {
     return Container(
       // padding: const EdgeInsets.all(5),
@@ -754,7 +773,16 @@ class MyBigGraphV2State extends State<MyBigGraphV2> {
             ),
             rightTitles: AxisTitles(sideTitles: SideTitles(showTitles: false)),
             topTitles: AxisTitles(sideTitles: SideTitles(showTitles: false)),
-            bottomTitles: AxisTitles(sideTitles: SideTitles(showTitles: false)),
+            bottomTitles: AxisTitles(
+              sideTitles: SideTitles(
+                showTitles: true,
+                reservedSize: 40,
+                interval: widget.samplingRate * 1, // ✅ 1 second
+                getTitlesWidget: (value, meta) {
+                  return _buildTimeLabel(value);
+                },
+              ),
+            ),
           ),
           borderData: FlBorderData(
             show: true,
