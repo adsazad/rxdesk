@@ -76,6 +76,7 @@ class _HomeState extends State<Home> {
   bool isImported = false;
 
   var o2Calibrate;
+  late SerialPort port;
 
   // Recorder
   int sampleCounter = 0;
@@ -368,7 +369,7 @@ class _HomeState extends State<Home> {
       listen: false,
     );
 
-    SerialPort port = SerialPort(globalSettings.com.toString());
+    port = SerialPort(globalSettings.com.toString());
 
     try {
       if (port.isOpen) {
@@ -679,8 +680,9 @@ class _HomeState extends State<Home> {
             context,
             listen: false,
           );
-          SerialPort port = SerialPort(globalSettings.com.toString());
+          // SerialPort port = SerialPort(globalSettings.com.toString());
           port.close();
+          resetAllData();
           setState(() {
             isPlaying = false;
           });
@@ -1397,6 +1399,45 @@ class _HomeState extends State<Home> {
     );
   }
 
+  void resetAllData() {
+    setState(() {
+      // Reset live metrics
+      votwo = 0;
+      votwokg = 0;
+      vco = 0;
+      rer = 0;
+      vol = 0;
+      flow = 0;
+      bpm = 0;
+      respirationRate = 0;
+
+      // Reset counters and flags
+      sampleCounter = 0;
+      bufSampleCounter = 0;
+      _saverInitialized = false;
+      recordStartIndex = null;
+      recordEndIndex = null;
+      isRecording = false;
+      cp = null;
+      fullCp = null;
+
+      // Clear buffers and data
+      _buffer.clear();
+      delayBuffer.clear();
+      recentVolumes.clear();
+      rawDataFull.clear();
+      _inMemoryData.clear();
+      breathStatsNotifier.value = [];
+
+      // Reset graph widget
+      myBigGraphKey.currentState?.reset();
+
+      // Reset flags
+      wasExhaling = false;
+      isImported = false;
+    });
+  }
+
   @override
   Widget build(BuildContext context) {
     return Consumer<DefaultPatientModal>(
@@ -1447,10 +1488,9 @@ class _HomeState extends State<Home> {
                                     context,
                                     listen: false,
                                   );
-                              SerialPort port = SerialPort(
-                                globalSettings.com.toString(),
-                              );
+
                               port.close();
+                              resetAllData();
                               setState(() {
                                 isPlaying = !isPlaying;
                               });

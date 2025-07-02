@@ -846,6 +846,37 @@ class MyBigGraphV2State extends State<MyBigGraphV2> {
 
   double pixelsPerSample = 1; // ✅ Tune this as needed
   ScrollController _scrollController = ScrollController(); // At state level
+  void reset() {
+    setState(() {
+      // Clear all data
+      for (int i = 0; i < allPlotData.length; i++) {
+        allPlotData[i].clear();
+
+        // Fill cyclic mode data with zeroes if not imported
+        if (!widget.isImported) {
+          allPlotData[i] = List.generate(
+            widget.windowSize,
+            (index) => FlSpot(index.toDouble(), 0),
+          );
+          allCurrentIndexes[i] = 0;
+        }
+      }
+
+      // Reset all filter buffers
+      filterBuffs = List.generate(
+        widget.plot.length,
+        (_) => List<double>.filled(FILT_BUF_SIZE, 0.0),
+      );
+
+      // Reset gains, offsets, and flags
+      plotOffsets = List.generate(widget.plot.length, (_) => 0.0);
+      _clearedForImport = false;
+      Pos = 0;
+
+      // Optionally refresh filters again
+      _refreshMultiFilter();
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
