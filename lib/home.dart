@@ -30,6 +30,7 @@ import 'package:spirobtvo/Widgets/VitalsBox.dart';
 import 'package:file_selector/file_selector.dart';
 import 'package:file_picker/file_picker.dart';
 import 'dart:typed_data';
+import 'package:path/path.dart' as p;
 
 class Home extends StatefulWidget {
   const Home({super.key});
@@ -1382,10 +1383,23 @@ class _HomeState extends State<Home> {
     final headerJsonBytes = fullBytes.sublist(4, headerEnd);
     final lengthBytes = fullBytes.sublist(0, 4);
 
+    // ✅ Get documents directory
+    final Directory docsDir = await getApplicationDocumentsDirectory();
+
+    // ✅ Build the custom path
+    final String recordingsPath = p.join(docsDir.path, 'SpiroBT', 'Records');
+
+    // ✅ Create the folder if it doesn't exist
+    final recordingsDir = Directory(recordingsPath);
+    if (!await recordingsDir.exists()) {
+      await recordingsDir.create(recursive: true);
+    }
+
     // ✅ Ask user where to save using FilePicker
     String? savePath = await FilePicker.platform.saveFile(
       dialogTitle: 'Save your recorded file',
       fileName: 'recorded_data.bin',
+      initialDirectory: recordingsPath, // May be ignored on some platforms
     );
 
     if (savePath == null) {
