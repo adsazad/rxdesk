@@ -55,6 +55,10 @@ class MyBigGraphV2State extends State<MyBigGraphV2> {
   bool _clearedForImport = false;
   int _cycleCount = 0;
 
+  List<MapEntry<double, String>> _yAxisLabelList = [];
+
+  late ValueNotifier<List<List<FlSpot>>> plotNotifier;
+
   void streamHandler(List<double> values) {
     Map<String, dynamic> resultMap = {};
 
@@ -84,16 +88,15 @@ class MyBigGraphV2State extends State<MyBigGraphV2> {
       (_) => List<double>.filled(FILT_BUF_SIZE, 0.0),
     );
     allPlotData = List.generate(widget.plot.length, (_) => []);
+    plotNotifier = ValueNotifier(allPlotData);
     allCurrentIndexes = List.generate(widget.plot.length, (_) => 0);
 
     plotScales =
         widget.plot.map((e) {
-          final scaleBoxes = (e["scale"] ?? 5);
-          double scaleValue =
-              (scaleBoxes is int || scaleBoxes is double)
-                  ? scaleBoxes.toDouble()
-                  : 5.0;
-          return (4096 / 12) * scaleValue; // total Y range for this channel
+          final boxes = (e["scale"] ?? 5).toDouble();
+          final boxValue =
+              (e["boxValue"] ?? (4096 / 12)).toDouble(); // fallback
+          return boxValue * boxes;
         }).toList();
 
     plotThresholds =
@@ -186,51 +189,44 @@ class MyBigGraphV2State extends State<MyBigGraphV2> {
     return localSum;
   }
 
+  // ValueNotifier<List<List<FlSpot>>> plotNotifier = ValueNotifier([]);
+
   List<double> updateEverything(List<double> values) {
     List<double> processedValues = [];
 
-    setState(() {
-      for (int i = 0; i < values.length; i++) {
-        streamHandler(values); // 🔁 You may want this once per full sample set
+    for (int i = 0; i < values.length; i++) {
+      double value = values[i];
+      value = applyMultiFilterToChannel(i, value);
+      processedValues.add(value);
 
-        double value = values[i];
-        value = applyMultiFilterToChannel(i, value);
-        processedValues.add(value);
-
-        if (widget.isImported) {
-          if (!_clearedForImport) {
-            for (var list in allPlotData) {
-              list.clear();
-            }
-            _clearedForImport = true;
-            print(
-              "🧹 Cleared previous data for all channels in imported mode.",
-            );
-          }
-
-          // print("Imported value for channel $i: $value");
-          // ✅ Append in scrollable mode
-          double x =
-              allPlotData[i].isNotEmpty ? allPlotData[i].last.x + 1 : 0.0;
-          // print("Appending value $value at x=$x for channel $i");
-          allPlotData[i].add(FlSpot(x, value));
-        } else {
-          // print("CYCLIC MODE: Channel $i, value: $value");
-          // 🔄 Cyclic mode
-          if (allCurrentIndexes[i] >= widget.windowSize) {
-            widget.onCycleComplete?.call();
-            allCurrentIndexes[i] = 0;
-            if (i == 0) _cycleCount++; // ✅ Only increment once per cycle
-          }
-
-          allPlotData[i][allCurrentIndexes[i]] = FlSpot(
-            allCurrentIndexes[i].toDouble(),
-            value,
-          );
-          allCurrentIndexes[i]++;
+      if (widget.isImported) {
+        if (!_clearedForImport) {
+          for (var list in allPlotData) list.clear();
+          _clearedForImport = true;
         }
+
+        double x = allPlotData[i].isNotEmpty ? allPlotData[i].last.x + 1 : 0.0;
+        allPlotData[i].add(FlSpot(x, value));
+      } else {
+        if (allCurrentIndexes[i] >= widget.windowSize) {
+          widget.onCycleComplete?.call();
+          allCurrentIndexes[i] = 0;
+          if (i == 0) _cycleCount++;
+        }
+
+        allPlotData[i][allCurrentIndexes[i]] = FlSpot(
+          allCurrentIndexes[i].toDouble(),
+          value,
+        );
+        allCurrentIndexes[i]++;
       }
-    });
+    }
+
+    // ✅ Update graph data without rebuilding whole widget
+    plotNotifier.value = List.generate(
+      allPlotData.length,
+      (i) => List.of(allPlotData[i]),
+    );
 
     return processedValues;
   }
@@ -264,6 +260,7 @@ class MyBigGraphV2State extends State<MyBigGraphV2> {
 
   List<HorizontalLine> _generateSeparationLines() {
     List<HorizontalLine> lines = [];
+    _yAxisLabelList.clear(); // Ensure labels are rebuilt each time
 
     double totalHeight = widget.maxY - widget.minY;
     double plotSpacing = totalHeight / widget.plot.length;
@@ -271,32 +268,48 @@ class MyBigGraphV2State extends State<MyBigGraphV2> {
     for (int i = 0; i < widget.plot.length; i++) {
       double channelTop = widget.maxY - plotSpacing * i;
       double channelBottom = widget.maxY - plotSpacing * (i + 1);
-      double channelCenter = (channelTop + channelBottom) / 2;
 
-      double pixelPerVolt = plotSpacing / (widget.plot[i]["scale"] ?? 5);
+      // Config values
+      double minDisplay = (widget.plot[i]["minDisplay"] ?? 0.0).toDouble();
+      double maxDisplay = (widget.plot[i]["maxDisplay"] ?? 100.0).toDouble();
+      double boxValue = (widget.plot[i]["boxValue"] ?? 25.0).toDouble();
+      String unit = widget.plot[i]["unit"]?.toString() ?? "";
 
-      // ➡ Create lines at every 0.5V step
-      int numberOfLines =
-          ((widget.plot[i]["scale"] ?? 5) * 2); // 2 lines per volt (500mV each)
+      double range = maxDisplay - minDisplay;
+      double pixelsPerUnit = plotSpacing / range;
 
-      for (int j = -numberOfLines ~/ 2; j <= numberOfLines ~/ 2; j++) {
-        double y = channelCenter - (j * pixelPerVolt * 0.5);
+      for (double val = minDisplay; val <= maxDisplay; val += boxValue) {
+        double y = channelBottom + (val - minDisplay) * pixelsPerUnit;
 
-        if (y <= channelTop && y >= channelBottom) {
+        if (y >= channelBottom && y <= channelTop) {
           lines.add(
             HorizontalLine(
               y: y,
-              color: Colors.blue.shade300,
-              strokeWidth: (j == 0) ? 0.6 : 0.3, // Make center 0V line darker
+              color: Colors.blue.shade400,
+              strokeWidth: (val == 0) ? 0.6 : 0.3,
             ),
+          );
+
+          // Handle conversion if function exists
+          double displayVal = val;
+          final convertFn = widget.plot[i]["boxValueConvert"];
+          if (convertFn != null && convertFn is Function) {
+            try {
+              displayVal = convertFn(val);
+            } catch (_) {
+              debugPrint("Conversion error for value $val");
+            }
+          }
+
+          _yAxisLabelList.add(
+            MapEntry(y, "${displayVal.toStringAsFixed(0)} $unit"),
           );
         }
       }
 
-      // Solid black separation line between channels
       if (i != 0) {
         lines.add(
-          HorizontalLine(y: channelTop, color: Colors.black, strokeWidth: 0.8),
+          HorizontalLine(y: channelTop, color: Colors.black, strokeWidth: 0.6),
         );
       }
     }
@@ -683,45 +696,22 @@ class MyBigGraphV2State extends State<MyBigGraphV2> {
   }
 
   Widget _buildYAxisLabelSynced(double value) {
-    double totalHeight = widget.maxY - widget.minY;
-    double plotSpacing = totalHeight / widget.plot.length;
+    const double tolerance = 1.5;
 
-    // Find which channel section this value belongs to
-    int sectionIndex = ((widget.maxY - value) / plotSpacing).floor();
-
-    if (sectionIndex < 0 || sectionIndex >= widget.plot.length) {
-      return const SizedBox.shrink(); // Out of range
+    for (final entry in _yAxisLabelList) {
+      if ((entry.key - value).abs() <= tolerance) {
+        return Text(
+          entry.value,
+          style: const TextStyle(
+            fontSize: 10,
+            color: Color.fromARGB(255, 117, 117, 117),
+          ),
+          textAlign: TextAlign.right,
+        );
+      }
     }
 
-    // Center line of this channel
-    double sectionTop = widget.maxY - plotSpacing * sectionIndex;
-    double sectionBottom = widget.maxY - plotSpacing * (sectionIndex + 1);
-    double sectionCenter = (sectionTop + sectionBottom) / 2;
-
-    // Each full box is 1V
-    double pixelPerBox =
-        plotSpacing / (widget.plot[sectionIndex]["scale"] ?? 5);
-
-    // Calculate how far this value is from center
-    double offsetFromCenter = value - sectionCenter;
-    double volts = -offsetFromCenter / pixelPerBox; // volt per box
-
-    // Check if this is exactly 0.5V step
-    double roundedVolts = (volts * 2).round() / 2.0;
-
-    // Allow tiny floating-point error margin
-    if ((volts - roundedVolts).abs() > 0.01) {
-      return const SizedBox.shrink();
-    }
-
-    String label =
-        '${roundedVolts >= 0 ? '+' : ''}${roundedVolts.toStringAsFixed(1)} V';
-
-    return Text(
-      label,
-      style: const TextStyle(color: Colors.black, fontSize: 10),
-      textAlign: TextAlign.right,
-    );
+    return const SizedBox.shrink(); // No matching label
   }
 
   Widget _buildTimeLabel(double sampleIndex) {
@@ -741,13 +731,13 @@ class MyBigGraphV2State extends State<MyBigGraphV2> {
     );
   }
 
-  Widget _chart() {
+  Widget _chart(List<List<FlSpot>> currentData) {
     return Container(
       // padding: const EdgeInsets.all(5),
       height: (250 / 12) * 35,
       child: LineChart(
         duration: const Duration(milliseconds: 0),
-        key: ValueKey(allPlotData[0].last.x), // ✅ forces rebuild
+        // key: ValueKey(allPlotData[0].last.x), // ✅ forces rebuild
         LineChartData(
           lineTouchData: LineTouchData(
             enabled: false, // disables all touch
@@ -762,15 +752,12 @@ class MyBigGraphV2State extends State<MyBigGraphV2> {
             leftTitles: AxisTitles(
               sideTitles: SideTitles(
                 showTitles: true,
-                reservedSize: 40, // enough space for labels
-                getTitlesWidget: (value, meta) {
-                  return _buildYAxisLabelSynced(value);
-                },
-                interval:
-                    (widget.maxY - widget.minY) /
-                    (widget.plot.length * 4), // 🔥 interval dynamically
+                reservedSize: 40,
+                getTitlesWidget: (value, meta) => _buildYAxisLabelSynced(value),
+                interval: 1, // still required to trigger callbacks
               ),
             ),
+
             rightTitles: AxisTitles(sideTitles: SideTitles(showTitles: false)),
             topTitles: AxisTitles(sideTitles: SideTitles(showTitles: false)),
             bottomTitles: AxisTitles(
@@ -842,18 +829,30 @@ class MyBigGraphV2State extends State<MyBigGraphV2> {
                         double channelMinY =
                             widget.maxY - plotSpacing * (i + 1);
 
-                        double normalizedY =
-                            ((spot.y * plotGains[i]) / plotScales[i]) *
-                            (plotSpacing / 2);
+                        final minD =
+                            (widget.plot[i]["minDisplay"] ?? 0.0).toDouble();
+                        final maxD =
+                            (widget.plot[i]["maxDisplay"] ?? 100.0).toDouble();
+                        final val = spot.y * plotGains[i];
 
-                        // Apply offset
+                        // ❌ Skip values outside display range
+                        if (val < minD || val > maxD) return null;
+
+                        double plotHeight = widget.maxY - widget.minY;
+                        plotSpacing = plotHeight / widget.plot.length;
+                        double channelTop = widget.maxY - plotSpacing * i;
+                        double channelBottom =
+                            widget.maxY - plotSpacing * (i + 1);
+
+                        // ✅ Relative to minDisplay = 0 at bottom
+                        double range = maxD - minD;
+                        double percent = (val - minD) / range;
                         double shiftedY =
-                            verticalCenter + normalizedY + plotOffsets[i];
+                            channelBottom + (percent * plotSpacing);
 
-                        // 💥 If shiftedY is outside the channel, discard point
-                        if (shiftedY > channelMaxY || shiftedY < channelMinY) {
-                          return null; // ✅ Ignore this point
-                        }
+                        // Clamp again for safety
+                        if (shiftedY < channelBottom || shiftedY > channelTop)
+                          return null;
 
                         return FlSpot(spot.x, shiftedY);
                       })
@@ -910,7 +909,7 @@ class MyBigGraphV2State extends State<MyBigGraphV2> {
   Widget build(BuildContext context) {
     return Row(
       children: [
-        _leftConsole(),
+        _leftConsole(), // ✅ Left panel with controls
         Expanded(
           child: Listener(
             onPointerSignal: (event) {
@@ -926,15 +925,24 @@ class MyBigGraphV2State extends State<MyBigGraphV2> {
               child: SingleChildScrollView(
                 controller: _scrollController,
                 scrollDirection: Axis.horizontal,
-                child: SizedBox(
-                  width:
-                      widget.isImported
-                          ? ((allPlotData.isNotEmpty &&
-                                  allPlotData[0].isNotEmpty)
-                              ? allPlotData[0].last.x * 0.4
-                              : widget.windowSize.toDouble())
-                          : widget.windowSize.toDouble() * 0.5,
-                  child: _chart(),
+                child: ValueListenableBuilder<List<List<FlSpot>>>(
+                  valueListenable: plotNotifier,
+                  builder: (context, currentData, _) {
+                    final bool hasData =
+                        currentData.isNotEmpty && currentData[0].isNotEmpty;
+
+                    final double calculatedWidth =
+                        widget.isImported
+                            ? (hasData
+                                ? currentData[0].last.x * 0.4
+                                : widget.windowSize.toDouble())
+                            : widget.windowSize.toDouble() * 0.5;
+
+                    return SizedBox(
+                      width: calculatedWidth,
+                      child: _chart(currentData),
+                    );
+                  },
                 ),
               ),
             ),

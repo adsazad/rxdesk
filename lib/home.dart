@@ -91,7 +91,7 @@ class _HomeState extends State<Home> {
     super.initState();
     initFunc();
 
-    // startTestLoop();
+    startTestLoop();
     // init();
     // CPETService cpet = CPETService();
     // timer = Timer.periodic(Duration(seconds: 10), (timer) {
@@ -1749,10 +1749,22 @@ class _HomeState extends State<Home> {
                           });
                         },
                         plot: [
-                          {"name": "ECG", "scale": 3, "gain": 0.4},
+                          {
+                            "name": "ECG",
+                            "boxValue": 4096 / 12,
+                            "unit": "mV",
+                            "minDisplay": (-4096 / 12) * 3,
+                            "maxDisplay": (4096 / 12) * 3,
+                            "scale": 3,
+                            "gain": 0.4,
+                          },
                           {
                             "name": "O2",
                             "scale": 3,
+                            "boxValue": 5,
+                            "unit": "%",
+                            "minDisplay": 0.0,
+                            "maxDisplay": 30.0,
                             "filterConfig": {
                               "filterOn": false,
                               "lpf": 3,
@@ -1804,6 +1816,11 @@ class _HomeState extends State<Home> {
                           {
                             "name": "CO2",
                             "scale": 3,
+                            "boxValue": 1 * 100,
+                            "boxValueConvert": (double x) => x / 100,
+                            "unit": "%",
+                            "minDisplay": 100,
+                            "maxDisplay": 7 * 100,
                             "filterConfig": {
                               "filterOn": false,
                               "lpf": 3,
@@ -1819,6 +1836,11 @@ class _HomeState extends State<Home> {
                           {
                             "name": "Flow",
                             "scale": 3,
+                            "boxValue": 100,
+                            "unit": "l/s",
+                            "minDisplay": 0.0,
+                            "maxDisplay": 550,
+
                             "meter": {
                               "decimal": 0,
                               "unit": " ",
@@ -1828,6 +1850,15 @@ class _HomeState extends State<Home> {
                           {
                             "name": "Tidal Volume",
                             "scale": 3,
+                            "boxValue":
+                                100, // ✅ Each grid box is 25 units (e.g., ml)
+                            "boxStep": 25.0, // 👈 new config
+
+                            "unit": "ml", // ✅ Shown on Y-axis
+                            "minDisplay":
+                                0.0, // ✅ Lower bound for displayed values
+                            "maxDisplay":
+                                550.0, // ✅ Upper bound for displayed values
                             "meter": {
                               "decimal": 0,
                               "unit": " ",
