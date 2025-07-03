@@ -190,6 +190,9 @@ class MyBigGraphV2State extends State<MyBigGraphV2> {
   }
 
   // ValueNotifier<List<List<FlSpot>>> plotNotifier = ValueNotifier([]);
+  // Add this near the top of your class
+  int _sampleBatchCounter = 0;
+  final int _batchThreshold = 5; // 🔁 update graph every 20 samples
 
   List<double> updateEverything(List<double> values) {
     List<double> processedValues = [];
@@ -222,11 +225,15 @@ class MyBigGraphV2State extends State<MyBigGraphV2> {
       }
     }
 
-    // ✅ Update graph data without rebuilding whole widget
-    plotNotifier.value = List.generate(
-      allPlotData.length,
-      (i) => List.of(allPlotData[i]),
-    );
+    // 🧠 Instead of updating every sample, update every 20 samples
+    _sampleBatchCounter++;
+    if (_sampleBatchCounter >= _batchThreshold) {
+      plotNotifier.value = List.generate(
+        allPlotData.length,
+        (i) => List.of(allPlotData[i]),
+      );
+      _sampleBatchCounter = 0;
+    }
 
     return processedValues;
   }
