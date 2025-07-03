@@ -1690,9 +1690,9 @@ class _HomeState extends State<Home> {
                               "fun": (e) {
                                 if (e.length > 2 &&
                                     e[1] != null &&
-                                    e[3] != null) {
+                                    e[4] != null) {
                                   double o2Percent = e[1] * 0.013463 - 0.6;
-                                  double flow = e[3];
+                                  double flow = e[4];
                                   return flow * (20.93 - o2Percent);
                                 } else {
                                   return null;
@@ -1704,10 +1704,10 @@ class _HomeState extends State<Home> {
                             "vco2": {
                               "fun": (e) {
                                 if (e.length > 3 &&
-                                    e[3] != null &&
-                                    e[3] != null) {
+                                    e[4] != null &&
+                                    e[4] != null) {
                                   double co2Fraction = e[2] / 100; // CO₂ %
-                                  double flow = e[3]; // Flow in L/min
+                                  double flow = e[4]; // Flow in L/min
                                   return flow * co2Fraction;
                                 } else {
                                   return null;
