@@ -653,14 +653,54 @@ class MyBigGraphV2State extends State<MyBigGraphV2> {
     );
   }
 
+  // void _adjustScale(int index, {required bool increase}) {
+  //   setState(() {
+  //     double minDisplay = (widget.plot[index]["minDisplay"] ?? 0.0).toDouble();
+  //     double maxDisplay =
+  //         (widget.plot[index]["maxDisplay"] ?? 100.0).toDouble();
+  //     double boxValue = (widget.plot[index]["boxValue"] ?? 25.0).toDouble();
+
+  //     if (increase) {
+  //       // Zoom in: remove one box from both ends, but keep at least one box
+  //       if ((maxDisplay - minDisplay) > 2 * boxValue) {
+  //         widget.plot[index]["minDisplay"] = minDisplay + boxValue;
+  //         widget.plot[index]["maxDisplay"] = maxDisplay - boxValue;
+  //       }
+  //     } else {
+  //       // Zoom out: add one box to both ends
+  //       widget.plot[index]["minDisplay"] = minDisplay - boxValue;
+  //       widget.plot[index]["maxDisplay"] = maxDisplay + boxValue;
+  //     }
+  //   });
+  // }
+
   void _adjustScale(int index, {required bool increase}) {
     setState(() {
-      double factor = 1.2; // 20% zoom per click
+      double minDisplay = (widget.plot[index]["minDisplay"] ?? 0.0).toDouble();
+      double maxDisplay =
+          (widget.plot[index]["maxDisplay"] ?? 100.0).toDouble();
+      double boxValue = (widget.plot[index]["boxValue"] ?? 25.0).toDouble();
+
+      // Keep number of boxes constant
+      int numBoxes = 5; // Or whatever you want (e.g., 5 boxes always)
+
+      // Adjust boxValue to zoom
       if (increase) {
-        plotScales[index] /= factor; // zoom in (magnify)
+        boxValue /= 1.5; // Zoom in: smaller value per box
       } else {
-        plotScales[index] *= factor; // zoom out (compress)
+        boxValue *= 1.5; // Zoom out: larger value per box
       }
+
+      // Prevent boxValue from being too small or too large
+      if (boxValue < 0.001) boxValue = 0.001;
+      if (boxValue > 1e6) boxValue = 1e6;
+
+      double mid = (maxDisplay + minDisplay) / 2;
+      double newRange = numBoxes * boxValue;
+
+      widget.plot[index]["boxValue"] = boxValue;
+      widget.plot[index]["minDisplay"] = mid - newRange / 2;
+      widget.plot[index]["maxDisplay"] = mid + newRange / 2;
     });
   }
 
@@ -693,11 +733,17 @@ class MyBigGraphV2State extends State<MyBigGraphV2> {
 
   void _adjustOffset(int index, {required bool up}) {
     setState(() {
-      double moveFactor = (4096 / 12) * 0.5; // Same movement as 0.5 box
+      double boxValue = (widget.plot[index]["boxValue"] ?? 25.0).toDouble();
       if (up) {
-        plotOffsets[index] += moveFactor;
+        widget.plot[index]["minDisplay"] =
+            (widget.plot[index]["minDisplay"] ?? 0.0) + boxValue;
+        widget.plot[index]["maxDisplay"] =
+            (widget.plot[index]["maxDisplay"] ?? 100.0) + boxValue;
       } else {
-        plotOffsets[index] -= moveFactor;
+        widget.plot[index]["minDisplay"] =
+            (widget.plot[index]["minDisplay"] ?? 0.0) - boxValue;
+        widget.plot[index]["maxDisplay"] =
+            (widget.plot[index]["maxDisplay"] ?? 100.0) - boxValue;
       }
     });
   }
@@ -824,47 +870,31 @@ class MyBigGraphV2State extends State<MyBigGraphV2> {
 
             return LineChartBarData(
               spots:
-                  allPlotData[i]
-                      .map((spot) {
-                        double totalHeight = widget.maxY - widget.minY;
-                        double plotSpacing = totalHeight / widget.plot.length;
-                        double verticalCenter =
-                            widget.maxY - plotSpacing * (i + 0.5);
+                  allPlotData[i].map((spot) {
+                    double totalHeight = widget.maxY - widget.minY;
+                    double plotSpacing = totalHeight / widget.plot.length;
+                    double channelTop = widget.maxY - plotSpacing * i;
+                    double channelBottom = widget.maxY - plotSpacing * (i + 1);
 
-                        // Channel boundaries
-                        double channelMaxY = widget.maxY - plotSpacing * i;
-                        double channelMinY =
-                            widget.maxY - plotSpacing * (i + 1);
+                    final minD =
+                        (widget.plot[i]["minDisplay"] ?? 0.0).toDouble();
+                    final maxD =
+                        (widget.plot[i]["maxDisplay"] ?? 100.0).toDouble();
+                    final val = spot.y * plotGains[i];
 
-                        final minD =
-                            (widget.plot[i]["minDisplay"] ?? 0.0).toDouble();
-                        final maxD =
-                            (widget.plot[i]["maxDisplay"] ?? 100.0).toDouble();
-                        final val = spot.y * plotGains[i];
+                    // Clamp value to min/max display
+                    double clampedVal = val.clamp(minD, maxD) as double;
 
-                        // ❌ Skip values outside display range
-                        if (val < minD || val > maxD) return null;
+                    double range = maxD - minD;
+                    double percent = (clampedVal - minD) / range;
+                    double shiftedY = channelBottom + (percent * plotSpacing);
 
-                        double plotHeight = widget.maxY - widget.minY;
-                        plotSpacing = plotHeight / widget.plot.length;
-                        double channelTop = widget.maxY - plotSpacing * i;
-                        double channelBottom =
-                            widget.maxY - plotSpacing * (i + 1);
+                    // Clamp Y for safety
+                    if (shiftedY < channelBottom) shiftedY = channelBottom;
+                    if (shiftedY > channelTop) shiftedY = channelTop;
 
-                        // ✅ Relative to minDisplay = 0 at bottom
-                        double range = maxD - minD;
-                        double percent = (val - minD) / range;
-                        double shiftedY =
-                            channelBottom + (percent * plotSpacing);
-
-                        // Clamp again for safety
-                        if (shiftedY < channelBottom || shiftedY > channelTop)
-                          return null;
-
-                        return FlSpot(spot.x, shiftedY);
-                      })
-                      .whereType<FlSpot>()
-                      .toList(),
+                    return FlSpot(spot.x, shiftedY);
+                  }).toList(),
 
               // ✅ Important: remove nulls
               isCurved: false,
