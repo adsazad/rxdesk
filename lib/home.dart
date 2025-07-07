@@ -1850,6 +1850,41 @@ class _HomeState extends State<Home> {
                           {
                             "name": "Tidal Volume",
                             "scale": 3,
+
+                            "scalePresets": [
+                              // Two minus: 0 to 125, box width 25
+                              {
+                                "minDisplay": 0.0,
+                                "maxDisplay": 125.0,
+                                "boxValue": 25.0,
+                              },
+                              // One minus: 0 to 240, box width 50
+                              {
+                                "minDisplay": 0.0,
+                                "maxDisplay": 240.0,
+                                "boxValue": 50.0,
+                              },
+                              // Default (center): 0 to 500, box width 100
+                              {
+                                "minDisplay": 0.0,
+                                "maxDisplay": 500.0,
+                                "boxValue": 100.0,
+                              },
+                              // One plus: 0 to 1000, box width 200
+                              {
+                                "minDisplay": 0.0,
+                                "maxDisplay": 1000.0,
+                                "boxValue": 200.0,
+                              },
+                              // Two plus: 0 to 2000, box width 400
+                              {
+                                "minDisplay": 0.0,
+                                "maxDisplay": 2000.0,
+                                "boxValue": 400.0,
+                              },
+                            ],
+                            "scalePresetIndex":
+                                2, // Centered at default (0 to 500)
                             "boxValue":
                                 100, // ✅ Each grid box is 25 units (e.g., ml)
                             "boxStep": 25.0, // 👈 new config

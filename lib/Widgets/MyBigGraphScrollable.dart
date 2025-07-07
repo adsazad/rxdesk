@@ -674,33 +674,99 @@ class MyBigGraphV2State extends State<MyBigGraphV2> {
   //   });
   // }
 
+  // void _adjustScale(int index, {required bool increase}) {
+  //   setState(() {
+  //     double minDisplay = (widget.plot[index]["minDisplay"] ?? 0.0).toDouble();
+  //     double maxDisplay =
+  //         (widget.plot[index]["maxDisplay"] ?? 100.0).toDouble();
+  //     double boxValue = (widget.plot[index]["boxValue"] ?? 25.0).toDouble();
+
+  //     // Keep number of boxes constant
+  //     int numBoxes = 5; // Or whatever you want (e.g., 5 boxes always)
+
+  //     // Adjust boxValue to zoom
+  //     if (increase) {
+  //       boxValue /= 1.5; // Zoom in: smaller value per box
+  //     } else {
+  //       boxValue *= 1.5; // Zoom out: larger value per box
+  //     }
+
+  //     // Prevent boxValue from being too small or too large
+  //     if (boxValue < 0.001) boxValue = 0.001;
+  //     if (boxValue > 1e6) boxValue = 1e6;
+
+  //     double mid = (maxDisplay + minDisplay) / 2;
+  //     double newRange = numBoxes * boxValue;
+
+  //     widget.plot[index]["boxValue"] = boxValue;
+  //     widget.plot[index]["minDisplay"] = mid - newRange / 2;
+  //     widget.plot[index]["maxDisplay"] = mid + newRange / 2;
+  //   });
+  // }
+
   void _adjustScale(int index, {required bool increase}) {
     setState(() {
-      double minDisplay = (widget.plot[index]["minDisplay"] ?? 0.0).toDouble();
-      double maxDisplay =
-          (widget.plot[index]["maxDisplay"] ?? 100.0).toDouble();
-      double boxValue = (widget.plot[index]["boxValue"] ?? 25.0).toDouble();
+      // Check for preset scaling config
+      final preset = widget.plot[index]["scalePresets"];
+      int presetPos = widget.plot[index]["scalePresetIndex"] ?? 0;
 
-      // Keep number of boxes constant
-      int numBoxes = 5; // Or whatever you want (e.g., 5 boxes always)
-
-      // Adjust boxValue to zoom
-      if (increase) {
-        boxValue /= 1.5; // Zoom in: smaller value per box
+      if (preset is List && preset.isNotEmpty) {
+        // Use preset scaling
+        if (increase) {
+          if (presetPos < preset.length - 1) presetPos++;
+        } else {
+          if (presetPos > 0) presetPos--;
+        }
+        final presetVal = preset[presetPos];
+        // Support both boxValue or min/maxDisplay in preset
+        if (presetVal is Map) {
+          widget.plot[index]["boxValue"] =
+              presetVal["boxValue"] ?? widget.plot[index]["boxValue"];
+          widget.plot[index]["minDisplay"] =
+              presetVal["minDisplay"] ?? widget.plot[index]["minDisplay"];
+          widget.plot[index]["maxDisplay"] =
+              presetVal["maxDisplay"] ?? widget.plot[index]["maxDisplay"];
+        } else {
+          // If preset is just a boxValue list
+          widget.plot[index]["boxValue"] = presetVal;
+          // Recalculate min/maxDisplay centered
+          double minDisplay =
+              (widget.plot[index]["minDisplay"] ?? 0.0).toDouble();
+          double maxDisplay =
+              (widget.plot[index]["maxDisplay"] ?? 100.0).toDouble();
+          int numBoxes = 5;
+          double mid = (maxDisplay + minDisplay) / 2;
+          double newRange = numBoxes * (presetVal as double);
+          widget.plot[index]["minDisplay"] = mid - newRange / 2;
+          widget.plot[index]["maxDisplay"] = mid + newRange / 2;
+        }
+        widget.plot[index]["scalePresetIndex"] = presetPos;
       } else {
-        boxValue *= 1.5; // Zoom out: larger value per box
+        // Fallback to original dynamic scaling
+        double minDisplay =
+            (widget.plot[index]["minDisplay"] ?? 0.0).toDouble();
+        double maxDisplay =
+            (widget.plot[index]["maxDisplay"] ?? 100.0).toDouble();
+        double boxValue = (widget.plot[index]["boxValue"] ?? 25.0).toDouble();
+
+        int numBoxes = 5;
+
+        if (increase) {
+          boxValue /= 1.5;
+        } else {
+          boxValue *= 1.5;
+        }
+
+        if (boxValue < 0.001) boxValue = 0.001;
+        if (boxValue > 1e6) boxValue = 1e6;
+
+        double mid = (maxDisplay + minDisplay) / 2;
+        double newRange = numBoxes * boxValue;
+
+        widget.plot[index]["boxValue"] = boxValue;
+        widget.plot[index]["minDisplay"] = mid - newRange / 2;
+        widget.plot[index]["maxDisplay"] = mid + newRange / 2;
       }
-
-      // Prevent boxValue from being too small or too large
-      if (boxValue < 0.001) boxValue = 0.001;
-      if (boxValue > 1e6) boxValue = 1e6;
-
-      double mid = (maxDisplay + minDisplay) / 2;
-      double newRange = numBoxes * boxValue;
-
-      widget.plot[index]["boxValue"] = boxValue;
-      widget.plot[index]["minDisplay"] = mid - newRange / 2;
-      widget.plot[index]["maxDisplay"] = mid + newRange / 2;
     });
   }
 
