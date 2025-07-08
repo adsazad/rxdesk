@@ -86,17 +86,109 @@ class _HomeState extends State<Home> {
   bool isRecording = false;
 
   Map<String, dynamic>? cp;
+  late List<Map<String, dynamic>> plotConfig; // <-- Move plot config here
+
   @override
   void initState() {
     super.initState();
     initFunc();
 
-    // startTestLoop();
-    // init();
-    // CPETService cpet = CPETService();
-    // timer = Timer.periodic(Duration(seconds: 10), (timer) {
-    //
-    // });
+    // Initialize plotConfig in state
+    plotConfig = [
+      {
+        "name": "ECG",
+        "boxValue": 4096 / 12,
+        "unit": "mV",
+        "minDisplay": (-4096 / 12) * 3,
+        "maxDisplay": (4096 / 12) * 3,
+        "scale": 3,
+        "gain": 0.4,
+      },
+      {
+        "name": "O2",
+        "scale": 3,
+        "boxValue": 5,
+        "unit": "%",
+        "minDisplay": 0.0,
+        "maxDisplay": 30.0,
+        "filterConfig": {"filterOn": false, "lpf": 3, "hpf": 5, "notch": 1},
+        "meter": {
+          "decimal": 1,
+          "unit":
+              Provider.of<GlobalSettingsModal>(
+                    context,
+                    listen: false,
+                  ).applyConversion
+                  ? " %"
+                  : " mV",
+          "convert": (double x) {
+            x = x * 0.00072105;
+            globalSettings = Provider.of<GlobalSettingsModal>(
+              context,
+              listen: false,
+            );
+            if (globalSettings != null &&
+                globalSettings.applyConversion == true) {
+              double result = o2Calibrate(x);
+              return result;
+            }
+            return x;
+          },
+        },
+      },
+      {
+        "name": "CO2",
+        "scale": 3,
+        "boxValue": 1 * 100,
+        "boxValueConvert": (double x) => x / 100,
+        "unit": "%",
+        "minDisplay": 0,
+        "maxDisplay": 7 * 100,
+        "filterConfig": {"filterOn": false, "lpf": 3, "hpf": 5, "notch": 1},
+        "meter": {"decimal": 1, "unit": "%", "convert": (double x) => x / 100},
+      },
+      {
+        "name": "Flow",
+        "scale": 3,
+        "scalePresets": [
+          {"minDisplay": 0.0, "maxDisplay": 125.0, "boxValue": 25.0},
+          {"minDisplay": 0.0, "maxDisplay": 240.0, "boxValue": 50.0},
+          {"minDisplay": 0.0, "maxDisplay": 500.0, "boxValue": 100.0},
+          {"minDisplay": 0.0, "maxDisplay": 1000.0, "boxValue": 200.0},
+          {"minDisplay": 0.0, "maxDisplay": 2000.0, "boxValue": 400.0},
+          {"minDisplay": 0.0, "maxDisplay": 4000.0, "boxValue": 800.0},
+          {"minDisplay": 0.0, "maxDisplay": 8000.0, "boxValue": 1600.0},
+        ],
+        "scalePresetIndex": 2,
+        "boxValue": 100,
+        "unit": "l/s",
+        "minDisplay": 0.0,
+        "maxDisplay": 550,
+        "meter": {"decimal": 0, "unit": " ", "convert": (double x) => x},
+      },
+      {
+        "name": "Tidal Volume",
+        "scale": 3,
+        "scalePresets": [
+          {"minDisplay": 0.0, "maxDisplay": 125.0, "boxValue": 25.0},
+          {"minDisplay": 0.0, "maxDisplay": 240.0, "boxValue": 50.0},
+          {"minDisplay": 0.0, "maxDisplay": 500.0, "boxValue": 100.0},
+          {"minDisplay": 0.0, "maxDisplay": 1000.0, "boxValue": 200.0},
+          {"minDisplay": 0.0, "maxDisplay": 2000.0, "boxValue": 400.0},
+          {"minDisplay": 0.0, "maxDisplay": 4000.0, "boxValue": 800.0},
+          {"minDisplay": 0.0, "maxDisplay": 8000.0, "boxValue": 1600.0},
+        ],
+        "scalePresetIndex": 2,
+        "boxValue": 100,
+        "boxStep": 25.0,
+        "unit": "ml",
+        "minDisplay": 0.0,
+        "maxDisplay": 550.0,
+        "meter": {"decimal": 0, "unit": " ", "convert": (double x) => x},
+      },
+    ];
+
+    // startTestLoop(); // Start the test loop
   }
 
   initFunc() async {
@@ -1755,217 +1847,7 @@ class _HomeState extends State<Home> {
                             // }
                           });
                         },
-                        plot: [
-                          {
-                            "name": "ECG",
-                            "boxValue": 4096 / 12,
-                            "unit": "mV",
-                            "minDisplay": (-4096 / 12) * 3,
-                            "maxDisplay": (4096 / 12) * 3,
-                            "scale": 3,
-                            "gain": 0.4,
-                          },
-                          {
-                            "name": "O2",
-                            "scale": 3,
-                            "boxValue": 5,
-                            "unit": "%",
-                            "minDisplay": 0.0,
-                            "maxDisplay": 30.0,
-                            "filterConfig": {
-                              "filterOn": false,
-                              "lpf": 3,
-                              "hpf": 5,
-                              "notch": 1,
-                            },
-                            "meter": {
-                              "decimal": 1,
-                              "unit":
-                                  Provider.of<GlobalSettingsModal>(
-                                        context,
-                                      ).applyConversion
-                                      ? " %"
-                                      : " mV",
-                              // "convert": (double x) => x, // voltage
-                              // "convert": (double x) => x * 0.00072105 , // voltage
-                              "convert": (double x) {
-                                x = x * 0.00072105;
-                                // print("VLT: ${x}");
-                                globalSettings =
-                                    Provider.of<GlobalSettingsModal>(
-                                      context,
-                                      listen: false,
-                                    );
-
-                                if (globalSettings != null &&
-                                    globalSettings.applyConversion == true) {
-                                  double result = o2Calibrate(x);
-                                  return result;
-                                }
-
-                                // print("RES: ${result}");
-                                return x;
-                              }, // voltage
-                              // "convert": (double x) => x * 0.013463 - 0.6,
-                            },
-                          },
-                          // {
-                          //   "name": "Flow",
-                          //   "scale": 3,
-                          //   "meter": {
-                          //     "unit": "l/s",
-                          //     // "convert": (double x) => x * 0.03005 - 4.1006 ,
-                          //     // "convert": (double x) => x * (0.001464/4) ,
-                          //     // "convert": (double x) => x * 0.00072105 ,
-                          //     "convert": (double x) => x,
-                          //   },
-                          // },
-                          {
-                            "name": "CO2",
-                            "scale": 3,
-                            "boxValue": 1 * 100,
-                            "boxValueConvert": (double x) => x / 100,
-                            "unit": "%",
-                            "minDisplay": 0,
-                            "maxDisplay": 7 * 100,
-                            "filterConfig": {
-                              "filterOn": false,
-                              "lpf": 3,
-                              "hpf": 5,
-                              "notch": 1,
-                            },
-                            "meter": {
-                              "decimal": 1,
-                              "unit": "%",
-                              "convert": (double x) => x / 100,
-                            },
-                          },
-                          {
-                            "name": "Flow",
-                            "scale": 3,
-
-                            "scalePresets": [
-                              // Two minus: 0 to 125, box width 25
-                              {
-                                "minDisplay": 0.0,
-                                "maxDisplay": 125.0,
-                                "boxValue": 25.0,
-                              },
-                              // One minus: 0 to 240, box width 50
-                              {
-                                "minDisplay": 0.0,
-                                "maxDisplay": 240.0,
-                                "boxValue": 50.0,
-                              },
-                              // Default (center): 0 to 500, box width 100
-                              {
-                                "minDisplay": 0.0,
-                                "maxDisplay": 500.0,
-                                "boxValue": 100.0,
-                              },
-                              // One plus: 0 to 1000, box width 200
-                              {
-                                "minDisplay": 0.0,
-                                "maxDisplay": 1000.0,
-                                "boxValue": 200.0,
-                              },
-                              // Two plus: 0 to 2000, box width 400
-                              {
-                                "minDisplay": 0.0,
-                                "maxDisplay": 2000.0,
-                                "boxValue": 400.0,
-                              },
-                              // Three plus: 0 to 4000, box width 800
-                              {
-                                "minDisplay": 0.0,
-                                "maxDisplay": 4000.0,
-                                "boxValue": 800.0,
-                              },
-                              // Four plus: 0 to 8000, box width 1600
-                              {
-                                "minDisplay": 0.0,
-                                "maxDisplay": 8000.0,
-                                "boxValue": 1600.0,
-                              },
-                            ],
-                            "scalePresetIndex":
-                                2, // Centered at default (0 to 500)
-                            "boxValue": 100,
-                            "unit": "l/s",
-                            "minDisplay": 0.0,
-                            "maxDisplay": 550,
-
-                            "meter": {
-                              "decimal": 0,
-                              "unit": " ",
-                              "convert": (double x) => x,
-                            },
-                          },
-                          {
-                            "name": "Tidal Volume",
-                            "scale": 3,
-
-                            "scalePresets": [
-                              // Two minus: 0 to 125, box width 25
-                              {
-                                "minDisplay": 0.0,
-                                "maxDisplay": 125.0,
-                                "boxValue": 25.0,
-                              },
-                              // One minus: 0 to 240, box width 50
-                              {
-                                "minDisplay": 0.0,
-                                "maxDisplay": 240.0,
-                                "boxValue": 50.0,
-                              },
-                              // Default (center): 0 to 500, box width 100
-                              {
-                                "minDisplay": 0.0,
-                                "maxDisplay": 500.0,
-                                "boxValue": 100.0,
-                              },
-                              // One plus: 0 to 1000, box width 200
-                              {
-                                "minDisplay": 0.0,
-                                "maxDisplay": 1000.0,
-                                "boxValue": 200.0,
-                              },
-                              // Two plus: 0 to 2000, box width 400
-                              {
-                                "minDisplay": 0.0,
-                                "maxDisplay": 2000.0,
-                                "boxValue": 400.0,
-                              },
-                              {
-                                "minDisplay": 0.0,
-                                "maxDisplay": 4000.0,
-                                "boxValue": 800.0,
-                              },
-                              // Four plus: 0 to 8000, box width 1600
-                              {
-                                "minDisplay": 0.0,
-                                "maxDisplay": 8000.0,
-                                "boxValue": 1600.0,
-                              },
-                            ],
-                            "scalePresetIndex":
-                                2, // Centered at default (0 to 500)
-                            "boxValue":
-                                100, // ✅ Each grid box is 25 units (e.g., ml)
-                            "boxStep": 25.0, // 👈 new config
-
-                            "unit": "ml", // ✅ Shown on Y-axis
-                            "minDisplay":
-                                0.0, // ✅ Lower bound for displayed values
-                            "maxDisplay":
-                                550.0, // ✅ Upper bound for displayed values
-                            "meter": {
-                              "decimal": 0,
-                              "unit": " ",
-                              "convert": (double x) => x,
-                            },
-                          },
-                        ],
+                        plot: plotConfig, // <-- Use state variable here
                         windowSize: 3000,
                         verticalLineConfigs: [
                           {'seconds': 0.2, 'stroke': 0.5, 'color': Colors.blue},
