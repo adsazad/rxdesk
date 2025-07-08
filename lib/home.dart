@@ -161,10 +161,12 @@ class _HomeState extends State<Home> {
         ],
         "scalePresetIndex": 2,
         "boxValue": 100,
-        "unit": "l/s",
+        "unit": "ml/s",
         "minDisplay": 0.0,
         "maxDisplay": 550,
         "meter": {"decimal": 0, "unit": " ", "convert": (double x) => x},
+        "yAxisLabelConvert": (double x) => x / 1000,
+        "yAxisLabelUnit": "L/s",
       },
       {
         "name": "Tidal Volume",
@@ -185,10 +187,12 @@ class _HomeState extends State<Home> {
         "minDisplay": 0.0,
         "maxDisplay": 550.0,
         "meter": {"decimal": 0, "unit": " ", "convert": (double x) => x},
+        "yAxisLabelConvert": (double x) => x / 1000,
+        "yAxisLabelUnit": "L",
       },
     ];
 
-    // startTestLoop(); // Start the test loop
+    startTestLoop(); // Start the test loop
   }
 
   initFunc() async {
