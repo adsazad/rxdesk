@@ -1593,6 +1593,13 @@ class _HomeState extends State<Home> {
                                           .map((e) => (e as num).toDouble())
                                           .toList();
 
+                                  if (numericSample.length >= 5) {
+                                    // Flip the last two values
+                                    final temp = numericSample[3];
+                                    numericSample[3] = numericSample[4];
+                                    numericSample[4] = temp;
+                                  }
+
                                   final edt = myBigGraphKey.currentState
                                       ?.updateEverything(numericSample);
                                   if (edt != null && edt.length >= 5) {
@@ -1600,8 +1607,8 @@ class _HomeState extends State<Home> {
                                       edt[0],
                                       edt[1],
                                       edt[2],
-                                      edt[4],
                                       edt[3],
+                                      edt[4],
                                     ]);
                                   }
                                 }

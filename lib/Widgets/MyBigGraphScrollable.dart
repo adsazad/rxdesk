@@ -407,13 +407,13 @@ class MyBigGraphV2State extends State<MyBigGraphV2> {
                               icon: const Icon(Icons.add, size: 16),
                               padding: EdgeInsets.zero,
                               constraints: const BoxConstraints(),
-                              onPressed: () => _adjustScale(i, increase: true),
+                              onPressed: () => _adjustScale(i, increase: false),
                             ),
                             IconButton(
                               icon: const Icon(Icons.remove, size: 16),
                               padding: EdgeInsets.zero,
                               constraints: const BoxConstraints(),
-                              onPressed: () => _adjustScale(i, increase: false),
+                              onPressed: () => _adjustScale(i, increase: true),
                             ),
                             IconButton(
                               icon: const Icon(
