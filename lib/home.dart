@@ -358,7 +358,7 @@ class _HomeState extends State<Home> {
           return;
         }
 
-        dataIndex += 1; // shift by one to search for next header
+        dataIndex += 1; // shift to search for next header
       }
 
       // Restart if we reached end
@@ -1826,7 +1826,7 @@ class _HomeState extends State<Home> {
                             "boxValue": 1 * 100,
                             "boxValueConvert": (double x) => x / 100,
                             "unit": "%",
-                            "minDisplay": 100,
+                            "minDisplay": 0,
                             "maxDisplay": 7 * 100,
                             "filterConfig": {
                               "filterOn": false,
@@ -1874,6 +1874,18 @@ class _HomeState extends State<Home> {
                                 "minDisplay": 0.0,
                                 "maxDisplay": 2000.0,
                                 "boxValue": 400.0,
+                              },
+                              // Three plus: 0 to 4000, box width 800
+                              {
+                                "minDisplay": 0.0,
+                                "maxDisplay": 4000.0,
+                                "boxValue": 800.0,
+                              },
+                              // Four plus: 0 to 8000, box width 1600
+                              {
+                                "minDisplay": 0.0,
+                                "maxDisplay": 8000.0,
+                                "boxValue": 1600.0,
                               },
                             ],
                             "scalePresetIndex":
@@ -1923,6 +1935,17 @@ class _HomeState extends State<Home> {
                                 "minDisplay": 0.0,
                                 "maxDisplay": 2000.0,
                                 "boxValue": 400.0,
+                              },
+                              {
+                                "minDisplay": 0.0,
+                                "maxDisplay": 4000.0,
+                                "boxValue": 800.0,
+                              },
+                              // Four plus: 0 to 8000, box width 1600
+                              {
+                                "minDisplay": 0.0,
+                                "maxDisplay": 8000.0,
+                                "boxValue": 1600.0,
                               },
                             ],
                             "scalePresetIndex":
