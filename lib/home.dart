@@ -192,7 +192,7 @@ class _HomeState extends State<Home> {
       },
     ];
 
-    startTestLoop(); // Start the test loop
+    // startTestLoop(); // Start the test loop
   }
 
   initFunc() async {
