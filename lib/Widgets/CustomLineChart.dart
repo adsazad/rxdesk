@@ -9,6 +9,18 @@ class CustomLineChart extends StatelessWidget {
   final String xLabel;
   final String yLabel;
 
+  // Optional parameters with defaults
+  final double? xMin;
+  final double? xMax;
+  final double? xInterval;
+  final double? yMin;
+  final double? yMax;
+  final double? yInterval;
+  final bool showGrid;
+  final double barWidth;
+  final bool showDots;
+  final bool isCurved;
+
   const CustomLineChart({
     Key? key,
     required this.xValues,
@@ -17,6 +29,16 @@ class CustomLineChart extends StatelessWidget {
     this.lineColor = Colors.blue,
     this.xLabel = 'X-axis',
     this.yLabel = 'Y-axis',
+    this.xMin,
+    this.xMax,
+    this.xInterval,
+    this.yMin,
+    this.yMax,
+    this.yInterval,
+    this.showGrid = true,
+    this.barWidth = 2,
+    this.showDots = false,
+    this.isCurved = false,
   }) : assert(
          xValues.length == yValues.length,
          "X and Y arrays must have the same length",
@@ -30,8 +52,16 @@ class CustomLineChart extends StatelessWidget {
       (index) => FlSpot(xValues[index], yValues[index]),
     );
 
-    final xInterval = _calculateInterval(xValues);
-    final yInterval = _calculateInterval(yValues);
+    final double computedXMin =
+        xMin ?? (xValues.isEmpty ? 0 : xValues.reduce((a, b) => a < b ? a : b));
+    final double computedXMax =
+        xMax ?? (xValues.isEmpty ? 1 : xValues.reduce((a, b) => a > b ? a : b));
+    final double computedYMin =
+        yMin ?? (yValues.isEmpty ? 0 : yValues.reduce((a, b) => a < b ? a : b));
+    final double computedYMax =
+        yMax ?? (yValues.isEmpty ? 1 : yValues.reduce((a, b) => a > b ? a : b));
+    final double computedXInterval = xInterval ?? _calculateInterval(xValues);
+    final double computedYInterval = yInterval ?? _calculateInterval(yValues);
 
     return LayoutBuilder(
       builder: (context, constraints) {
@@ -67,12 +97,16 @@ class CustomLineChart extends StatelessWidget {
                         height: chartHeight,
                         child: LineChart(
                           LineChartData(
-                            gridData: FlGridData(show: true),
+                            minX: computedXMin,
+                            maxX: computedXMax,
+                            minY: computedYMin,
+                            maxY: computedYMax,
+                            gridData: FlGridData(show: showGrid),
                             titlesData: FlTitlesData(
                               leftTitles: AxisTitles(
                                 sideTitles: SideTitles(
                                   showTitles: true,
-                                  interval: yInterval,
+                                  interval: computedYInterval,
                                   getTitlesWidget: (value, meta) {
                                     return Text(
                                       value.toStringAsFixed(1),
@@ -87,7 +121,7 @@ class CustomLineChart extends StatelessWidget {
                               bottomTitles: AxisTitles(
                                 sideTitles: SideTitles(
                                   showTitles: true,
-                                  interval: xInterval,
+                                  interval: computedXInterval,
                                   getTitlesWidget: (value, meta) {
                                     return Text(
                                       value.toStringAsFixed(1),
@@ -110,12 +144,12 @@ class CustomLineChart extends StatelessWidget {
                             lineBarsData: [
                               LineChartBarData(
                                 spots: spots,
-                                isCurved: false,
+                                isCurved: isCurved,
                                 show: true,
-                                barWidth: 0,
-                                color: Colors.transparent,
+                                barWidth: barWidth,
+                                color: lineColor,
                                 dotData: FlDotData(
-                                  show: true,
+                                  show: showDots,
                                   getDotPainter: (
                                     spot,
                                     percent,
