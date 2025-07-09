@@ -31,6 +31,7 @@ import 'package:file_selector/file_selector.dart';
 import 'package:file_picker/file_picker.dart';
 import 'dart:typed_data';
 import 'package:path/path.dart' as p;
+import 'package:spirobtvo/ReportPreviewPage.dart'; // <-- Import your preview page
 
 class Home extends StatefulWidget {
   const Home({super.key});
@@ -1677,6 +1678,19 @@ class _HomeState extends State<Home> {
                               // setState(() {
                               //   defaultPatient = result['patient'];
                               // });
+                              final patient = result['patient'];
+                              final defaultProvider =
+                                  Provider.of<DefaultPatientModal>(
+                                    context,
+                                    listen: false,
+                                  );
+                              final prefs =
+                                  await SharedPreferences.getInstance();
+                              prefs.setString(
+                                'default_patient',
+                                jsonEncode(patient),
+                              );
+                              defaultProvider.setDefault(patient);
 
                               final samples =
                                   result['samples'] as List<dynamic>;
@@ -1780,6 +1794,43 @@ class _HomeState extends State<Home> {
                             );
                           },
                         ),
+                        _iconButtonColumn(
+                          icon: Icons.picture_as_pdf,
+                          label: "Print PDF",
+                          onPressed: () async {
+                            if (isImported &&
+                                cp != null &&
+                                cp!['breathStats'] is List) {
+                              // Optionally, generate chart images as base64 and pass as graphBase64List
+                              List<String>? graphBase64List;
+                              // graphBase64List = await generateYourGraphBase64List(); // implement if needed
+
+                              Navigator.of(context).push(
+                                MaterialPageRoute(
+                                  builder:
+                                      (context) => ReportPreviewPage(
+                                        patient:
+                                            Provider.of<DefaultPatientModal>(
+                                              context,
+                                              listen: false,
+                                            ).patient ??
+                                            {},
+                                        breathStats: cp!["breathStats"],
+                                        graphBase64List: graphBase64List,
+                                      ),
+                                ),
+                              );
+                            } else {
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                SnackBar(
+                                  content: Text(
+                                    "Import data first to print PDF.",
+                                  ),
+                                ),
+                              );
+                            }
+                          },
+                        ),
                       ],
                     ),
                   ),
@@ -1791,6 +1842,7 @@ class _HomeState extends State<Home> {
                     Expanded(
                       child: MyBigGraphV2(
                         key: myBigGraphKey,
+                        // if(delaySamples == null) {
                         isImported: isImported,
                         onCycleComplete: () {
                           // if(delaySamples == null) {
