@@ -388,7 +388,7 @@ class _HomeState extends State<Home> {
       },
     ];
 
-    // startTestLoop(); // Start the test loop
+    startTestLoop(); // Start the test loop
   }
 
   initFunc() async {
@@ -1640,7 +1640,9 @@ class _HomeState extends State<Home> {
                               );
                             } else {
                               // Stop recording
-                              port.close();
+
+                              // port.close();
+
                               print("Stopping recording...");
 
                               recordEndIndex = sampleCounter;

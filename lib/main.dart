@@ -8,6 +8,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:spirobtvo/ProviderModals/DefaultPatientModal.dart';
 import 'package:spirobtvo/ProviderModals/GlobalSettingsModal.dart';
 import 'package:spirobtvo/Services/navigatorService.dart';
+import 'package:spirobtvo/data/local/database.dart';
 import 'package:spirobtvo/home.dart';
 import 'package:window_manager/window_manager.dart';
 
@@ -80,6 +81,11 @@ void main() async {
           ),
           pvrd.ChangeNotifierProvider<DefaultPatientModal>(
             create: (context) => DefaultPatientModal(),
+          ),
+          pvrd.Provider<AppDatabase>(
+            create: (context) => AppDatabase(), // <-- Add this line
+            dispose:
+                (context, db) => db.close(), // <-- Clean up when not needed
           ),
         ],
         child: MaterialApp(

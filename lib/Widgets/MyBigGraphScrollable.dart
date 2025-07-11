@@ -307,7 +307,7 @@ class MyBigGraphV2State extends State<MyBigGraphV2> {
               displayVal = convertFn(val);
               if (labelUnit != null) displayUnit = labelUnit;
             } catch (_) {
-              debugPrint("Y-axis label conversion error for value $val");
+              // debugPrint("Y-axis label conversion error for value $val");
             }
           }
 
