@@ -23,7 +23,12 @@ class DataSaver {
     initialized = true;
 
     final dir = await getApplicationDocumentsDirectory();
-    _file = File('${dir.path}/$filename');
+    final tempDirPath = '${dir.path}/SpiroBT/Temp';
+    final tempDir = Directory(tempDirPath);
+    if (!await tempDir.exists()) {
+      await tempDir.create(recursive: true);
+    }
+    _file = File('${tempDir.path}/$filename');
     print('Initializing DataSaver with file: ${_file.path}');
 
     final jsonString = jsonEncode(patientInfo);

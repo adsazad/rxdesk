@@ -1743,7 +1743,7 @@ class _HomeState extends State<Home> {
                             } else {
                               // Stop recording
 
-                              // port.close();
+                              port.close();
 
                               print("Stopping recording...");
 
