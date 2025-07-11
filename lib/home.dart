@@ -142,11 +142,12 @@ class _HomeState extends State<Home> {
       {
         "name": "CO2",
         "scale": 3,
-        "boxValue": 1 * 100,
+        "boxValue": 25 / 6,
+        "labelDecimal": 0,
         "boxValueConvert": (double x) => x / 100,
         "unit": "%",
         "minDisplay": 0,
-        "maxDisplay": 7 * 100,
+        "maxDisplay": 30,
         "filterConfig": {"filterOn": false, "lpf": 3, "hpf": 5, "notch": 1},
         "meter": {"decimal": 1, "unit": "%", "convert": (double x) => x / 100},
         // calibrate button
@@ -205,11 +206,41 @@ class _HomeState extends State<Home> {
                             portCal.write(
                               Uint8List.fromList('G\r\n'.codeUnits),
                             );
-                            ScaffoldMessenger.of(context).showSnackBar(
-                              SnackBar(
-                                content: Text("Calibrate command sent!"),
-                              ),
+
+                            // Listen for response
+                            SerialPortReader reader = SerialPortReader(portCal);
+                            StreamSubscription? subscription;
+                            subscription = reader.stream.listen(
+                              (data) {
+                                final response = String.fromCharCodes(data);
+                                if (response.contains('G\r\n')) {
+                                  ScaffoldMessenger.of(context).showSnackBar(
+                                    SnackBar(
+                                      content: Text("Calibration successful!"),
+                                    ),
+                                  );
+                                  subscription
+                                      ?.cancel(); // Stop listening after success
+                                }
+                              },
+                              onError: (e) {
+                                print(e);
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                  SnackBar(
+                                    content: Text(
+                                      "Error receiving calibration response: $e",
+                                    ),
+                                  ),
+                                );
+                                subscription?.cancel();
+                              },
+                              onDone: () {
+                                // Optionally handle stream completion
+                              },
                             );
+                            //  close the port also
+                            // await Future.delayed(Duration(seconds: 2));
+                            // portCal.close();
                           } catch (e) {
                             print(e);
                             ScaffoldMessenger.of(context).showSnackBar(
@@ -247,8 +278,8 @@ class _HomeState extends State<Home> {
         "minDisplay": 0.0,
         "maxDisplay": 550,
         "meter": {"decimal": 0, "unit": " ", "convert": (double x) => x},
-        "yAxisLabelConvert": (double x) => x / 1000,
-        "yAxisLabelUnit": "L/s",
+        "yAxisLabelConvert": (double x) => x < 1000 ? x : x / 1000,
+        "yAxisLabelUnit": (double x) => x < 1000 ? "ml/s" : "L/s",
         // custom button
         "customButtons": [
           {
@@ -352,8 +383,8 @@ class _HomeState extends State<Home> {
         "minDisplay": 0.0,
         "maxDisplay": 550.0,
         "meter": {"decimal": 0, "unit": " ", "convert": (double x) => x},
-        "yAxisLabelConvert": (double x) => x / 1000,
-        "yAxisLabelUnit": "L",
+        "yAxisLabelConvert": (double x) => x < 1000 ? x : x / 1000,
+        "yAxisLabelUnit": (double x) => x < 1000 ? "ml" : "L",
       },
     ];
 

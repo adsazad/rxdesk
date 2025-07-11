@@ -311,8 +311,13 @@ class MyBigGraphV2State extends State<MyBigGraphV2> {
             }
           }
 
+          int labelDecimal =
+              widget.plot[i]["labelDecimal"] ?? 1; // Default to 1 decimal
           _yAxisLabelList.add(
-            MapEntry(y, "${displayVal.toStringAsFixed(1)} $displayUnit"),
+            MapEntry(
+              y,
+              "${displayVal.toStringAsFixed(labelDecimal)} $displayUnit",
+            ),
           );
         }
       }
@@ -857,7 +862,7 @@ class MyBigGraphV2State extends State<MyBigGraphV2> {
         return Text(
           entry.value,
           style: const TextStyle(
-            fontSize: 10,
+            fontSize: 8,
             color: Color.fromARGB(255, 117, 117, 117),
           ),
           textAlign: TextAlign.right,
