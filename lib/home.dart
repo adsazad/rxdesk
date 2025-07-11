@@ -149,6 +149,85 @@ class _HomeState extends State<Home> {
         "maxDisplay": 7 * 100,
         "filterConfig": {"filterOn": false, "lpf": 3, "hpf": 5, "notch": 1},
         "meter": {"decimal": 1, "unit": "%", "convert": (double x) => x / 100},
+        // calibrate button
+        "customButtons": [
+          {
+            "label": "Calibrate",
+            "icon": Icons.refresh,
+            "onPressed": (data) {
+              final context = myBigGraphKey.currentContext ?? this.context;
+
+              showDialog(
+                context: context,
+                builder: (context) {
+                  return AlertDialog(
+                    title: Text("Device Calibration"),
+                    content: Text(
+                      "Press the button below to send the calibrate command to the device.",
+                    ),
+                    actions: [
+                      TextButton(
+                        child: Text("Cancel"),
+                        onPressed: () => Navigator.of(context).pop(),
+                      ),
+                      ElevatedButton(
+                        child: Text("Send Calibrate Command"),
+                        onPressed: () async {
+                          try {
+                            // Initialize port if not already open or not initialized
+
+                            final globalSettings =
+                                Provider.of<GlobalSettingsModal>(
+                                  context,
+                                  listen: false,
+                                );
+                            SerialPort portCal = SerialPort(
+                              globalSettings.com.toString(),
+                            );
+                            if (!portCal.isOpen) {
+                              if (!portCal.openReadWrite()) {
+                                throw Exception(
+                                  "Failed to open port: ${SerialPort.lastError}",
+                                );
+                              }
+                              final config = portCal.config;
+                              config.baudRate = 230400;
+                              config.bits = 8;
+                              config.stopBits = 1;
+                              config.xonXoff = 0;
+                              config.rts = 1;
+                              config.cts = 0;
+                              config.dsr = 0;
+                              config.dtr = 1;
+                              portCal.config = config;
+                            }
+
+                            portCal.write(
+                              Uint8List.fromList('G\r\n'.codeUnits),
+                            );
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              SnackBar(
+                                content: Text("Calibrate command sent!"),
+                              ),
+                            );
+                          } catch (e) {
+                            print(e);
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              SnackBar(
+                                content: Text("Failed to send command: $e"),
+                              ),
+                            );
+                          }
+                          Navigator.of(context).pop();
+                        },
+                      ),
+                    ],
+                  );
+                },
+              );
+            },
+          },
+        ],
       },
       {
         "name": "Flow",
@@ -170,6 +249,89 @@ class _HomeState extends State<Home> {
         "meter": {"decimal": 0, "unit": " ", "convert": (double x) => x},
         "yAxisLabelConvert": (double x) => x / 1000,
         "yAxisLabelUnit": "L/s",
+        // custom button
+        "customButtons": [
+          {
+            "label": "Calibrate",
+            "icon": Icons.refresh,
+            "onPressed": (data) {
+              final context = myBigGraphKey.currentContext ?? this.context;
+              final globalSettings = Provider.of<GlobalSettingsModal>(
+                context,
+                listen: false,
+              );
+
+              TextEditingController plusController = TextEditingController(
+                text: globalSettings.flowCalPlus.toString(),
+              );
+              TextEditingController minusController = TextEditingController(
+                text: globalSettings.flowCalMinus.toString(),
+              );
+
+              showDialog(
+                context: context,
+                builder: (context) {
+                  return AlertDialog(
+                    title: Text("Calibrate Flow"),
+                    content: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        TextField(
+                          controller: plusController,
+                          keyboardType: TextInputType.numberWithOptions(
+                            decimal: true,
+                          ),
+                          decoration: InputDecoration(
+                            labelText: "Flow Calibrator +",
+                            hintText: "Enter plus value",
+                          ),
+                        ),
+                        SizedBox(height: 12),
+                        TextField(
+                          controller: minusController,
+                          keyboardType: TextInputType.numberWithOptions(
+                            decimal: true,
+                          ),
+                          decoration: InputDecoration(
+                            labelText: "Flow Calibrator -",
+                            hintText: "Enter minus value",
+                          ),
+                        ),
+                      ],
+                    ),
+                    actions: [
+                      TextButton(
+                        child: Text("Cancel"),
+                        onPressed: () => Navigator.of(context).pop(),
+                      ),
+                      ElevatedButton(
+                        child: Text("Save"),
+                        onPressed: () {
+                          double plus =
+                              double.tryParse(plusController.text) ?? 0.0;
+                          double minus =
+                              double.tryParse(minusController.text) ?? 0.0;
+                          globalSettings.setFlowCalPlus(plus);
+                          globalSettings.setFlowCalMinus(minus);
+
+                          // Optionally save to SharedPreferences
+                          SharedPreferences.getInstance().then((prefs) {
+                            prefs.setString(
+                              "globalSettings",
+                              globalSettings.toJson(),
+                            );
+                          });
+
+                          Navigator.of(context).pop();
+                        },
+                      ),
+                    ],
+                  );
+                },
+              );
+            },
+          },
+        ],
       },
       {
         "name": "Tidal Volume",
@@ -398,6 +560,8 @@ class _HomeState extends State<Home> {
           double flow = (data[11] << 8 | data[10]) * 1.0;
           // double vol = (data[13] << 8 | data[12]) * 1.0;
           double co2 = (data[15] << 8 | data[14]) * 1.0;
+          flow =
+              flow + globalSettings.flowCalPlus - globalSettings.flowCalMinus;
 
           saver(ecg: ecg, o2: o2, flow: flow, vol: vol, co2: co2);
           // Update your graph
@@ -691,6 +855,12 @@ class _HomeState extends State<Home> {
               double o2 = (frame[7] * 256 + frame[6]) * 1.0;
               double flow = (frame[11] * 256 + frame[10]) * 1.0;
               double co2 = (frame[15] * 256 + frame[14]) * 1.0;
+
+              // flow calibrator
+              flow =
+                  flow +
+                  globalSettings.flowCalPlus -
+                  globalSettings.flowCalMinus;
 
               // flow = 9.82 * 1000 / flow;
 

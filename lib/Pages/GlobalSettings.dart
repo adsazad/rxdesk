@@ -70,13 +70,13 @@ class _GlobalSettingsState extends State<GlobalSettings> {
     // {"label":"50mm/s", "value": 50},
     // {"label":"100mm/s", "value": 100},
   ];
-  List<dynamic> comOptions = [
-  ];
+  List<dynamic> comOptions = [];
   TextEditingController voltage1Controller = TextEditingController();
-  TextEditingController value1Controller  = TextEditingController();
-  TextEditingController voltage2Controller  = TextEditingController();
-  TextEditingController value2Controller  = TextEditingController();
-
+  TextEditingController value1Controller = TextEditingController();
+  TextEditingController voltage2Controller = TextEditingController();
+  TextEditingController value2Controller = TextEditingController();
+  TextEditingController flowCalPlusController = TextEditingController();
+  TextEditingController flowCalMinusController = TextEditingController();
 
   var speedValue = 25;
 
@@ -98,6 +98,7 @@ class _GlobalSettingsState extends State<GlobalSettings> {
     super.initState();
     init();
   }
+
   @override
   void dispose() {
     voltage1Controller.dispose();
@@ -117,12 +118,12 @@ class _GlobalSettingsState extends State<GlobalSettings> {
     availablePorts = await SerialPort.availablePorts;
     print(availablePorts);
     var seen = <String>{}; // Set to track unique values
-    var copts = availablePorts.where((e) => seen.add(e)).map((e) => {
-      "label": e,
-      "value": e
-    }).toList();
+    var copts =
+        availablePorts
+            .where((e) => seen.add(e))
+            .map((e) => {"label": e, "value": e})
+            .toList();
     setState(() {
-
       comOptions = copts;
       print(comOptions);
       com = globalSettings.com.toString();
@@ -139,7 +140,6 @@ class _GlobalSettingsState extends State<GlobalSettings> {
       gridlineV = globalSettings.gridLine;
       appMode = globalSettings.appMode.toString();
 
-
       sampleRate =
           globalSettings.sampleRate != null
               ? globalSettings.sampleRate.toString()
@@ -152,10 +152,24 @@ class _GlobalSettingsState extends State<GlobalSettings> {
         gridLine = "Off";
       }
     });
-    voltage1Controller = TextEditingController(text: (globalSettings.voltage1 ?? 0.96).toString());
-    value1Controller = TextEditingController(text: globalSettings.value1.toString());
-    voltage2Controller = TextEditingController(text: globalSettings.voltage2.toString());
-    value2Controller = TextEditingController(text: globalSettings.value2.toString());
+    voltage1Controller = TextEditingController(
+      text: (globalSettings.voltage1 ?? 0.96).toString(),
+    );
+    value1Controller = TextEditingController(
+      text: globalSettings.value1.toString(),
+    );
+    voltage2Controller = TextEditingController(
+      text: globalSettings.voltage2.toString(),
+    );
+    value2Controller = TextEditingController(
+      text: globalSettings.value2.toString(),
+    );
+    flowCalPlusController = TextEditingController(
+      text: globalSettings.flowCalPlus.toString(),
+    );
+    flowCalMinusController = TextEditingController(
+      text: globalSettings.flowCalMinus.toString(),
+    );
     applyConversion = globalSettings.applyConversion;
     print("voltage1");
     print(voltage1Controller.text);
@@ -179,8 +193,9 @@ class _GlobalSettingsState extends State<GlobalSettings> {
       double.parse(value1Controller.text),
       double.parse(voltage2Controller.text),
       double.parse(value2Controller.text),
-      applyConversion
-
+      applyConversion,
+      double.tryParse(flowCalPlusController.text) ?? 0.0,
+      double.tryParse(flowCalMinusController.text) ?? 0.0,
     );
     globalSettings.setAppMode(appMode);
 
@@ -190,6 +205,7 @@ class _GlobalSettingsState extends State<GlobalSettings> {
     print(globalSettings);
     String settingJson = globalSettings.toJson();
     prefs!.setString("globalSettings", settingJson);
+
     // widget.onChange({
     //   "filterOn": filterOnOff,
     //   "highPass": highPassValue,
@@ -639,26 +655,25 @@ class _GlobalSettingsState extends State<GlobalSettings> {
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceEvenly,
               children: [
-                Text(
-                  "COM Port",
-                  style: TextStyle(fontSize: 20),
-                ),
+                Text("COM Port", style: TextStyle(fontSize: 20)),
                 // SizedBox(width: 50,),
                 DropdownButton<dynamic>(
-                    value: comOptions.any((e) => e["value"] == com) ? com : null,
-                    items: comOptions.map((e) {
-                      return DropdownMenuItem<dynamic>(
-                        child: Text(e["label"]),
-                        value: e["value"],
-                      );
-                    }).toList(),
-                    onChanged: (d) {
-                      // print(d);
-                      setState(() {
-                        com = d;
-                      });
-                      onChange();
-                    }),
+                  value: comOptions.any((e) => e["value"] == com) ? com : null,
+                  items:
+                      comOptions.map((e) {
+                        return DropdownMenuItem<dynamic>(
+                          child: Text(e["label"]),
+                          value: e["value"],
+                        );
+                      }).toList(),
+                  onChanged: (d) {
+                    // print(d);
+                    setState(() {
+                      com = d;
+                    });
+                    onChange();
+                  },
+                ),
               ],
             ),
             Row(
@@ -679,53 +694,30 @@ class _GlobalSettingsState extends State<GlobalSettings> {
             ),
             Divider(),
             Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                children: [
-                  Text(
-                    'Callibrator Voltage 1',
-                    style: TextStyle(fontSize: 20),
-                  ),
-                  Container(
-                    width: 160, // Fixed width to match dropdowns
-                    child: TextFormField(
-                     controller: voltage1Controller,
-                      keyboardType: TextInputType.numberWithOptions(decimal: true),
-
-                      decoration: InputDecoration(
-                        hintText: 'e.g. 1.2',
-                        border: OutlineInputBorder(),
-                        contentPadding: EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-                      ),
-                      onChanged: (newVal) => onChange(),
-
-                    ),
-                  ),
-                ],
+              padding: const EdgeInsets.symmetric(
+                horizontal: 16.0,
+                vertical: 8.0,
               ),
-            ),
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                 children: [
-                  Text(
-                    'Callibrator Value 1',
-                    style: TextStyle(fontSize: 20),
-                  ),
+                  Text('Callibrator Voltage 1', style: TextStyle(fontSize: 20)),
                   Container(
                     width: 160, // Fixed width to match dropdowns
                     child: TextFormField(
-                     controller: value1Controller,
-                      keyboardType: TextInputType.numberWithOptions(decimal: true),
+                      controller: voltage1Controller,
+                      keyboardType: TextInputType.numberWithOptions(
+                        decimal: true,
+                      ),
 
                       decoration: InputDecoration(
                         hintText: 'e.g. 1.2',
                         border: OutlineInputBorder(),
-                        contentPadding: EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                        contentPadding: EdgeInsets.symmetric(
+                          horizontal: 12,
+                          vertical: 8,
+                        ),
                       ),
-
                       onChanged: (newVal) => onChange(),
                     ),
                   ),
@@ -733,23 +725,60 @@ class _GlobalSettingsState extends State<GlobalSettings> {
               ),
             ),
             Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
+              padding: const EdgeInsets.symmetric(
+                horizontal: 16.0,
+                vertical: 8.0,
+              ),
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                 children: [
-                  Text(
-                    'Callibrator Voltage 2',
-                    style: TextStyle(fontSize: 20),
-                  ),
+                  Text('Callibrator Value 1', style: TextStyle(fontSize: 20)),
                   Container(
                     width: 160, // Fixed width to match dropdowns
                     child: TextFormField(
-                      keyboardType: TextInputType.numberWithOptions(decimal: true),
+                      controller: value1Controller,
+                      keyboardType: TextInputType.numberWithOptions(
+                        decimal: true,
+                      ),
+
+                      decoration: InputDecoration(
+                        hintText: 'e.g. 1.2',
+                        border: OutlineInputBorder(),
+                        contentPadding: EdgeInsets.symmetric(
+                          horizontal: 12,
+                          vertical: 8,
+                        ),
+                      ),
+
+                      onChanged: (newVal) => onChange(),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            Padding(
+              padding: const EdgeInsets.symmetric(
+                horizontal: 16.0,
+                vertical: 8.0,
+              ),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                children: [
+                  Text('Callibrator Voltage 2', style: TextStyle(fontSize: 20)),
+                  Container(
+                    width: 160, // Fixed width to match dropdowns
+                    child: TextFormField(
+                      keyboardType: TextInputType.numberWithOptions(
+                        decimal: true,
+                      ),
                       controller: voltage2Controller,
                       decoration: InputDecoration(
                         hintText: 'e.g. 1.2',
                         border: OutlineInputBorder(),
-                        contentPadding: EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                        contentPadding: EdgeInsets.symmetric(
+                          horizontal: 12,
+                          vertical: 8,
+                        ),
                       ),
 
                       onChanged: (newVal) => onChange(),
@@ -759,26 +788,91 @@ class _GlobalSettingsState extends State<GlobalSettings> {
               ),
             ),
             Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
+              padding: const EdgeInsets.symmetric(
+                horizontal: 16.0,
+                vertical: 8.0,
+              ),
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                 children: [
-                  Text(
-                    'Callibrator Value 2',
-                    style: TextStyle(fontSize: 20),
-                  ),
+                  Text('Callibrator Value 2', style: TextStyle(fontSize: 20)),
                   Container(
                     width: 160, // Fixed width to match dropdowns
                     child: TextFormField(
-                     controller: value2Controller,
-                      keyboardType: TextInputType.numberWithOptions(decimal: true),
+                      controller: value2Controller,
+                      keyboardType: TextInputType.numberWithOptions(
+                        decimal: true,
+                      ),
 
                       decoration: InputDecoration(
                         hintText: 'e.g. 1.2',
                         border: OutlineInputBorder(),
-                        contentPadding: EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                        contentPadding: EdgeInsets.symmetric(
+                          horizontal: 12,
+                          vertical: 8,
+                        ),
                       ),
 
+                      onChanged: (newVal) => onChange(),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            Padding(
+              padding: const EdgeInsets.symmetric(
+                horizontal: 16.0,
+                vertical: 8.0,
+              ),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                children: [
+                  Text('Flow Calibrator +', style: TextStyle(fontSize: 20)),
+                  Container(
+                    width: 160,
+                    child: TextFormField(
+                      controller: flowCalPlusController,
+                      keyboardType: TextInputType.numberWithOptions(
+                        decimal: true,
+                      ),
+                      decoration: InputDecoration(
+                        hintText: 'e.g. 0.0',
+                        border: OutlineInputBorder(),
+                        contentPadding: EdgeInsets.symmetric(
+                          horizontal: 12,
+                          vertical: 8,
+                        ),
+                      ),
+                      onChanged: (newVal) => onChange(),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            Padding(
+              padding: const EdgeInsets.symmetric(
+                horizontal: 16.0,
+                vertical: 8.0,
+              ),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                children: [
+                  Text('Flow Calibrator -', style: TextStyle(fontSize: 20)),
+                  Container(
+                    width: 160,
+                    child: TextFormField(
+                      controller: flowCalMinusController,
+                      keyboardType: TextInputType.numberWithOptions(
+                        decimal: true,
+                      ),
+                      decoration: InputDecoration(
+                        hintText: 'e.g. 0.0',
+                        border: OutlineInputBorder(),
+                        contentPadding: EdgeInsets.symmetric(
+                          horizontal: 12,
+                          vertical: 8,
+                        ),
+                      ),
                       onChanged: (newVal) => onChange(),
                     ),
                   ),

@@ -22,6 +22,9 @@ class GlobalSettingsModal with ChangeNotifier {
   String? com = "none";
   bool applyConversion = false;
 
+  double flowCalPlus = 0.0;
+  double flowCalMinus = 0.0;
+
   GlobalSettingsModal({
     required this.com,
     required this.autoRecordOnOff,
@@ -36,8 +39,9 @@ class GlobalSettingsModal with ChangeNotifier {
     required value2,
     this.appMode,
     this.sampleRate,
-    required this.applyConversion
-
+    required this.applyConversion,
+    this.flowCalPlus = 0.0,
+    this.flowCalMinus = 0.0,
   });
 
   void setAutoRecordOnOff(bool value) {
@@ -60,7 +64,7 @@ class GlobalSettingsModal with ChangeNotifier {
     notifyListeners();
   }
 
- void setapplyConversion(bool val) {
+  void setapplyConversion(bool val) {
     if (applyConversion != val) {
       applyConversion = val;
       notifyListeners(); // ✅ this triggers UI refresh wherever Consumer is used
@@ -82,6 +86,16 @@ class GlobalSettingsModal with ChangeNotifier {
     notifyListeners();
   }
 
+  void setFlowCalPlus(double value) {
+    flowCalPlus = value;
+    notifyListeners();
+  }
+
+  void setFlowCalMinus(double value) {
+    flowCalMinus = value;
+    notifyListeners();
+  }
+
   void setAll(
     bool autoRecordOnOff,
     bool filterOnOf,
@@ -91,11 +105,13 @@ class GlobalSettingsModal with ChangeNotifier {
     recTime,
     bool gridLine,
     String com,
-      double? voltage1,
-      double value1,
-      double voltage2,
-      double value2,
-      bool applyConversion
+    double? voltage1,
+    double value1,
+    double voltage2,
+    double value2,
+    bool applyConversion,
+    double flowCalPlus,
+    double flowCalMinus,
   ) {
     this.autoRecordOnOff = autoRecordOnOff;
     this.filterOnOf = filterOnOf;
@@ -109,8 +125,8 @@ class GlobalSettingsModal with ChangeNotifier {
     this.voltage2 = voltage2;
     this.value2 = value2;
     this.applyConversion = applyConversion;
-    // setapplyConversion(applyConversion);
-
+    this.flowCalPlus = flowCalPlus;
+    this.flowCalMinus = flowCalMinus;
     notifyListeners();
   }
 
@@ -127,9 +143,11 @@ class GlobalSettingsModal with ChangeNotifier {
       "com": com,
       "voltage1": voltage1,
       "value1": value1,
-      "voltage2":voltage2,
-      "value2":value2,
-      "applyConversion": applyConversion
+      "voltage2": voltage2,
+      "value2": value2,
+      "applyConversion": applyConversion,
+      "flowCalPlus": flowCalPlus,
+      "flowCalMinus": flowCalMinus,
     };
     String jsonString = jsonEncode(json);
     return jsonString;
@@ -153,6 +171,8 @@ class GlobalSettingsModal with ChangeNotifier {
     voltage2 = arr["voltage2"];
     value2 = arr["value2"];
     applyConversion = arr['applyConversion'];
+    flowCalPlus = arr["flowCalPlus"] ?? 0.0;
+    flowCalMinus = arr["flowCalMinus"] ?? 0.0;
 
     // if(arr["hrvDuration"]) {
     // }else{

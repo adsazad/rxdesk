@@ -4,6 +4,7 @@ import 'package:animated_splash_screen/animated_splash_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:provider/provider.dart' as pvrd;
+import 'package:shared_preferences/shared_preferences.dart';
 import 'package:spirobtvo/ProviderModals/DefaultPatientModal.dart';
 import 'package:spirobtvo/ProviderModals/GlobalSettingsModal.dart';
 import 'package:spirobtvo/Services/navigatorService.dart';
@@ -14,10 +15,9 @@ void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await windowManager.ensureInitialized();
 
-  // Set fullscreen mode on app launch
   WindowOptions windowOptions = WindowOptions(
     title: 'SpiroBT',
-    size: Size(1920, 1080), // Optional starting size
+    size: Size(1920, 1080),
     center: true,
     minimumSize: Size(800, 600),
   );
@@ -25,32 +25,58 @@ void main() async {
     await windowManager.show();
     await windowManager.maximize();
   });
-  // SystemChrome.setPreferredOrientations([DeviceOrientation.portraitUp])
-
-  //     .then((_) {
 
   HttpOverrides.global = new MyHttpOverrides();
+
+  // Load settings from SharedPreferences
+  final prefs = await SharedPreferences.getInstance();
+  String? settingsJson = prefs.getString("globalSettings");
+  GlobalSettingsModal globalSettings;
+  if (settingsJson != null) {
+    globalSettings = GlobalSettingsModal(
+      com: "none",
+      autoRecordOnOff: true,
+      filterOnOf: true,
+      highPass: 5,
+      lowPass: 3,
+      notch: true,
+      gridLine: true,
+      sampleRate: '300',
+      voltage1: 0.96,
+      value1: 20.93,
+      voltage2: 0.77,
+      value2: 15.93,
+      applyConversion: false,
+      flowCalPlus: 0.0,
+      flowCalMinus: 0.0,
+    );
+    globalSettings.fromJson(settingsJson);
+  } else {
+    globalSettings = GlobalSettingsModal(
+      com: "none",
+      autoRecordOnOff: true,
+      filterOnOf: true,
+      highPass: 5,
+      lowPass: 3,
+      notch: true,
+      gridLine: true,
+      sampleRate: '300',
+      voltage1: 0.96,
+      value1: 20.93,
+      voltage2: 0.77,
+      value2: 15.93,
+      applyConversion: false,
+      flowCalPlus: 0.0,
+      flowCalMinus: 0.0,
+    );
+  }
+
   runApp(
     ProviderScope(
       child: pvrd.MultiProvider(
         providers: [
           pvrd.ChangeNotifierProvider<GlobalSettingsModal>(
-            create:
-                (context) => GlobalSettingsModal(
-                  com: "none",
-                  autoRecordOnOff: true,
-                  filterOnOf: true,
-                  highPass: 5,
-                  lowPass: 3,
-                  notch: true,
-                  gridLine: true,
-                  sampleRate: '300',
-                  voltage1: 0.96,
-                  value1: 20.93,
-                  voltage2: 0.77,
-                  value2: 15.93,
-                  applyConversion: false,
-                ),
+            create: (context) => globalSettings,
           ),
           pvrd.ChangeNotifierProvider<DefaultPatientModal>(
             create: (context) => DefaultPatientModal(),
@@ -59,7 +85,6 @@ void main() async {
         child: MaterialApp(
           debugShowCheckedModeBanner: false,
           navigatorKey: NavigationService.instance.navigationKey,
-          // localizationsDelegates: [MonthYearPickerLocalizations.delegate],
           theme: ThemeData(
             fontFamily: "Ubuntu",
             textSelectionTheme: TextSelectionThemeData(
@@ -104,7 +129,6 @@ void main() async {
       ),
     ),
   );
-  // });
 }
 
 class MyHttpOverrides extends HttpOverrides {

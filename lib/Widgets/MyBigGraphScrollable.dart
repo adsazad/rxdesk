@@ -369,10 +369,14 @@ class MyBigGraphV2State extends State<MyBigGraphV2> {
     double sectionHeight = totalHeight / widget.plot.length;
 
     return Container(
-      width: 120, // ⬅️ Increased width a little for buttons
+      width: 120,
       color: Colors.white,
       child: Column(
         children: List.generate(widget.plot.length, (i) {
+          final plot = widget.plot[i];
+          final customButtons =
+              plot["customButtons"] as List<Map<String, dynamic>>?;
+
           return Container(
             height: sectionHeight,
             decoration: BoxDecoration(
@@ -460,6 +464,34 @@ class MyBigGraphV2State extends State<MyBigGraphV2> {
                   constraints: const BoxConstraints(),
                   onPressed: () => _openFilterDialog(i),
                 ),
+                // --- Custom Buttons ---
+                if (customButtons != null)
+                  Row(
+                    children:
+                        customButtons.map((btn) {
+                          return Padding(
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 2.0,
+                            ),
+                            child: ElevatedButton.icon(
+                              icon: Icon(btn["icon"], size: 16),
+                              label: Text(
+                                btn["label"],
+                                style: TextStyle(fontSize: 12),
+                              ),
+                              onPressed: () {
+                                if (btn["onPressed"] != null) {
+                                  btn["onPressed"](allPlotData[i]);
+                                }
+                              },
+                              style: ElevatedButton.styleFrom(
+                                minimumSize: Size(80, 32),
+                                padding: EdgeInsets.symmetric(horizontal: 6),
+                              ),
+                            ),
+                          );
+                        }).toList(),
+                  ),
               ],
             ),
           );
