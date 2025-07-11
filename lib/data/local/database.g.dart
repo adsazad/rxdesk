@@ -502,15 +502,375 @@ class PatientsCompanion extends UpdateCompanion<Patient> {
   }
 }
 
+class $RecordingsTable extends Recordings
+    with TableInfo<$RecordingsTable, Recording> {
+  @override
+  final GeneratedDatabase attachedDatabase;
+  final String? _alias;
+  $RecordingsTable(this.attachedDatabase, [this._alias]);
+  static const VerificationMeta _idMeta = const VerificationMeta('id');
+  @override
+  late final GeneratedColumn<int> id = GeneratedColumn<int>(
+    'id',
+    aliasedName,
+    false,
+    hasAutoIncrement: true,
+    type: DriftSqlType.int,
+    requiredDuringInsert: false,
+    defaultConstraints: GeneratedColumn.constraintIsAlways(
+      'PRIMARY KEY AUTOINCREMENT',
+    ),
+  );
+  static const VerificationMeta _patientIdMeta = const VerificationMeta(
+    'patientId',
+  );
+  @override
+  late final GeneratedColumn<int> patientId = GeneratedColumn<int>(
+    'patient_id',
+    aliasedName,
+    false,
+    type: DriftSqlType.int,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _filePathMeta = const VerificationMeta(
+    'filePath',
+  );
+  @override
+  late final GeneratedColumn<String> filePath = GeneratedColumn<String>(
+    'file_path',
+    aliasedName,
+    false,
+    additionalChecks: GeneratedColumn.checkTextLength(
+      minTextLength: 1,
+      maxTextLength: 255,
+    ),
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _recordedAtMeta = const VerificationMeta(
+    'recordedAt',
+  );
+  @override
+  late final GeneratedColumn<DateTime> recordedAt = GeneratedColumn<DateTime>(
+    'recorded_at',
+    aliasedName,
+    false,
+    type: DriftSqlType.dateTime,
+    requiredDuringInsert: false,
+    defaultValue: currentDateAndTime,
+  );
+  static const VerificationMeta _createdAtMeta = const VerificationMeta(
+    'createdAt',
+  );
+  @override
+  late final GeneratedColumn<DateTime> createdAt = GeneratedColumn<DateTime>(
+    'created_at',
+    aliasedName,
+    false,
+    type: DriftSqlType.dateTime,
+    requiredDuringInsert: false,
+    defaultValue: currentDateAndTime,
+  );
+  @override
+  List<GeneratedColumn> get $columns => [
+    id,
+    patientId,
+    filePath,
+    recordedAt,
+    createdAt,
+  ];
+  @override
+  String get aliasedName => _alias ?? actualTableName;
+  @override
+  String get actualTableName => $name;
+  static const String $name = 'recordings';
+  @override
+  VerificationContext validateIntegrity(
+    Insertable<Recording> instance, {
+    bool isInserting = false,
+  }) {
+    final context = VerificationContext();
+    final data = instance.toColumns(true);
+    if (data.containsKey('id')) {
+      context.handle(_idMeta, id.isAcceptableOrUnknown(data['id']!, _idMeta));
+    }
+    if (data.containsKey('patient_id')) {
+      context.handle(
+        _patientIdMeta,
+        patientId.isAcceptableOrUnknown(data['patient_id']!, _patientIdMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_patientIdMeta);
+    }
+    if (data.containsKey('file_path')) {
+      context.handle(
+        _filePathMeta,
+        filePath.isAcceptableOrUnknown(data['file_path']!, _filePathMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_filePathMeta);
+    }
+    if (data.containsKey('recorded_at')) {
+      context.handle(
+        _recordedAtMeta,
+        recordedAt.isAcceptableOrUnknown(data['recorded_at']!, _recordedAtMeta),
+      );
+    }
+    if (data.containsKey('created_at')) {
+      context.handle(
+        _createdAtMeta,
+        createdAt.isAcceptableOrUnknown(data['created_at']!, _createdAtMeta),
+      );
+    }
+    return context;
+  }
+
+  @override
+  Set<GeneratedColumn> get $primaryKey => {id};
+  @override
+  Recording map(Map<String, dynamic> data, {String? tablePrefix}) {
+    final effectivePrefix = tablePrefix != null ? '$tablePrefix.' : '';
+    return Recording(
+      id:
+          attachedDatabase.typeMapping.read(
+            DriftSqlType.int,
+            data['${effectivePrefix}id'],
+          )!,
+      patientId:
+          attachedDatabase.typeMapping.read(
+            DriftSqlType.int,
+            data['${effectivePrefix}patient_id'],
+          )!,
+      filePath:
+          attachedDatabase.typeMapping.read(
+            DriftSqlType.string,
+            data['${effectivePrefix}file_path'],
+          )!,
+      recordedAt:
+          attachedDatabase.typeMapping.read(
+            DriftSqlType.dateTime,
+            data['${effectivePrefix}recorded_at'],
+          )!,
+      createdAt:
+          attachedDatabase.typeMapping.read(
+            DriftSqlType.dateTime,
+            data['${effectivePrefix}created_at'],
+          )!,
+    );
+  }
+
+  @override
+  $RecordingsTable createAlias(String alias) {
+    return $RecordingsTable(attachedDatabase, alias);
+  }
+}
+
+class Recording extends DataClass implements Insertable<Recording> {
+  final int id;
+  final int patientId;
+  final String filePath;
+  final DateTime recordedAt;
+  final DateTime createdAt;
+  const Recording({
+    required this.id,
+    required this.patientId,
+    required this.filePath,
+    required this.recordedAt,
+    required this.createdAt,
+  });
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    map['id'] = Variable<int>(id);
+    map['patient_id'] = Variable<int>(patientId);
+    map['file_path'] = Variable<String>(filePath);
+    map['recorded_at'] = Variable<DateTime>(recordedAt);
+    map['created_at'] = Variable<DateTime>(createdAt);
+    return map;
+  }
+
+  RecordingsCompanion toCompanion(bool nullToAbsent) {
+    return RecordingsCompanion(
+      id: Value(id),
+      patientId: Value(patientId),
+      filePath: Value(filePath),
+      recordedAt: Value(recordedAt),
+      createdAt: Value(createdAt),
+    );
+  }
+
+  factory Recording.fromJson(
+    Map<String, dynamic> json, {
+    ValueSerializer? serializer,
+  }) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return Recording(
+      id: serializer.fromJson<int>(json['id']),
+      patientId: serializer.fromJson<int>(json['patientId']),
+      filePath: serializer.fromJson<String>(json['filePath']),
+      recordedAt: serializer.fromJson<DateTime>(json['recordedAt']),
+      createdAt: serializer.fromJson<DateTime>(json['createdAt']),
+    );
+  }
+  @override
+  Map<String, dynamic> toJson({ValueSerializer? serializer}) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return <String, dynamic>{
+      'id': serializer.toJson<int>(id),
+      'patientId': serializer.toJson<int>(patientId),
+      'filePath': serializer.toJson<String>(filePath),
+      'recordedAt': serializer.toJson<DateTime>(recordedAt),
+      'createdAt': serializer.toJson<DateTime>(createdAt),
+    };
+  }
+
+  Recording copyWith({
+    int? id,
+    int? patientId,
+    String? filePath,
+    DateTime? recordedAt,
+    DateTime? createdAt,
+  }) => Recording(
+    id: id ?? this.id,
+    patientId: patientId ?? this.patientId,
+    filePath: filePath ?? this.filePath,
+    recordedAt: recordedAt ?? this.recordedAt,
+    createdAt: createdAt ?? this.createdAt,
+  );
+  Recording copyWithCompanion(RecordingsCompanion data) {
+    return Recording(
+      id: data.id.present ? data.id.value : this.id,
+      patientId: data.patientId.present ? data.patientId.value : this.patientId,
+      filePath: data.filePath.present ? data.filePath.value : this.filePath,
+      recordedAt:
+          data.recordedAt.present ? data.recordedAt.value : this.recordedAt,
+      createdAt: data.createdAt.present ? data.createdAt.value : this.createdAt,
+    );
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('Recording(')
+          ..write('id: $id, ')
+          ..write('patientId: $patientId, ')
+          ..write('filePath: $filePath, ')
+          ..write('recordedAt: $recordedAt, ')
+          ..write('createdAt: $createdAt')
+          ..write(')'))
+        .toString();
+  }
+
+  @override
+  int get hashCode =>
+      Object.hash(id, patientId, filePath, recordedAt, createdAt);
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      (other is Recording &&
+          other.id == this.id &&
+          other.patientId == this.patientId &&
+          other.filePath == this.filePath &&
+          other.recordedAt == this.recordedAt &&
+          other.createdAt == this.createdAt);
+}
+
+class RecordingsCompanion extends UpdateCompanion<Recording> {
+  final Value<int> id;
+  final Value<int> patientId;
+  final Value<String> filePath;
+  final Value<DateTime> recordedAt;
+  final Value<DateTime> createdAt;
+  const RecordingsCompanion({
+    this.id = const Value.absent(),
+    this.patientId = const Value.absent(),
+    this.filePath = const Value.absent(),
+    this.recordedAt = const Value.absent(),
+    this.createdAt = const Value.absent(),
+  });
+  RecordingsCompanion.insert({
+    this.id = const Value.absent(),
+    required int patientId,
+    required String filePath,
+    this.recordedAt = const Value.absent(),
+    this.createdAt = const Value.absent(),
+  }) : patientId = Value(patientId),
+       filePath = Value(filePath);
+  static Insertable<Recording> custom({
+    Expression<int>? id,
+    Expression<int>? patientId,
+    Expression<String>? filePath,
+    Expression<DateTime>? recordedAt,
+    Expression<DateTime>? createdAt,
+  }) {
+    return RawValuesInsertable({
+      if (id != null) 'id': id,
+      if (patientId != null) 'patient_id': patientId,
+      if (filePath != null) 'file_path': filePath,
+      if (recordedAt != null) 'recorded_at': recordedAt,
+      if (createdAt != null) 'created_at': createdAt,
+    });
+  }
+
+  RecordingsCompanion copyWith({
+    Value<int>? id,
+    Value<int>? patientId,
+    Value<String>? filePath,
+    Value<DateTime>? recordedAt,
+    Value<DateTime>? createdAt,
+  }) {
+    return RecordingsCompanion(
+      id: id ?? this.id,
+      patientId: patientId ?? this.patientId,
+      filePath: filePath ?? this.filePath,
+      recordedAt: recordedAt ?? this.recordedAt,
+      createdAt: createdAt ?? this.createdAt,
+    );
+  }
+
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    if (id.present) {
+      map['id'] = Variable<int>(id.value);
+    }
+    if (patientId.present) {
+      map['patient_id'] = Variable<int>(patientId.value);
+    }
+    if (filePath.present) {
+      map['file_path'] = Variable<String>(filePath.value);
+    }
+    if (recordedAt.present) {
+      map['recorded_at'] = Variable<DateTime>(recordedAt.value);
+    }
+    if (createdAt.present) {
+      map['created_at'] = Variable<DateTime>(createdAt.value);
+    }
+    return map;
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('RecordingsCompanion(')
+          ..write('id: $id, ')
+          ..write('patientId: $patientId, ')
+          ..write('filePath: $filePath, ')
+          ..write('recordedAt: $recordedAt, ')
+          ..write('createdAt: $createdAt')
+          ..write(')'))
+        .toString();
+  }
+}
+
 abstract class _$AppDatabase extends GeneratedDatabase {
   _$AppDatabase(QueryExecutor e) : super(e);
   $AppDatabaseManager get managers => $AppDatabaseManager(this);
   late final $PatientsTable patients = $PatientsTable(this);
+  late final $RecordingsTable recordings = $RecordingsTable(this);
   @override
   Iterable<TableInfo<Table, Object?>> get allTables =>
       allSchemaEntities.whereType<TableInfo<Table, Object?>>();
   @override
-  List<DatabaseSchemaEntity> get allSchemaEntities => [patients];
+  List<DatabaseSchemaEntity> get allSchemaEntities => [patients, recordings];
 }
 
 typedef $$PatientsTableCreateCompanionBuilder =
@@ -765,10 +1125,212 @@ typedef $$PatientsTableProcessedTableManager =
       Patient,
       PrefetchHooks Function()
     >;
+typedef $$RecordingsTableCreateCompanionBuilder =
+    RecordingsCompanion Function({
+      Value<int> id,
+      required int patientId,
+      required String filePath,
+      Value<DateTime> recordedAt,
+      Value<DateTime> createdAt,
+    });
+typedef $$RecordingsTableUpdateCompanionBuilder =
+    RecordingsCompanion Function({
+      Value<int> id,
+      Value<int> patientId,
+      Value<String> filePath,
+      Value<DateTime> recordedAt,
+      Value<DateTime> createdAt,
+    });
+
+class $$RecordingsTableFilterComposer
+    extends Composer<_$AppDatabase, $RecordingsTable> {
+  $$RecordingsTableFilterComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnFilters<int> get id => $composableBuilder(
+    column: $table.id,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<int> get patientId => $composableBuilder(
+    column: $table.patientId,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get filePath => $composableBuilder(
+    column: $table.filePath,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<DateTime> get recordedAt => $composableBuilder(
+    column: $table.recordedAt,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<DateTime> get createdAt => $composableBuilder(
+    column: $table.createdAt,
+    builder: (column) => ColumnFilters(column),
+  );
+}
+
+class $$RecordingsTableOrderingComposer
+    extends Composer<_$AppDatabase, $RecordingsTable> {
+  $$RecordingsTableOrderingComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnOrderings<int> get id => $composableBuilder(
+    column: $table.id,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<int> get patientId => $composableBuilder(
+    column: $table.patientId,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get filePath => $composableBuilder(
+    column: $table.filePath,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<DateTime> get recordedAt => $composableBuilder(
+    column: $table.recordedAt,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<DateTime> get createdAt => $composableBuilder(
+    column: $table.createdAt,
+    builder: (column) => ColumnOrderings(column),
+  );
+}
+
+class $$RecordingsTableAnnotationComposer
+    extends Composer<_$AppDatabase, $RecordingsTable> {
+  $$RecordingsTableAnnotationComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  GeneratedColumn<int> get id =>
+      $composableBuilder(column: $table.id, builder: (column) => column);
+
+  GeneratedColumn<int> get patientId =>
+      $composableBuilder(column: $table.patientId, builder: (column) => column);
+
+  GeneratedColumn<String> get filePath =>
+      $composableBuilder(column: $table.filePath, builder: (column) => column);
+
+  GeneratedColumn<DateTime> get recordedAt => $composableBuilder(
+    column: $table.recordedAt,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<DateTime> get createdAt =>
+      $composableBuilder(column: $table.createdAt, builder: (column) => column);
+}
+
+class $$RecordingsTableTableManager
+    extends
+        RootTableManager<
+          _$AppDatabase,
+          $RecordingsTable,
+          Recording,
+          $$RecordingsTableFilterComposer,
+          $$RecordingsTableOrderingComposer,
+          $$RecordingsTableAnnotationComposer,
+          $$RecordingsTableCreateCompanionBuilder,
+          $$RecordingsTableUpdateCompanionBuilder,
+          (
+            Recording,
+            BaseReferences<_$AppDatabase, $RecordingsTable, Recording>,
+          ),
+          Recording,
+          PrefetchHooks Function()
+        > {
+  $$RecordingsTableTableManager(_$AppDatabase db, $RecordingsTable table)
+    : super(
+        TableManagerState(
+          db: db,
+          table: table,
+          createFilteringComposer:
+              () => $$RecordingsTableFilterComposer($db: db, $table: table),
+          createOrderingComposer:
+              () => $$RecordingsTableOrderingComposer($db: db, $table: table),
+          createComputedFieldComposer:
+              () => $$RecordingsTableAnnotationComposer($db: db, $table: table),
+          updateCompanionCallback:
+              ({
+                Value<int> id = const Value.absent(),
+                Value<int> patientId = const Value.absent(),
+                Value<String> filePath = const Value.absent(),
+                Value<DateTime> recordedAt = const Value.absent(),
+                Value<DateTime> createdAt = const Value.absent(),
+              }) => RecordingsCompanion(
+                id: id,
+                patientId: patientId,
+                filePath: filePath,
+                recordedAt: recordedAt,
+                createdAt: createdAt,
+              ),
+          createCompanionCallback:
+              ({
+                Value<int> id = const Value.absent(),
+                required int patientId,
+                required String filePath,
+                Value<DateTime> recordedAt = const Value.absent(),
+                Value<DateTime> createdAt = const Value.absent(),
+              }) => RecordingsCompanion.insert(
+                id: id,
+                patientId: patientId,
+                filePath: filePath,
+                recordedAt: recordedAt,
+                createdAt: createdAt,
+              ),
+          withReferenceMapper:
+              (p0) =>
+                  p0
+                      .map(
+                        (e) => (
+                          e.readTable(table),
+                          BaseReferences(db, table, e),
+                        ),
+                      )
+                      .toList(),
+          prefetchHooksCallback: null,
+        ),
+      );
+}
+
+typedef $$RecordingsTableProcessedTableManager =
+    ProcessedTableManager<
+      _$AppDatabase,
+      $RecordingsTable,
+      Recording,
+      $$RecordingsTableFilterComposer,
+      $$RecordingsTableOrderingComposer,
+      $$RecordingsTableAnnotationComposer,
+      $$RecordingsTableCreateCompanionBuilder,
+      $$RecordingsTableUpdateCompanionBuilder,
+      (Recording, BaseReferences<_$AppDatabase, $RecordingsTable, Recording>),
+      Recording,
+      PrefetchHooks Function()
+    >;
 
 class $AppDatabaseManager {
   final _$AppDatabase _db;
   $AppDatabaseManager(this._db);
   $$PatientsTableTableManager get patients =>
       $$PatientsTableTableManager(_db, _db.patients);
+  $$RecordingsTableTableManager get recordings =>
+      $$RecordingsTableTableManager(_db, _db.recordings);
 }

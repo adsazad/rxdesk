@@ -7,6 +7,7 @@ import 'dart:typed_data';
 import 'dart:ui';
 import 'package:path_provider/path_provider.dart';
 import 'package:spirobtvo/Widgets/MyBigGraphScrollable.dart';
+import 'package:spirobtvo/data/local/database.dart';
 import 'package:syncfusion_flutter_xlsio/xlsio.dart' as xlsio;
 
 import 'package:flutter/material.dart';
@@ -34,6 +35,8 @@ import 'package:path/path.dart' as p;
 import 'package:spirobtvo/ReportPreviewPage.dart'; // <-- Import your preview page
 import 'package:spirobtvo/SavedChartsDialogContent.dart';
 import 'package:spirobtvo/Widgets/IconButtonColumn.dart';
+import 'package:drift/drift.dart' as drift;
+import 'package:uuid/uuid.dart';
 
 class Home extends StatefulWidget {
   const Home({super.key});
@@ -388,7 +391,7 @@ class _HomeState extends State<Home> {
       },
     ];
 
-    startTestLoop(); // Start the test loop
+    // startTestLoop(); // Start the test loop
   }
 
   initFunc() async {
@@ -1426,6 +1429,96 @@ class _HomeState extends State<Home> {
     return {"patient": patientInfo, "samples": samples};
   }
 
+  // Future<void> saveRecordingSlice() async {
+  //   if (!_saverInitialized) {
+  //     print("❌ DataSaver not initialized.");
+  //     return;
+  //   }
+
+  //   final file = File(dataSaver.path);
+  //   if (!file.existsSync()) {
+  //     print("❌ File does not exist.");
+  //     return;
+  //   }
+
+  //   final fullBytes = await file.readAsBytes();
+
+  //   if (fullBytes.length < 4) {
+  //     print("❌ File too small to contain header.");
+  //     return;
+  //   }
+
+  //   final headerLen = ByteData.sublistView(
+  //     fullBytes,
+  //     0,
+  //     4,
+  //   ).getUint32(0, Endian.little);
+  //   if (headerLen <= 0 || headerLen > 8192) {
+  //     print("❌ Invalid JSON header length: $headerLen");
+  //     return;
+  //   }
+
+  //   final headerEnd = 4 + headerLen;
+  //   if (headerEnd >= fullBytes.length) {
+  //     print("❌ File doesn't contain enough bytes for header + samples.");
+  //     return;
+  //   }
+
+  //   final sampleBytes = fullBytes.sublist(headerEnd);
+  //   const bytesPerSample = 5 * 8; // 5 float64 values
+
+  //   final maxSamples = sampleBytes.length ~/ bytesPerSample;
+  //   print("Max samples in file: $maxSamples");
+  //   print(recordStartIndex);
+  //   print(recordEndIndex);
+  //   final clampedEndIndex = min(recordEndIndex ?? 0, maxSamples);
+  //   final clampedStartIndex = min(recordStartIndex ?? 0, clampedEndIndex);
+
+  //   final startByte = clampedStartIndex * bytesPerSample;
+  //   final endByte = clampedEndIndex * bytesPerSample;
+
+  //   if (startByte >= endByte || endByte > sampleBytes.length) {
+  //     print("❌ Invalid byte range. Start: $startByte, End: $endByte");
+  //     return;
+  //   }
+
+  //   final selectedBytes = sampleBytes.sublist(startByte, endByte);
+  //   final headerJsonBytes = fullBytes.sublist(4, headerEnd);
+  //   final lengthBytes = fullBytes.sublist(0, 4);
+
+  //   // ✅ Get documents directory
+  //   final Directory docsDir = await getApplicationDocumentsDirectory();
+
+  //   // ✅ Build the custom path
+  //   final String recordingsPath = p.join(docsDir.path, 'SpiroBT', 'Records');
+
+  //   // ✅ Create the folder if it doesn't exist
+  //   final recordingsDir = Directory(recordingsPath);
+  //   if (!await recordingsDir.exists()) {
+  //     await recordingsDir.create(recursive: true);
+  //   }
+
+  //   // ✅ Ask user where to save using FilePicker
+  //   String? savePath = await FilePicker.platform.saveFile(
+  //     dialogTitle: 'Save your recorded file',
+  //     fileName: 'recorded_data.bin',
+  //     initialDirectory: recordingsPath, // May be ignored on some platforms
+  //   );
+
+  //   if (savePath == null) {
+  //     print("⚠️ User cancelled save dialog.");
+  //     return;
+  //   }
+
+  //   await File(
+  //     savePath,
+  //   ).writeAsBytes(lengthBytes + headerJsonBytes + selectedBytes);
+  //   print("✅ Saved recording to: $savePath");
+  //   ScaffoldMessenger.of(context).showSnackBar(
+  //     SnackBar(content: Text("Recording saved to file successfully.")),
+  //   );
+  // }
+
   Future<void> saveRecordingSlice() async {
     if (!_saverInitialized) {
       print("❌ DataSaver not initialized.");
@@ -1465,9 +1558,6 @@ class _HomeState extends State<Home> {
     const bytesPerSample = 5 * 8; // 5 float64 values
 
     final maxSamples = sampleBytes.length ~/ bytesPerSample;
-    print("Max samples in file: $maxSamples");
-    print(recordStartIndex);
-    print(recordEndIndex);
     final clampedEndIndex = min(recordEndIndex ?? 0, maxSamples);
     final clampedStartIndex = min(recordStartIndex ?? 0, clampedEndIndex);
 
@@ -1485,27 +1575,16 @@ class _HomeState extends State<Home> {
 
     // ✅ Get documents directory
     final Directory docsDir = await getApplicationDocumentsDirectory();
-
-    // ✅ Build the custom path
     final String recordingsPath = p.join(docsDir.path, 'SpiroBT', 'Records');
-
-    // ✅ Create the folder if it doesn't exist
     final recordingsDir = Directory(recordingsPath);
     if (!await recordingsDir.exists()) {
       await recordingsDir.create(recursive: true);
     }
 
-    // ✅ Ask user where to save using FilePicker
-    String? savePath = await FilePicker.platform.saveFile(
-      dialogTitle: 'Save your recorded file',
-      fileName: 'recorded_data.bin',
-      initialDirectory: recordingsPath, // May be ignored on some platforms
-    );
-
-    if (savePath == null) {
-      print("⚠️ User cancelled save dialog.");
-      return;
-    }
+    // ✅ Generate a random filename
+    final uuid = Uuid();
+    final randomName = 'recording_${uuid.v4()}.bin';
+    final savePath = p.join(recordingsPath, randomName);
 
     await File(
       savePath,
@@ -1514,6 +1593,29 @@ class _HomeState extends State<Home> {
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(content: Text("Recording saved to file successfully.")),
     );
+
+    // ✅ Store file path and patient id in database
+    final db = Provider.of<AppDatabase>(context, listen: false);
+    final patientProvider = Provider.of<DefaultPatientModal>(
+      context,
+      listen: false,
+    );
+    final patient = patientProvider.patient;
+    if (patient != null && patient['id'] != null) {
+      await db
+          .into(db.recordings)
+          .insert(
+            RecordingsCompanion(
+              patientId: drift.Value(patient['id'] as int),
+              filePath: drift.Value(savePath),
+              createdAt: drift.Value(DateTime.now()),
+              recordedAt: drift.Value(DateTime.now()),
+            ),
+          );
+      print("✅ Recording info saved in database.");
+    } else {
+      print("❌ No patient selected, cannot save recording info in database.");
+    }
   }
 
   void resetAllData() {
@@ -1742,7 +1844,7 @@ class _HomeState extends State<Home> {
                           onPressed: () {
                             Navigator.of(context).push(
                               MaterialPageRoute(
-                                builder: (context) => Patients(),
+                                builder: (context) => PatientsList(),
                               ),
                             );
                           },

@@ -18,7 +18,16 @@ class Patients extends Table {
   DateTimeColumn get createdAt => dateTime().withDefault(currentDateAndTime)();
 }
 
-@DriftDatabase(tables: [Patients])
+class Recordings extends Table {
+  IntColumn get id => integer().autoIncrement()();
+  IntColumn get patientId => integer()(); // Foreign key to Patients.id
+  TextColumn get filePath => text().withLength(min: 1, max: 255)();
+  DateTimeColumn get recordedAt =>
+      dateTime().withDefault(currentDateAndTime)(); // <-- Added field
+  DateTimeColumn get createdAt => dateTime().withDefault(currentDateAndTime)();
+}
+
+@DriftDatabase(tables: [Patients, Recordings])
 class AppDatabase extends _$AppDatabase {
   AppDatabase() : super(_openConnection());
 

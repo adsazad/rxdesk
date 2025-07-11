@@ -4,14 +4,14 @@ import 'package:spirobtvo/Pages/patient/patientAdd.dart';
 import 'package:spirobtvo/ProviderModals/DefaultPatientModal.dart';
 import 'package:spirobtvo/data/local/database.dart';
 
-class Patients extends StatefulWidget {
-  const Patients({super.key});
+class PatientsList extends StatefulWidget {
+  const PatientsList({super.key});
 
   @override
-  State<Patients> createState() => _PatientsState();
+  State<PatientsList> createState() => _PatientsListState();
 }
 
-class _PatientsState extends State<Patients> {
+class _PatientsListState extends State<PatientsList> {
   List<Patient> _patients = [];
 
   @override
