@@ -498,24 +498,74 @@ class _HomeState extends State<Home> {
     String command,
     void Function(String) updateResponse,
   ) async {
-    // Stop main stream before sending manual command
+    print("[DEBUG] Cancelling main data stream...");
     mainDataSubscription?.cancel();
     mainDataSubscription = null;
 
+    print("[DEBUG] Preparing to send command: $command");
     updateResponse("Sending: $command\n");
 
     final bytes = Uint8List.fromList(command.codeUnits);
-    port.write(bytes);
+    print("[DEBUG] Will send bytes one by one: $bytes");
+
+    List<int> buffer = [];
+    SerialPortReader reader = SerialPortReader(port);
+
+    // Start listening before sending
+    StreamSubscription? sub;
+    final completer = Completer<void>();
+    Timer? responseTimer;
+
+    sub = reader.stream.listen(
+      (data) {
+        print("[DEBUG] Received data chunk: $data");
+        if (data.isEmpty) return;
+        buffer.addAll(data);
+
+        // If buffer ends with \r\n, consider response complete
+        if (buffer.length >= 2 &&
+            buffer[buffer.length - 2] == 13 &&
+            buffer[buffer.length - 1] == 10) {
+          final resp = String.fromCharCodes(buffer);
+          print("[DEBUG] Full response: $resp");
+          updateResponse("Received: $resp\n");
+          completer.complete();
+          sub?.cancel();
+          responseTimer?.cancel();
+        } else {
+          // Reset timer every time we get data (fallback for silence)
+          responseTimer?.cancel();
+          responseTimer = Timer(Duration(milliseconds: 2000), () {
+            final resp = String.fromCharCodes(buffer);
+            print("[DEBUG] Partial response (timeout): $resp");
+            updateResponse("Received (partial): $resp\n");
+            completer.complete();
+            sub?.cancel();
+          });
+        }
+      },
+      onError: (e) {
+        print("[DEBUG] Error while reading response: $e");
+        updateResponse("Error: $e\n");
+        completer.complete();
+        sub?.cancel();
+        responseTimer?.cancel();
+      },
+    );
+
+    // Send each byte individually with a short delay
+    for (final b in bytes) {
+      port.write(Uint8List.fromList([b]));
+      print("[DEBUG] Sent byte: $b");
+      await Future.delayed(Duration(milliseconds: 10));
+    }
     updateResponse("Sent: $command\n");
 
-    // Listen for response (single-shot)
-    SerialPortReader reader = SerialPortReader(port);
-    await reader.stream.first.then((data) {
-      final resp = String.fromCharCodes(data);
-      updateResponse("Received: $resp\n");
-    });
+    // Wait for response to complete or timeout
+    await completer.future;
+    responseTimer?.cancel();
 
-    // Restart main stream after manual command
+    print("[DEBUG] Restarting main data stream...");
     startMainDataStream(port);
   }
 
