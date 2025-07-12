@@ -448,13 +448,15 @@ class _HomeState extends State<Home> {
         // while the response is not caontaining BT
         if (!response.contains("BT")) {
           onResponse?.call("Received: $response");
-          if (step == 0 && response.contains("K 2\r\n")) {
+          if (step == 0 && RegExp(r"\s*K\s*00002\r\n").hasMatch(response)) {
             step++;
             sendNextCommand();
-          } else if (step == 1 && RegExp(r"G\d+\r\n").hasMatch(response)) {
+          } else if (step == 1 &&
+              RegExp(r"\s*G\s*\d+\r\n").hasMatch(response)) {
             step++;
             sendNextCommand();
-          } else if (step == 2 && response.contains("K 1\r\n")) {
+          } else if (step == 2 &&
+              RegExp(r"\s*K\s*00001\r\n").hasMatch(response)) {
             step++;
             sendNextCommand();
           }
