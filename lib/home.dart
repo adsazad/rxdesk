@@ -284,6 +284,70 @@ class _HomeState extends State<Home> {
                             ),
                             onPressed: isSending ? null : sendSequence,
                           ),
+                          Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                            children: [
+                              ElevatedButton(
+                                child: Text("Send K 2"),
+                                onPressed:
+                                    isSending
+                                        ? null
+                                        : () async {
+                                          await sendSingleCommand(
+                                            port,
+                                            "K 2\r\n",
+                                            setState,
+                                            responseText,
+                                          );
+                                        },
+                              ),
+                              ElevatedButton(
+                                child: Text("Send G"),
+                                onPressed:
+                                    isSending
+                                        ? null
+                                        : () async {
+                                          await sendSingleCommand(
+                                            port,
+                                            "G\r\n",
+                                            setState,
+                                            responseText,
+                                          );
+                                        },
+                              ),
+                              ElevatedButton(
+                                child: Text("Send K 1"),
+                                onPressed:
+                                    isSending
+                                        ? null
+                                        : () async {
+                                          await sendSingleCommand(
+                                            port,
+                                            "K 1\r\n",
+                                            setState,
+                                            responseText,
+                                          );
+                                        },
+                              ),
+                              ElevatedButton(
+                                child: Text("Send All"),
+                                onPressed:
+                                    isSending
+                                        ? null
+                                        : () async {
+                                          await sendCalibrationSequence(
+                                            port,
+                                            context,
+                                            onResponse: (resp) {
+                                              setState(() {
+                                                responseText += resp + "\n";
+                                              });
+                                            },
+                                          );
+                                        },
+                              ),
+                            ],
+                          ),
                         ],
                       );
                     },
@@ -423,6 +487,28 @@ class _HomeState extends State<Home> {
     ];
 
     // startTestLoop(); // Start the test loop
+  }
+
+  Future<void> sendSingleCommand(
+    SerialPort port,
+    String command,
+    void Function(void Function()) setState,
+    String responseText,
+  ) async {
+    final bytes = Uint8List.fromList(command.codeUnits);
+    port.write(bytes);
+    setState(() {
+      responseText += "Sent: $command\n";
+    });
+
+    // Listen for response (single-shot)
+    SerialPortReader reader = SerialPortReader(port);
+    await reader.stream.first.then((data) {
+      final resp = String.fromCharCodes(data);
+      setState(() {
+        responseText += "Received: $resp\n";
+      });
+    });
   }
 
   Future<void> sendCalibrationSequence(
@@ -970,6 +1056,7 @@ class _HomeState extends State<Home> {
     //             recentVolumes.removeAt(0);
     //           }
 
+    //           // Check for exhalation pattern
     //           int nonZeroCount = recentVolumes.where((v) => v > 50).length;
     //           bool currentIsZero = vol <= 5;
 
