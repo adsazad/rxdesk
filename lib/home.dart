@@ -6,6 +6,7 @@ import 'dart:math';
 import 'dart:typed_data';
 import 'dart:ui';
 import 'package:path_provider/path_provider.dart';
+import 'package:spirobtvo/ProviderModals/ImportFileProvider.dart';
 import 'package:spirobtvo/Widgets/MyBigGraphScrollable.dart';
 import 'package:spirobtvo/data/local/database.dart';
 import 'package:syncfusion_flutter_xlsio/xlsio.dart' as xlsio;
@@ -1427,6 +1428,106 @@ class _HomeState extends State<Home> {
 
     print("✅ Imported ${samples.length} samples from $path");
     return {"patient": patientInfo, "samples": samples};
+  }
+
+  Future<void> importBinFileFromPath(String path) async {
+    setState(() {
+      isImported = true;
+    });
+
+    try {
+      // Step 1: Import file
+      final file = File(path);
+      final bytes = await file.readAsBytes();
+
+      if (bytes.length < 4) {
+        print("❌ File too short to contain header.");
+        return;
+      }
+
+      final headerLen = ByteData.sublistView(
+        bytes,
+        0,
+        4,
+      ).getUint32(0, Endian.little);
+      if (headerLen <= 0 || headerLen > 8192) {
+        print("❌ Invalid header length: $headerLen");
+        return;
+      }
+
+      if (bytes.length < 4 + headerLen) {
+        print("❌ File doesn't contain full header.");
+        return;
+      }
+
+      final jsonBytes = bytes.sublist(4, 4 + headerLen);
+      final String jsonText = utf8.decode(jsonBytes);
+      final Map<String, dynamic> patient = jsonDecode(jsonText);
+
+      const bytesPerSample = 5 * 8;
+      final sampleData = bytes.sublist(4 + headerLen);
+      final int sampleCount = sampleData.length ~/ bytesPerSample;
+
+      List<List<double>> samples = [];
+      for (int i = 0; i < sampleCount; i++) {
+        final start = i * bytesPerSample;
+        final chunk = sampleData.sublist(start, start + bytesPerSample);
+        final bd = ByteData.sublistView(chunk);
+
+        samples.add([
+          bd.getFloat64(0, Endian.little), // ECG
+          bd.getFloat64(8, Endian.little), // O2
+          bd.getFloat64(16, Endian.little), // CO2
+          bd.getFloat64(24, Endian.little), // Vol
+          bd.getFloat64(32, Endian.little), // Flow
+        ]);
+      }
+
+      // Step 2: Set patient info
+      final defaultProvider = Provider.of<DefaultPatientModal>(
+        context,
+        listen: false,
+      );
+      final prefs = await SharedPreferences.getInstance();
+      prefs.setString('default_patient', jsonEncode(patient));
+      defaultProvider.setDefault(patient);
+
+      // Step 3: Push all samples to graph and memory
+      _inMemoryData.clear();
+      for (final sample in samples) {
+        if (sample.length >= 5) {
+          final List<double> numericSample =
+              sample.map((e) => (e as num).toDouble()).toList();
+          if (numericSample.length >= 5) {
+            // Flip the last two values
+            final temp = numericSample[3];
+            numericSample[3] = numericSample[4];
+            numericSample[4] = temp;
+          }
+          final edt = myBigGraphKey.currentState?.updateEverything(
+            numericSample,
+          );
+          if (edt != null && edt.length >= 5) {
+            _inMemoryData.add([edt[0], edt[1], edt[2], edt[3], edt[4]]);
+          }
+        }
+      }
+
+      print("Imported ${samples.length} samples.");
+      onExhalationDetected();
+    } catch (e) {
+      print("❌ Error while importing: $e");
+    }
+  }
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    final importProvider = Provider.of<ImportFileProvider>(context);
+    if (importProvider.filePath != null) {
+      importBinFileFromPath(importProvider.filePath!);
+      importProvider.clear();
+    }
   }
 
   // Future<void> saveRecordingSlice() async {

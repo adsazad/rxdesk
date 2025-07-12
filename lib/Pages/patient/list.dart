@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:spirobtvo/Pages/patient/PatientRecords.dart';
 import 'package:spirobtvo/Pages/patient/patientAdd.dart';
 import 'package:spirobtvo/ProviderModals/DefaultPatientModal.dart';
 import 'package:spirobtvo/data/local/database.dart';
@@ -115,7 +116,7 @@ class _PatientsListState extends State<PatientsList> {
                                         CircleAvatar(
                                           radius: 28,
                                           backgroundColor: Colors.blue.shade100,
-                                          child: const Icon(
+                                          child: Icon(
                                             Icons.person,
                                             color: Colors.blue,
                                             size: 30,
@@ -135,21 +136,70 @@ class _PatientsListState extends State<PatientsList> {
                                                   color:
                                                       isDefault
                                                           ? Colors.green[800]
-                                                          : null,
+                                                          : Colors.black87,
                                                 ),
                                               ),
                                               const SizedBox(height: 4),
-                                              Text(
-                                                "Gender: ${patient.gender ?? '-'} • Age: ${patient.age ?? '-'}",
-                                                style: TextStyle(
-                                                  color: Colors.grey[700],
-                                                ),
+                                              Row(
+                                                children: [
+                                                  Icon(
+                                                    Icons.transgender,
+                                                    size: 16,
+                                                    color: Colors.grey,
+                                                  ),
+                                                  const SizedBox(width: 4),
+                                                  Text(
+                                                    "Gender: ${patient.gender ?? '-'}",
+                                                  ),
+                                                  const SizedBox(width: 12),
+                                                  Icon(
+                                                    Icons.cake,
+                                                    size: 16,
+                                                    color: Colors.grey,
+                                                  ),
+                                                  const SizedBox(width: 4),
+                                                  Text(
+                                                    "Age: ${patient.age ?? '-'}",
+                                                  ),
+                                                ],
                                               ),
-                                              Text(
-                                                "Mobile: ${patient.mobile ?? '-'}",
-                                                style: TextStyle(
-                                                  color: Colors.grey[700],
-                                                ),
+                                              const SizedBox(height: 4),
+                                              Row(
+                                                children: [
+                                                  Icon(
+                                                    Icons.phone,
+                                                    size: 16,
+                                                    color: Colors.grey,
+                                                  ),
+                                                  const SizedBox(width: 4),
+                                                  Text(
+                                                    "Mobile: ${patient.mobile ?? '-'}",
+                                                  ),
+                                                ],
+                                              ),
+                                              const SizedBox(height: 4),
+                                              Row(
+                                                children: [
+                                                  Icon(
+                                                    Icons.height,
+                                                    size: 16,
+                                                    color: Colors.grey,
+                                                  ),
+                                                  const SizedBox(width: 4),
+                                                  Text(
+                                                    "Height: ${patient.height} cm",
+                                                  ),
+                                                  const SizedBox(width: 12),
+                                                  Icon(
+                                                    Icons.monitor_weight,
+                                                    size: 16,
+                                                    color: Colors.grey,
+                                                  ),
+                                                  const SizedBox(width: 4),
+                                                  Text(
+                                                    "Weight: ${patient.weight} kg",
+                                                  ),
+                                                ],
                                               ),
                                             ],
                                           ),
@@ -168,55 +218,92 @@ class _PatientsListState extends State<PatientsList> {
                                     const SizedBox(height: 12),
                                     Align(
                                       alignment: Alignment.centerRight,
-                                      child: OutlinedButton.icon(
-                                        onPressed: () async {
-                                          defaultProvider.setDefault({
-                                            'id': patient.id,
-                                            'name': patient.name,
-                                            'gender': patient.gender,
-                                            'mobile': patient.mobile,
-                                            'age': patient.age.toString(),
-                                            'height': patient.height.toString(),
-                                            'weight': patient.weight.toString(),
-                                          });
+                                      child: Row(
+                                        mainAxisSize: MainAxisSize.min,
+                                        children: [
+                                          OutlinedButton.icon(
+                                            onPressed: () async {
+                                              defaultProvider.setDefault({
+                                                'id': patient.id,
+                                                'name': patient.name,
+                                                'gender': patient.gender,
+                                                'mobile': patient.mobile,
+                                                'age': patient.age.toString(),
+                                                'height':
+                                                    patient.height.toString(),
+                                                'weight':
+                                                    patient.weight.toString(),
+                                              });
 
-                                          ScaffoldMessenger.of(
-                                            context,
-                                          ).showSnackBar(
-                                            SnackBar(
-                                              content: Text(
-                                                "${patient.name} set as default patient",
+                                              ScaffoldMessenger.of(
+                                                context,
+                                              ).showSnackBar(
+                                                SnackBar(
+                                                  content: Text(
+                                                    "${patient.name} set as default patient",
+                                                  ),
+                                                ),
+                                              );
+                                            },
+                                            icon: Icon(
+                                              Icons.push_pin,
+                                              color:
+                                                  isDefault
+                                                      ? Colors.green
+                                                      : Colors.black,
+                                              size: 18,
+                                            ),
+                                            label: Text(
+                                              isDefault
+                                                  ? "Default Patient"
+                                                  : "Set as Default",
+                                              style: TextStyle(
+                                                color:
+                                                    isDefault
+                                                        ? Colors.green
+                                                        : Colors.black,
                                               ),
                                             ),
-                                          );
-                                        },
-                                        icon: Icon(
-                                          Icons.push_pin,
-                                          color:
-                                              isDefault
-                                                  ? Colors.green
-                                                  : Colors.black,
-                                          size: 18,
-                                        ),
-                                        label: Text(
-                                          isDefault
-                                              ? "Default Patient"
-                                              : "Set as Default",
-                                          style: TextStyle(
-                                            color:
-                                                isDefault
-                                                    ? Colors.green
-                                                    : Colors.black,
+                                            style: OutlinedButton.styleFrom(
+                                              side: BorderSide(
+                                                color:
+                                                    isDefault
+                                                        ? Colors.green
+                                                        : Colors.black,
+                                              ),
+                                            ),
                                           ),
-                                        ),
-                                        style: OutlinedButton.styleFrom(
-                                          side: BorderSide(
-                                            color:
-                                                isDefault
-                                                    ? Colors.green
-                                                    : Colors.black,
+                                          const SizedBox(width: 8),
+                                          OutlinedButton.icon(
+                                            onPressed: () {
+                                              Navigator.of(context).push(
+                                                MaterialPageRoute(
+                                                  builder:
+                                                      (context) =>
+                                                          PatientRecordingsPage(
+                                                            patientId:
+                                                                patient.id,
+                                                          ),
+                                                ),
+                                              );
+                                            },
+                                            icon: Icon(
+                                              Icons.folder_open,
+                                              color: Colors.blue,
+                                            ),
+                                            label: Text(
+                                              "Recordings",
+                                              style: TextStyle(
+                                                color: Colors.blue,
+                                              ),
+                                            ),
+                                            style: OutlinedButton.styleFrom(
+                                              side: BorderSide(
+                                                color: Colors.blue,
+                                              ),
+                                            ),
                                           ),
-                                        ),
+                                        ],
                                       ),
                                     ),
                                   ],

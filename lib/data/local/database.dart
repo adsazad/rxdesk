@@ -32,9 +32,16 @@ class AppDatabase extends _$AppDatabase {
   AppDatabase() : super(_openConnection());
 
   @override
-  int get schemaVersion => 1;
+  int get schemaVersion => 2; // <-- Increment this
 
-  // CRUD methods can be added here
+  @override
+  MigrationStrategy get migration => MigrationStrategy(
+    onUpgrade: (m, from, to) async {
+      if (from == 1) {
+        await m.addColumn(recordings, recordings.recordedAt);
+      }
+    },
+  );
 }
 
 // Opens the database connection

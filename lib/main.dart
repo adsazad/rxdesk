@@ -7,6 +7,7 @@ import 'package:provider/provider.dart' as pvrd;
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:spirobtvo/ProviderModals/DefaultPatientModal.dart';
 import 'package:spirobtvo/ProviderModals/GlobalSettingsModal.dart';
+import 'package:spirobtvo/ProviderModals/ImportFileProvider.dart';
 import 'package:spirobtvo/Services/navigatorService.dart';
 import 'package:spirobtvo/data/local/database.dart';
 import 'package:spirobtvo/home.dart';
@@ -86,6 +87,10 @@ void main() async {
             create: (context) => AppDatabase(), // <-- Add this line
             dispose:
                 (context, db) => db.close(), // <-- Clean up when not needed
+          ),
+          // Add to your MultiProvider list
+          pvrd.ChangeNotifierProvider<ImportFileProvider>(
+            create: (_) => ImportFileProvider(),
           ),
         ],
         child: MaterialApp(
