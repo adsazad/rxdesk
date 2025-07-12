@@ -146,7 +146,7 @@ class _HomeState extends State<Home> {
       {
         "name": "CO2",
         "scale": 3,
-        "boxValue": 25 / 6,
+        "boxValue": 30 / 6,
         "labelDecimal": 0,
         "boxValueConvert": (double x) => x / 100,
         "unit": "%",
@@ -176,11 +176,9 @@ class _HomeState extends State<Home> {
                         onPressed: () => Navigator.of(context).pop(),
                       ),
                       ElevatedButton(
-                        child: Text("Send Calibrate Command"),
+                        child: Text("Send Calibrate Sequence"),
                         onPressed: () async {
                           try {
-                            // Initialize port if not already open or not initialized
-
                             final globalSettings =
                                 Provider.of<GlobalSettingsModal>(
                                   context,
@@ -206,50 +204,14 @@ class _HomeState extends State<Home> {
                               config.dtr = 1;
                               portCal.config = config;
                             }
-
-                            portCal.write(
-                              Uint8List.fromList('G\r\n'.codeUnits),
-                            );
-
-                            // Listen for response
-                            SerialPortReader reader = SerialPortReader(portCal);
-                            StreamSubscription? subscription;
-                            subscription = reader.stream.listen(
-                              (data) {
-                                final response = String.fromCharCodes(data);
-                                if (response.contains('G\r\n')) {
-                                  ScaffoldMessenger.of(context).showSnackBar(
-                                    SnackBar(
-                                      content: Text("Calibration successful!"),
-                                    ),
-                                  );
-                                  subscription
-                                      ?.cancel(); // Stop listening after success
-                                }
-                              },
-                              onError: (e) {
-                                print(e);
-                                ScaffoldMessenger.of(context).showSnackBar(
-                                  SnackBar(
-                                    content: Text(
-                                      "Error receiving calibration response: $e",
-                                    ),
-                                  ),
-                                );
-                                subscription?.cancel();
-                              },
-                              onDone: () {
-                                // Optionally handle stream completion
-                              },
-                            );
-                            //  close the port also
-                            // await Future.delayed(Duration(seconds: 2));
-                            // portCal.close();
+                            await sendCalibrationSequence(portCal, context);
                           } catch (e) {
                             print(e);
                             ScaffoldMessenger.of(context).showSnackBar(
                               SnackBar(
-                                content: Text("Failed to send command: $e"),
+                                content: Text(
+                                  "Failed to send calibration sequence: $e",
+                                ),
                               ),
                             );
                           }
@@ -393,6 +355,67 @@ class _HomeState extends State<Home> {
     ];
 
     // startTestLoop(); // Start the test loop
+  }
+
+  Future<void> sendCalibrationSequence(
+    SerialPort port,
+    BuildContext context,
+  ) async {
+    final commands = [
+      Uint8List.fromList([0x4B, 0x20, 0x32, 0x0D, 0x0A]), // K 2\r\n
+      Uint8List.fromList([0x47, 0x0D, 0x0A]), // G\r\n
+      Uint8List.fromList([0x4B, 0x20, 0x31, 0x0D, 0x0A]), // K 1\r\n
+    ];
+
+    int step = 0;
+    SerialPortReader reader = SerialPortReader(port);
+    StreamSubscription? subscription;
+
+    void sendNextCommand() {
+      if (step < commands.length) {
+        port.write(commands[step]);
+        print("Sent command: ${String.fromCharCodes(commands[step])}");
+      } else {
+        subscription?.cancel();
+        port.close();
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text("Calibration sequence complete!")),
+        );
+      }
+    }
+
+    subscription = reader.stream.listen(
+      (data) {
+        final response = String.fromCharCodes(data);
+        print("Received: $response");
+
+        if (step == 0 && response.contains("K 2\r\n")) {
+          step++;
+          sendNextCommand();
+        } else if (step == 1 && RegExp(r"G\d+\r\n").hasMatch(response)) {
+          // Accept any G<number>\r\n response
+          step++;
+          sendNextCommand();
+        } else if (step == 2 && response.contains("K 1\r\n")) {
+          step++;
+          sendNextCommand();
+        }
+      },
+      onError: (e) {
+        print("Serial error: $e");
+        subscription?.cancel();
+        port.close();
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text("Calibration failed: $e")));
+      },
+      onDone: () {
+        print("Serial stream done.");
+        port.close();
+      },
+    );
+
+    sendNextCommand();
   }
 
   initFunc() async {
