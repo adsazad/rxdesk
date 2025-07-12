@@ -498,7 +498,7 @@ class _HomeState extends State<Home> {
     String command,
     void Function(String) updateResponse,
   ) async {
-    print("[DEBUG] Cancelling main data stream...");
+    print("[DEBUG] Cancelling previous listener...");
     mainDataSubscription?.cancel();
     mainDataSubscription = null;
 
@@ -511,16 +511,34 @@ class _HomeState extends State<Home> {
     List<int> buffer = [];
     SerialPortReader reader = SerialPortReader(port);
 
-    // Start listening before sending
+    // Flush the port BEFORE starting the listener
+    try {
+      port.flush();
+      print("[DEBUG] Flushed serial port before listening.");
+    } catch (e) {
+      print("[DEBUG] Port flush not supported or failed: $e");
+    }
+
     StreamSubscription? sub;
     final completer = Completer<void>();
     Timer? responseTimer;
 
+    // Start a new listener BEFORE sending bytes!
     sub = reader.stream.listen(
       (data) {
         print("[DEBUG] Received data chunk: $data");
         if (data.isEmpty) return;
         buffer.addAll(data);
+
+        // Reset timer every time we get data (fallback for silence)
+        responseTimer?.cancel();
+        responseTimer = Timer(Duration(milliseconds: 2000), () {
+          final resp = String.fromCharCodes(buffer);
+          print("[DEBUG] Partial response (timeout): $resp");
+          updateResponse("Received (partial): $resp\n");
+          completer.complete();
+          sub?.cancel();
+        });
 
         // If buffer ends with \r\n, consider response complete
         if (buffer.length >= 2 &&
@@ -532,16 +550,6 @@ class _HomeState extends State<Home> {
           completer.complete();
           sub?.cancel();
           responseTimer?.cancel();
-        } else {
-          // Reset timer every time we get data (fallback for silence)
-          responseTimer?.cancel();
-          responseTimer = Timer(Duration(milliseconds: 2000), () {
-            final resp = String.fromCharCodes(buffer);
-            print("[DEBUG] Partial response (timeout): $resp");
-            updateResponse("Received (partial): $resp\n");
-            completer.complete();
-            sub?.cancel();
-          });
         }
       },
       onError: (e) {
@@ -553,7 +561,10 @@ class _HomeState extends State<Home> {
       },
     );
 
-    // Send each byte individually with a short delay
+    // Slightly longer delay to ensure listener is ready
+    await Future.delayed(Duration(milliseconds: 100));
+
+    // Now send each byte individually with a short delay
     for (final b in bytes) {
       port.write(Uint8List.fromList([b]));
       print("[DEBUG] Sent byte: $b");
