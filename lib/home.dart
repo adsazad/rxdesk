@@ -95,6 +95,8 @@ class _HomeState extends State<Home> {
   Map<String, dynamic>? cp;
   late List<Map<String, dynamic>> plotConfig; // <-- Move plot config here
 
+  StreamSubscription<Uint8List>? mainDataSubscription;
+
   @override
   void initState() {
     super.initState();
@@ -195,30 +197,39 @@ class _HomeState extends State<Home> {
                         });
 
                         try {
-                          final globalSettings =
-                              Provider.of<GlobalSettingsModal>(
-                                context,
-                                listen: false,
-                              );
-                          SerialPort portCal = SerialPort(
-                            globalSettings.com.toString(),
-                          );
-                          if (!portCal.isOpen) {
-                            if (!portCal.openReadWrite()) {
-                              throw Exception(
-                                "Failed to open port: ${SerialPort.lastError}",
-                              );
+                          // Use the existing port if available and open
+                          mainDataSubscription?.cancel();
+                          mainDataSubscription = null;
+
+                          SerialPort portCal;
+                          if (port != null && port.isOpen) {
+                            portCal = port;
+                          } else {
+                            final globalSettings =
+                                Provider.of<GlobalSettingsModal>(
+                                  context,
+                                  listen: false,
+                                );
+                            portCal = SerialPort(globalSettings.com.toString());
+                            if (!portCal.isOpen) {
+                              if (!portCal.openReadWrite()) {
+                                throw Exception(
+                                  "Failed to open port: ${SerialPort.lastError}",
+                                );
+                              }
+                              final config = portCal.config;
+                              config.baudRate = 230400;
+                              config.bits = 8;
+                              config.stopBits = 1;
+                              config.xonXoff = 0;
+                              config.rts = 1;
+                              config.cts = 0;
+                              config.dsr = 0;
+                              config.dtr = 1;
+                              portCal.config = config;
                             }
-                            final config = portCal.config;
-                            config.baudRate = 230400;
-                            config.bits = 8;
-                            config.stopBits = 1;
-                            config.xonXoff = 0;
-                            config.rts = 1;
-                            config.cts = 0;
-                            config.dsr = 0;
-                            config.dtr = 1;
-                            portCal.config = config;
+                            // Optionally assign to global port if you want to reuse
+                            port = portCal;
                           }
 
                           await sendCalibrationSequence(
@@ -245,6 +256,7 @@ class _HomeState extends State<Home> {
                           setState(() {
                             isSending = false;
                           });
+                          startMainDataStream(port);
                         }
                       }
 
@@ -931,32 +943,150 @@ class _HomeState extends State<Home> {
     //     print("❌ Serial port error: $e");
     //   },
     // );
-    reader.stream.listen(
+    // reader.stream.listen(
+    //   (data) {
+    //     // final hexString = data
+    //     //     .map((b) => b.toRadixString(16).padLeft(2, '0'))
+    //     //     .join(' ');
+    //     // print("Packet Start");
+    //     // print(hexString);
+    //     // print("Packet End");
+    //     int frameLength = 18;
+    //     for (int i = 0; i <= data.length - frameLength;) {
+    //       // Look for a valid frame header
+    //       if (data[i] == 'B'.codeUnitAt(0) &&
+    //           data[i + 1] == 'T'.codeUnitAt(0)) {
+    //         // Check that we have a full frame ahead
+    //         if (i + frameLength <= data.length) {
+    //           final frame = data.sublist(i, i + frameLength);
+    //           // print("DATACOM HERE");
+
+    //           // Your existing logic here
+    //           // double vol = (frame[13] << 8 | frame[12]) * 1.0;
+    //           double vol = (frame[13] * 256 + frame[12]) * 1.0;
+
+    //           recentVolumes.add(vol);
+    //           if (recentVolumes.length > 10) {
+    //             recentVolumes.removeAt(0);
+    //           }
+
+    //           int nonZeroCount = recentVolumes.where((v) => v > 50).length;
+    //           bool currentIsZero = vol <= 5;
+
+    //           if (nonZeroCount >= 5 && currentIsZero && wasExhaling) {
+    //             onExhalationDetected();
+    //             wasExhaling = false;
+    //           }
+
+    //           if (vol > 50) {
+    //             wasExhaling = true;
+    //           }
+
+    //           double ecg = (frame[3] * 256 + frame[2]) * 1.0;
+    //           double o2 = (frame[7] * 256 + frame[6]) * 1.0;
+    //           double flow = (frame[11] * 256 + frame[10]) * 1.0;
+    //           double co2 = (frame[15] * 256 + frame[14]) * 1.0;
+
+    //           // flow calibrator
+    //           flow =
+    //               flow +
+    //               globalSettings.flowCalPlus -
+    //               globalSettings.flowCalMinus;
+
+    //           // flow = 9.82 * 1000 / flow;
+
+    //           setState(() {
+    //             flow = flow;
+    //           });
+
+    //           rawDataFull.add(ecg);
+    //           saver(ecg: ecg, o2: o2, flow: flow, vol: vol, co2: co2);
+
+    //           // delayBuffer.add([ecg, o2, co2, vol, flow]);  // commenting this stop delay correction
+
+    //           int bufferSizeLimit = ((delaySamples ?? 0) + 1) * 2;
+    //           if (delayBuffer.length > bufferSizeLimit) {
+    //             delayBuffer.removeAt(0);
+    //           }
+
+    //           if (delaySamples == null || delayBuffer.length <= delaySamples!) {
+    //             // print("DATACOMHERE2");
+    //             List<double>? edt = myBigGraphKey.currentState
+    //                 ?.updateEverything([ecg, o2, co2, flow, vol]);
+    //             if (edt != null) {
+    //               _inMemoryData.add([edt[0], edt[1], edt[2], edt[3], flow]);
+    //             }
+    //             i += frameLength;
+    //             continue;
+    //           }
+
+    //           var current = delayBuffer[0];
+    //           var future = delayBuffer[delaySamples!];
+
+    //           double correctedECG = current[0];
+    //           double correctedVOL = current[3];
+    //           double correctedFLOW = current[4];
+    //           double correctedO2 = future[1];
+    //           double correctedCO2 = future[2];
+
+    //           delayBuffer.removeAt(0);
+
+    //           List<double>? edt = myBigGraphKey.currentState?.updateEverything([
+    //             correctedECG,
+    //             correctedO2,
+    //             correctedCO2,
+    //             correctedFLOW,
+    //             correctedVOL,
+    //           ]);
+
+    //           if (edt != null) {
+    //             _inMemoryData.add([
+    //               edt[0],
+    //               edt[1],
+    //               edt[2],
+    //               edt[3],
+    //               correctedFLOW,
+    //             ]);
+    //           }
+
+    //           i += frameLength; // move to next possible frame
+    //         } else {
+    //           // Not enough bytes for a full frame, break to wait for next chunk
+    //           break;
+    //         }
+    //       } else {
+    //         // Not a valid frame header, move forward by 1 byte and search again
+    //         i++;
+    //       }
+    //     }
+    //   },
+    //   onDone: () {
+    //     print("Serial Done");
+    //   },
+    //   onError: (e) {
+    //     print("❌ Serial port error: $e");
+    //   },
+    // );
+    startMainDataStream(port); // Start the main data stream
+  }
+
+  void startMainDataStream(SerialPort port) {
+    // Cancel any previous subscription
+    mainDataSubscription?.cancel();
+
+    SerialPortReader reader = SerialPortReader(port);
+    mainDataSubscription = reader.stream.listen(
       (data) {
-        // final hexString = data
-        //     .map((b) => b.toRadixString(16).padLeft(2, '0'))
-        //     .join(' ');
-        // print("Packet Start");
-        // print(hexString);
-        // print("Packet End");
         int frameLength = 18;
         for (int i = 0; i <= data.length - frameLength;) {
-          // Look for a valid frame header
           if (data[i] == 'B'.codeUnitAt(0) &&
               data[i + 1] == 'T'.codeUnitAt(0)) {
-            // Check that we have a full frame ahead
             if (i + frameLength <= data.length) {
               final frame = data.sublist(i, i + frameLength);
-              // print("DATACOM HERE");
 
-              // Your existing logic here
-              // double vol = (frame[13] << 8 | frame[12]) * 1.0;
               double vol = (frame[13] * 256 + frame[12]) * 1.0;
-
               recentVolumes.add(vol);
-              if (recentVolumes.length > 10) {
-                recentVolumes.removeAt(0);
-              }
+              if (recentVolumes.length > 10) recentVolumes.removeAt(0);
 
               int nonZeroCount = recentVolumes.where((v) => v > 50).length;
               bool currentIsZero = vol <= 5;
@@ -965,23 +1095,17 @@ class _HomeState extends State<Home> {
                 onExhalationDetected();
                 wasExhaling = false;
               }
-
-              if (vol > 50) {
-                wasExhaling = true;
-              }
+              if (vol > 50) wasExhaling = true;
 
               double ecg = (frame[3] * 256 + frame[2]) * 1.0;
               double o2 = (frame[7] * 256 + frame[6]) * 1.0;
               double flow = (frame[11] * 256 + frame[10]) * 1.0;
               double co2 = (frame[15] * 256 + frame[14]) * 1.0;
 
-              // flow calibrator
               flow =
                   flow +
                   globalSettings.flowCalPlus -
                   globalSettings.flowCalMinus;
-
-              // flow = 9.82 * 1000 / flow;
 
               setState(() {
                 flow = flow;
@@ -990,20 +1114,14 @@ class _HomeState extends State<Home> {
               rawDataFull.add(ecg);
               saver(ecg: ecg, o2: o2, flow: flow, vol: vol, co2: co2);
 
-              // delayBuffer.add([ecg, o2, co2, vol, flow]);  // commenting this stop delay correction
-
               int bufferSizeLimit = ((delaySamples ?? 0) + 1) * 2;
-              if (delayBuffer.length > bufferSizeLimit) {
-                delayBuffer.removeAt(0);
-              }
+              if (delayBuffer.length > bufferSizeLimit) delayBuffer.removeAt(0);
 
               if (delaySamples == null || delayBuffer.length <= delaySamples!) {
-                // print("DATACOMHERE2");
                 List<double>? edt = myBigGraphKey.currentState
                     ?.updateEverything([ecg, o2, co2, flow, vol]);
-                if (edt != null) {
+                if (edt != null)
                   _inMemoryData.add([edt[0], edt[1], edt[2], edt[3], flow]);
-                }
                 i += frameLength;
                 continue;
               }
@@ -1026,7 +1144,6 @@ class _HomeState extends State<Home> {
                 correctedFLOW,
                 correctedVOL,
               ]);
-
               if (edt != null) {
                 _inMemoryData.add([
                   edt[0],
@@ -1036,14 +1153,11 @@ class _HomeState extends State<Home> {
                   correctedFLOW,
                 ]);
               }
-
-              i += frameLength; // move to next possible frame
+              i += frameLength;
             } else {
-              // Not enough bytes for a full frame, break to wait for next chunk
               break;
             }
           } else {
-            // Not a valid frame header, move forward by 1 byte and search again
             i++;
           }
         }
