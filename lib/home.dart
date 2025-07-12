@@ -498,6 +498,10 @@ class _HomeState extends State<Home> {
     String command,
     void Function(String) updateResponse,
   ) async {
+    // Stop main stream before sending manual command
+    mainDataSubscription?.cancel();
+    mainDataSubscription = null;
+
     updateResponse("Sending: $command\n");
 
     final bytes = Uint8List.fromList(command.codeUnits);
@@ -510,6 +514,9 @@ class _HomeState extends State<Home> {
       final resp = String.fromCharCodes(data);
       updateResponse("Received: $resp\n");
     });
+
+    // Restart main stream after manual command
+    startMainDataStream(port);
   }
 
   Future<void> sendCalibrationSequence(
