@@ -165,60 +165,98 @@ class _HomeState extends State<Home> {
               showDialog(
                 context: context,
                 builder: (context) {
-                  return AlertDialog(
-                    title: Text("Device Calibration"),
-                    content: Text(
-                      "Press the button below to send the calibrate command to the device.",
-                    ),
-                    actions: [
-                      TextButton(
-                        child: Text("Cancel"),
-                        onPressed: () => Navigator.of(context).pop(),
-                      ),
-                      ElevatedButton(
-                        child: Text("Send Calibrate Sequence"),
-                        onPressed: () async {
-                          try {
-                            final globalSettings =
-                                Provider.of<GlobalSettingsModal>(
-                                  context,
-                                  listen: false,
-                                );
-                            SerialPort portCal = SerialPort(
-                              globalSettings.com.toString(),
-                            );
-                            if (!portCal.isOpen) {
-                              if (!portCal.openReadWrite()) {
-                                throw Exception(
-                                  "Failed to open port: ${SerialPort.lastError}",
-                                );
-                              }
-                              final config = portCal.config;
-                              config.baudRate = 230400;
-                              config.bits = 8;
-                              config.stopBits = 1;
-                              config.xonXoff = 0;
-                              config.rts = 1;
-                              config.cts = 0;
-                              config.dsr = 0;
-                              config.dtr = 1;
-                              portCal.config = config;
+                  String responseText = "";
+                  bool isSending = false;
+
+                  return StatefulBuilder(
+                    builder: (context, setState) {
+                      Future<void> sendSequence() async {
+                        setState(() {
+                          isSending = true;
+                          responseText = "Starting calibration sequence...\n";
+                        });
+
+                        try {
+                          final globalSettings =
+                              Provider.of<GlobalSettingsModal>(
+                                context,
+                                listen: false,
+                              );
+                          SerialPort portCal = SerialPort(
+                            globalSettings.com.toString(),
+                          );
+                          if (!portCal.isOpen) {
+                            if (!portCal.openReadWrite()) {
+                              throw Exception(
+                                "Failed to open port: ${SerialPort.lastError}",
+                              );
                             }
-                            await sendCalibrationSequence(portCal, context);
-                          } catch (e) {
-                            print(e);
-                            ScaffoldMessenger.of(context).showSnackBar(
-                              SnackBar(
-                                content: Text(
-                                  "Failed to send calibration sequence: $e",
-                                ),
-                              ),
-                            );
+                            final config = portCal.config;
+                            config.baudRate = 230400;
+                            config.bits = 8;
+                            config.stopBits = 1;
+                            config.xonXoff = 0;
+                            config.rts = 1;
+                            config.cts = 0;
+                            config.dsr = 0;
+                            config.dtr = 1;
+                            portCal.config = config;
                           }
-                          Navigator.of(context).pop();
-                        },
-                      ),
-                    ],
+
+                          await sendCalibrationSequence(
+                            portCal,
+                            context,
+                            onResponse: (resp) {
+                              setState(() {
+                                responseText += resp + "\n";
+                              });
+                            },
+                          );
+                        } catch (e) {
+                          setState(() {
+                            responseText += "Error: $e\n";
+                          });
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            SnackBar(
+                              content: Text(
+                                "Failed to send calibration sequence: $e",
+                              ),
+                            ),
+                          );
+                        } finally {
+                          setState(() {
+                            isSending = false;
+                          });
+                        }
+                      }
+
+                      return AlertDialog(
+                        title: Text("Device Calibration"),
+                        content: SizedBox(
+                          width: 350,
+                          child: SingleChildScrollView(
+                            child: Text(
+                              responseText,
+                              style: TextStyle(fontFamily: 'monospace'),
+                            ),
+                          ),
+                        ),
+                        actions: [
+                          TextButton(
+                            child: Text("Cancel"),
+                            onPressed: () => Navigator.of(context).pop(),
+                          ),
+                          ElevatedButton(
+                            child: Text(
+                              isSending
+                                  ? "Sending..."
+                                  : "Send Calibrate Sequence",
+                            ),
+                            onPressed: isSending ? null : sendSequence,
+                          ),
+                        ],
+                      );
+                    },
                   );
                 },
               );
@@ -359,8 +397,9 @@ class _HomeState extends State<Home> {
 
   Future<void> sendCalibrationSequence(
     SerialPort port,
-    BuildContext context,
-  ) async {
+    BuildContext context, {
+    void Function(String response)? onResponse,
+  }) async {
     final commands = [
       Uint8List.fromList([0x4B, 0x20, 0x32, 0x0D, 0x0A]), // K 2\r\n
       Uint8List.fromList([0x47, 0x0D, 0x0A]), // G\r\n
@@ -374,10 +413,11 @@ class _HomeState extends State<Home> {
     void sendNextCommand() {
       if (step < commands.length) {
         port.write(commands[step]);
-        print("Sent command: ${String.fromCharCodes(commands[step])}");
+        onResponse?.call("Sent: ${String.fromCharCodes(commands[step])}");
       } else {
         subscription?.cancel();
         port.close();
+        onResponse?.call("Calibration sequence complete!");
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(content: Text("Calibration sequence complete!")),
         );
@@ -387,13 +427,12 @@ class _HomeState extends State<Home> {
     subscription = reader.stream.listen(
       (data) {
         final response = String.fromCharCodes(data);
-        print("Received: $response");
+        onResponse?.call("Received: $response");
 
         if (step == 0 && response.contains("K 2\r\n")) {
           step++;
           sendNextCommand();
         } else if (step == 1 && RegExp(r"G\d+\r\n").hasMatch(response)) {
-          // Accept any G<number>\r\n response
           step++;
           sendNextCommand();
         } else if (step == 2 && response.contains("K 1\r\n")) {
@@ -402,7 +441,7 @@ class _HomeState extends State<Home> {
         }
       },
       onError: (e) {
-        print("Serial error: $e");
+        onResponse?.call("Serial error: $e");
         subscription?.cancel();
         port.close();
         ScaffoldMessenger.of(
@@ -410,7 +449,7 @@ class _HomeState extends State<Home> {
         ).showSnackBar(SnackBar(content: Text("Calibration failed: $e")));
       },
       onDone: () {
-        print("Serial stream done.");
+        onResponse?.call("Serial stream done.");
         port.close();
       },
     );
@@ -1318,6 +1357,91 @@ class _HomeState extends State<Home> {
               : 'No Patient',
           style: TextStyle(fontSize: 18.5, fontWeight: FontWeight.bold),
         ),
+        if (defaultPatient != null)
+          Card(
+            margin: const EdgeInsets.all(16),
+            elevation: 4,
+            color: Colors.grey[900],
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(16),
+            ),
+            child: Padding(
+              padding: const EdgeInsets.all(20.0),
+              child: Row(
+                children: [
+                  CircleAvatar(
+                    radius: 32,
+                    backgroundColor: Colors.blueGrey.shade900,
+                    child: Icon(
+                      Icons.person,
+                      color: Colors.blue.shade200,
+                      size: 36,
+                    ),
+                  ),
+                  const SizedBox(width: 24),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          defaultPatient['name'] ?? '',
+                          style: const TextStyle(
+                            fontSize: 22,
+                            fontWeight: FontWeight.bold,
+                            color: Colors.white,
+                          ),
+                        ),
+                        const SizedBox(height: 6),
+                        Row(
+                          children: [
+                            Icon(
+                              Icons.transgender,
+                              size: 18,
+                              color: Colors.grey,
+                            ),
+                            const SizedBox(width: 4),
+                            Text(
+                              "Gender: ${defaultPatient['gender'] ?? ''}",
+                              style: TextStyle(color: Colors.white70),
+                            ),
+                            const SizedBox(width: 16),
+                            Icon(Icons.cake, size: 18, color: Colors.grey),
+                            const SizedBox(width: 4),
+                            Text(
+                              "Age: ${defaultPatient['age'] ?? ''}",
+                              style: TextStyle(color: Colors.white70),
+                            ),
+                          ],
+                        ),
+                        const SizedBox(height: 6),
+                        Row(
+                          children: [
+                            Icon(Icons.height, size: 18, color: Colors.grey),
+                            const SizedBox(width: 4),
+                            Text(
+                              "Height: ${defaultPatient['height'] ?? ''} cm",
+                              style: TextStyle(color: Colors.white70),
+                            ),
+                            const SizedBox(width: 16),
+                            Icon(
+                              Icons.monitor_weight,
+                              size: 18,
+                              color: Colors.grey,
+                            ),
+                            const SizedBox(width: 4),
+                            Text(
+                              "Weight: ${defaultPatient['weight'] ?? ''} kg",
+                              style: TextStyle(color: Colors.white70),
+                            ),
+                          ],
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
         SizedBox(height: 10),
 
         Row(
