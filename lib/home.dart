@@ -428,16 +428,18 @@ class _HomeState extends State<Home> {
       (data) {
         final response = String.fromCharCodes(data);
         onResponse?.call("Received: $response");
-
-        if (step == 0 && response.contains("K 2\r\n")) {
-          step++;
-          sendNextCommand();
-        } else if (step == 1 && RegExp(r"G\d+\r\n").hasMatch(response)) {
-          step++;
-          sendNextCommand();
-        } else if (step == 2 && response.contains("K 1\r\n")) {
-          step++;
-          sendNextCommand();
+        // while the response is not caontaining BT
+        if (!response.contains("BT")) {
+          if (step == 0 && response.contains("K 2\r\n")) {
+            step++;
+            sendNextCommand();
+          } else if (step == 1 && RegExp(r"G\d+\r\n").hasMatch(response)) {
+            step++;
+            sendNextCommand();
+          } else if (step == 2 && response.contains("K 1\r\n")) {
+            step++;
+            sendNextCommand();
+          }
         }
       },
       onError: (e) {
