@@ -284,6 +284,7 @@ class _HomeState extends State<Home> {
                             ),
                             onPressed: isSending ? null : sendSequence,
                           ),
+                          // ...inside your AlertDialog actions...
                           Row(
                             mainAxisAlignment: MainAxisAlignment.spaceBetween,
                             children: [
@@ -296,8 +297,9 @@ class _HomeState extends State<Home> {
                                           await sendSingleCommand(
                                             port,
                                             "K 2\r\n",
-                                            setState,
-                                            responseText,
+                                            (msg) => setState(
+                                              () => responseText += msg,
+                                            ),
                                           );
                                         },
                               ),
@@ -310,8 +312,9 @@ class _HomeState extends State<Home> {
                                           await sendSingleCommand(
                                             port,
                                             "G\r\n",
-                                            setState,
-                                            responseText,
+                                            (msg) => setState(
+                                              () => responseText += msg,
+                                            ),
                                           );
                                         },
                               ),
@@ -324,8 +327,9 @@ class _HomeState extends State<Home> {
                                           await sendSingleCommand(
                                             port,
                                             "K 1\r\n",
-                                            setState,
-                                            responseText,
+                                            (msg) => setState(
+                                              () => responseText += msg,
+                                            ),
                                           );
                                         },
                               ),
@@ -492,22 +496,19 @@ class _HomeState extends State<Home> {
   Future<void> sendSingleCommand(
     SerialPort port,
     String command,
-    void Function(void Function()) setState,
-    String responseText,
+    void Function(String) updateResponse,
   ) async {
+    updateResponse("Sending: $command\n");
+
     final bytes = Uint8List.fromList(command.codeUnits);
     port.write(bytes);
-    setState(() {
-      responseText += "Sent: $command\n";
-    });
+    updateResponse("Sent: $command\n");
 
     // Listen for response (single-shot)
     SerialPortReader reader = SerialPortReader(port);
     await reader.stream.first.then((data) {
       final resp = String.fromCharCodes(data);
-      setState(() {
-        responseText += "Received: $resp\n";
-      });
+      updateResponse("Received: $resp\n");
     });
   }
 
