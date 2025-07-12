@@ -276,14 +276,14 @@ class _HomeState extends State<Home> {
                             child: Text("Cancel"),
                             onPressed: () => Navigator.of(context).pop(),
                           ),
-                          ElevatedButton(
-                            child: Text(
-                              isSending
-                                  ? "Sending..."
-                                  : "Send Calibrate Sequence",
-                            ),
-                            onPressed: isSending ? null : sendSequence,
-                          ),
+                          // ElevatedButton(
+                          //   child: Text(
+                          //     isSending
+                          //         ? "Sending..."
+                          //         : "Send Calibrate Sequence",
+                          //   ),
+                          //   onPressed: isSending ? null : sendSequence,
+                          // ),
                           // ...inside your AlertDialog actions...
                           Row(
                             mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -294,12 +294,14 @@ class _HomeState extends State<Home> {
                                     isSending
                                         ? null
                                         : () async {
-                                          await sendSingleCommand(
-                                            port,
-                                            "K 2\r\n",
-                                            (msg) => setState(
-                                              () => responseText += msg,
-                                            ),
+                                          await sendSerialCommand(
+                                            port: port,
+                                            command: "K 2\r\n",
+                                            updateResponse: (resp) {
+                                              setState(() {
+                                                responseText += resp + "\n";
+                                              });
+                                            },
                                           );
                                         },
                               ),
@@ -309,12 +311,14 @@ class _HomeState extends State<Home> {
                                     isSending
                                         ? null
                                         : () async {
-                                          await sendSingleCommand(
-                                            port,
-                                            "G\r\n",
-                                            (msg) => setState(
-                                              () => responseText += msg,
-                                            ),
+                                          await sendSerialCommand(
+                                            port: port,
+                                            command: "G\r\n",
+                                            updateResponse: (resp) {
+                                              setState(() {
+                                                responseText += resp + "\n";
+                                              });
+                                            },
                                           );
                                         },
                               ),
@@ -324,25 +328,10 @@ class _HomeState extends State<Home> {
                                     isSending
                                         ? null
                                         : () async {
-                                          await sendSingleCommand(
-                                            port,
-                                            "K 1\r\n",
-                                            (msg) => setState(
-                                              () => responseText += msg,
-                                            ),
-                                          );
-                                        },
-                              ),
-                              ElevatedButton(
-                                child: Text("Send All"),
-                                onPressed:
-                                    isSending
-                                        ? null
-                                        : () async {
-                                          await sendCalibrationSequence(
-                                            port,
-                                            context,
-                                            onResponse: (resp) {
+                                          await sendSerialCommand(
+                                            port: port,
+                                            command: "K 1\r\n",
+                                            updateResponse: (resp) {
                                               setState(() {
                                                 responseText += resp + "\n";
                                               });
@@ -350,6 +339,23 @@ class _HomeState extends State<Home> {
                                           );
                                         },
                               ),
+                              // ElevatedButton(
+                              //   child: Text("Send All"),
+                              //   onPressed:
+                              //       isSending
+                              //           ? null
+                              //           : () async {
+                              //             await sendCalibrationSequence(
+                              //               port,
+                              //               context,
+                              //               onResponse: (resp) {
+                              //                 setState(() {
+                              //                   responseText += resp + "\n";
+                              //                 });
+                              //               },
+                              //             );
+                              //           },
+                              // ),
                             ],
                           ),
                         ],
@@ -493,91 +499,132 @@ class _HomeState extends State<Home> {
     // startTestLoop(); // Start the test loop
   }
 
-  Future<void> sendSingleCommand(
-    SerialPort port,
-    String command,
-    void Function(String) updateResponse,
-  ) async {
-    print("[DEBUG] Cancelling previous listener...");
-    mainDataSubscription?.cancel();
-    mainDataSubscription = null;
+  // Future<void> sendSingleCommand(
+  //   SerialPort port,
+  //   String command,
+  //   void Function(String) updateResponse,
+  // ) async {
+  //   print("[DEBUG] Cancelling main data stream...");
+  //   mainDataSubscription?.cancel();
+  //   mainDataSubscription = null;
 
-    print("[DEBUG] Preparing to send command: $command");
-    updateResponse("Sending: $command\n");
+  //   print("[DEBUG] Preparing to send command: $command");
+  //   updateResponse("Sending: $command\n");
 
-    final bytes = Uint8List.fromList(command.codeUnits);
-    print("[DEBUG] Will send bytes one by one: $bytes");
+  //   final bytes = Uint8List.fromList(command.codeUnits);
+  //   print("[DEBUG] Will send bytes one by one: $bytes");
 
-    List<int> buffer = [];
-    SerialPortReader reader = SerialPortReader(port);
+  //   List<int> buffer = [];
+  //   SerialPortReader reader = SerialPortReader(port);
 
-    // Flush the port BEFORE starting the listener
-    try {
-      port.flush();
-      print("[DEBUG] Flushed serial port before listening.");
-    } catch (e) {
-      print("[DEBUG] Port flush not supported or failed: $e");
+  //   // Start listening before sending
+  //   StreamSubscription? sub;
+  //   final completer = Completer<void>();
+  //   Timer? responseTimer;
+
+  //   sub = reader.stream.listen(
+  //     (data) {
+  //       print("[DEBUG] Received data chunk: $data");
+  //       if (data.isEmpty) return;
+  //       buffer.addAll(data);
+
+  //       // If buffer ends with \r\n, consider response complete
+  //       if (buffer.length >= 2 &&
+  //           buffer[buffer.length - 2] == 13 &&
+  //           buffer[buffer.length - 1] == 10) {
+  //         final resp = String.fromCharCodes(buffer);
+  //         print("[DEBUG] Full response: $resp");
+  //         updateResponse("Received: $resp\n");
+  //         completer.complete();
+  //         sub?.cancel();
+  //         responseTimer?.cancel();
+  //       } else {
+  //         // Reset timer every time we get data (fallback for silence)
+  //         responseTimer?.cancel();
+  //         responseTimer = Timer(Duration(milliseconds: 2000), () {
+  //           final resp = String.fromCharCodes(buffer);
+  //           print("[DEBUG] Partial response (timeout): $resp");
+  //           updateResponse("Received (partial): $resp\n");
+  //           completer.complete();
+  //           sub?.cancel();
+  //         });
+  //       }
+  //     },
+  //     onError: (e) {
+  //       print("[DEBUG] Error while reading response: $e");
+  //       updateResponse("Error: $e\n");
+  //       completer.complete();
+  //       sub?.cancel();
+  //       responseTimer?.cancel();
+  //     },
+  //   );
+
+  //   // Send each byte individually with a short delay
+  //   for (final b in bytes) {
+  //     port.write(Uint8List.fromList([b]));
+  //     print("[DEBUG] Sent byte: $b");
+  //     await Future.delayed(Duration(milliseconds: 10));
+  //   }
+  //   updateResponse("Sent: $command\n");
+
+  //   // Wait for response to complete or timeout
+  //   await completer.future;
+  //   responseTimer?.cancel();
+
+  //   print("[DEBUG] Restarting main data stream...");
+  //   startMainDataStream(port);
+  // }
+
+  //   import 'dart:async';
+  // import 'dart:typed_data';
+  // import 'package:dart_serial_port/dart_serial_port.dart';
+
+  Future<void> sendSerialCommand({
+    required SerialPort port,
+    required String command,
+    required void Function(String) updateResponse,
+  }) async {
+    if (!port.isOpen) {
+      print("❌ Port not open.");
+      return;
     }
 
-    StreamSubscription? sub;
-    final completer = Completer<void>();
-    Timer? responseTimer;
+    port.flush(); // clear junk before starting
 
-    // Start a new listener BEFORE sending bytes!
-    sub = reader.stream.listen(
-      (data) {
-        print("[DEBUG] Received data chunk: $data");
-        if (data.isEmpty) return;
-        buffer.addAll(data);
+    final fullCommand = '$command\r\n';
+    final commandBytes = Uint8List.fromList(fullCommand.codeUnits);
 
-        // Reset timer every time we get data (fallback for silence)
-        responseTimer?.cancel();
-        responseTimer = Timer(Duration(milliseconds: 2000), () {
-          final resp = String.fromCharCodes(buffer);
-          print("[DEBUG] Partial response (timeout): $resp");
-          updateResponse("Received (partial): $resp\n");
-          completer.complete();
-          sub?.cancel();
-        });
+    final buffer = <int>[];
+    final stopwatch = Stopwatch()..start();
+    bool commandWritten = false;
 
-        // If buffer ends with \r\n, consider response complete
-        if (buffer.length >= 2 &&
-            buffer[buffer.length - 2] == 13 &&
-            buffer[buffer.length - 1] == 10) {
-          final resp = String.fromCharCodes(buffer);
-          print("[DEBUG] Full response: $resp");
-          updateResponse("Received: $resp\n");
-          completer.complete();
-          sub?.cancel();
-          responseTimer?.cancel();
-        }
-      },
-      onError: (e) {
-        print("[DEBUG] Error while reading response: $e");
-        updateResponse("Error: $e\n");
-        completer.complete();
-        sub?.cancel();
-        responseTimer?.cancel();
-      },
-    );
+    print("[INFO] Preparing to send: $fullCommand");
 
-    // Slightly longer delay to ensure listener is ready
-    await Future.delayed(Duration(milliseconds: 100));
+    // Begin read loop first
+    while (stopwatch.elapsedMilliseconds < 1500) {
+      final chunk = port.read(64, timeout: 5); // 50ms blocking read
+      // print("[DEBUG] Read chunk: ${chunk}");
+      if (chunk.isNotEmpty) {
+        buffer.addAll(chunk);
+        print("[READ] ${chunk.map((b) => b).join(', ')}");
 
-    // Now send each byte individually with a short delay
-    for (final b in bytes) {
-      port.write(Uint8List.fromList([b]));
-      print("[DEBUG] Sent byte: $b");
-      await Future.delayed(Duration(milliseconds: 10));
+        // Exit if response ends in \n (10)
+        if (buffer.contains(10)) break;
+      }
+
+      // Send command after ~100ms or so, once reader is running
+      if (!commandWritten && stopwatch.elapsedMilliseconds >= 100) {
+        port.write(commandBytes);
+        print("[INFO] Sent: $fullCommand");
+        commandWritten = true;
+      }
+
+      // await Future.delayed(Duration(milliseconds: 10));
     }
-    updateResponse("Sent: $command\n");
 
-    // Wait for response to complete or timeout
-    await completer.future;
-    responseTimer?.cancel();
-
-    print("[DEBUG] Restarting main data stream...");
-    startMainDataStream(port);
+    print("[FINAL RESPONSE] ${buffer.map((b) => b).join(', ')}");
+    updateResponse("Received: ${String.fromCharCodes(buffer)}");
+    print("[ASCII] ${String.fromCharCodes(buffer)}");
   }
 
   Future<void> sendCalibrationSequence(
@@ -946,7 +993,7 @@ class _HomeState extends State<Home> {
       config.stopBits = 1;
       config.stopBits = 1;
       config.xonXoff = 0;
-      config.rts = 1;
+      config.rts = 0;
       config.cts = 0;
       config.dsr = 0;
       config.dtr = 1;
