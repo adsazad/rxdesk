@@ -462,41 +462,44 @@ class MyBigGraphV2State extends State<MyBigGraphV2> {
                   ),
                 ),
                 _meter(i),
-                IconButton(
-                  icon: const Icon(Icons.filter_alt, size: 16),
-                  tooltip: "Set Filters",
-                  padding: EdgeInsets.zero,
-                  constraints: const BoxConstraints(),
-                  onPressed: () => _openFilterDialog(i),
+                Row(
+                  children: [
+                    IconButton(
+                      icon: const Icon(Icons.filter_alt, size: 16),
+                      tooltip: "Set Filters",
+                      padding: EdgeInsets.zero,
+                      constraints: const BoxConstraints(),
+                      onPressed: () => _openFilterDialog(i),
+                    ),
+                    // --- Custom Buttons ---
+                    if (customButtons != null)
+                      Row(
+                        children:
+                            customButtons.map((btn) {
+                              return Padding(
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 2.0,
+                                ),
+                                child: IconButton(
+                                  icon: Icon(btn["icon"], size: 16),
+
+                                  onPressed: () {
+                                    if (btn["onPressed"] != null) {
+                                      btn["onPressed"](allPlotData[i]);
+                                    }
+                                  },
+                                  style: ElevatedButton.styleFrom(
+                                    minimumSize: Size(80, 32),
+                                    padding: EdgeInsets.symmetric(
+                                      horizontal: 6,
+                                    ),
+                                  ),
+                                ),
+                              );
+                            }).toList(),
+                      ),
+                  ],
                 ),
-                // --- Custom Buttons ---
-                if (customButtons != null)
-                  Row(
-                    children:
-                        customButtons.map((btn) {
-                          return Padding(
-                            padding: const EdgeInsets.symmetric(
-                              horizontal: 2.0,
-                            ),
-                            child: ElevatedButton.icon(
-                              icon: Icon(btn["icon"], size: 16),
-                              label: Text(
-                                btn["label"],
-                                style: TextStyle(fontSize: 12),
-                              ),
-                              onPressed: () {
-                                if (btn["onPressed"] != null) {
-                                  btn["onPressed"](allPlotData[i]);
-                                }
-                              },
-                              style: ElevatedButton.styleFrom(
-                                minimumSize: Size(80, 32),
-                                padding: EdgeInsets.symmetric(horizontal: 6),
-                              ),
-                            ),
-                          );
-                        }).toList(),
-                  ),
               ],
             ),
           );
@@ -658,8 +661,8 @@ class MyBigGraphV2State extends State<MyBigGraphV2> {
 
     return Expanded(
       child: Container(
-        margin: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
-        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+        margin: const EdgeInsets.symmetric(horizontal: 6, vertical: 4),
+        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
         decoration: BoxDecoration(
           color: Colors.grey.shade100,
           borderRadius: BorderRadius.circular(12),
@@ -675,13 +678,13 @@ class MyBigGraphV2State extends State<MyBigGraphV2> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            const SizedBox(height: 4),
+            const SizedBox(height: 2),
             AutoSizeText(
               liveValue,
               maxLines: 1,
-              minFontSize: 14,
+              minFontSize: 12,
               style: const TextStyle(
-                fontSize: 18,
+                fontSize: 16,
                 fontWeight: FontWeight.bold,
                 color: Colors.deepPurple,
               ),

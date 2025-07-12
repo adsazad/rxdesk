@@ -118,6 +118,15 @@ class _HomeState extends State<Home> {
         "unit": "%",
         "minDisplay": 0.0,
         "maxDisplay": 30.0,
+        "scalePresets": [
+          {"minDisplay": 0.0, "maxDisplay": 5.0, "boxValue": 1.0},
+          {"minDisplay": 0.0, "maxDisplay": 10.0, "boxValue": 2.0},
+          {"minDisplay": 0.0, "maxDisplay": 20.0, "boxValue": 4.0},
+          {"minDisplay": 0.0, "maxDisplay": 30.0, "boxValue": 6.0},
+          {"minDisplay": 0.0, "maxDisplay": 40.0, "boxValue": 8.0},
+          {"minDisplay": 0.0, "maxDisplay": 50.0, "boxValue": 10.0},
+        ],
+        "scalePresetIndex": 3,
         "filterConfig": {"filterOn": false, "lpf": 3, "hpf": 5, "notch": 1},
         "meter": {
           "decimal": 1,
@@ -152,6 +161,15 @@ class _HomeState extends State<Home> {
         "unit": "%",
         "minDisplay": 0,
         "maxDisplay": 30,
+        "scalePresets": [
+          {"minDisplay": 0.0, "maxDisplay": 5.0, "boxValue": 1.0},
+          {"minDisplay": 0.0, "maxDisplay": 10.0, "boxValue": 2.0},
+          {"minDisplay": 0.0, "maxDisplay": 20.0, "boxValue": 4.0},
+          {"minDisplay": 0.0, "maxDisplay": 30.0, "boxValue": 6.0},
+          {"minDisplay": 0.0, "maxDisplay": 40.0, "boxValue": 8.0},
+          {"minDisplay": 0.0, "maxDisplay": 50.0, "boxValue": 10.0},
+        ],
+        "scalePresetIndex": 3,
         "filterConfig": {"filterOn": false, "lpf": 3, "hpf": 5, "notch": 1},
         "meter": {"decimal": 1, "unit": "%", "convert": (double x) => x / 100},
         // calibrate button
