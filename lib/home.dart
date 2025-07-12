@@ -427,9 +427,9 @@ class _HomeState extends State<Home> {
     subscription = reader.stream.listen(
       (data) {
         final response = String.fromCharCodes(data);
-        onResponse?.call("Received: $response");
         // while the response is not caontaining BT
         if (!response.contains("BT")) {
+          onResponse?.call("Received: $response");
           if (step == 0 && response.contains("K 2\r\n")) {
             step++;
             sendNextCommand();
