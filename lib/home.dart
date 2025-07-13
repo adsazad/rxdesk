@@ -594,54 +594,55 @@ class _HomeState extends State<Home> {
       print("[INFO] Preparing to send: $thirdCommand");
       port.write(thirdCommandBytes);
       print("[INFO] Sent: $thirdCommand");
+      onComplete(); // Call onComplete here to signal readiness
 
-      buffer.clear();
-      stopwatch.reset();
+      // buffer.clear();
+      // stopwatch.reset();
 
-      // Flip: start read loop after writing
-      while (stopwatch.elapsedMilliseconds < 1500) {
-        final chunk = port.read(64, timeout: 5);
-        if (chunk.isNotEmpty && !String.fromCharCodes(chunk).contains("BT")) {
-          buffer.addAll(chunk);
-          print("[READ] ${chunk.map((b) => b).join(', ')}");
-          if (buffer.contains(10)) break;
-        }
-        // await Future.delayed(Duration(milliseconds: 5));
-      }
-      print("[THIRD RESPONSE] ${buffer.map((b) => b).join(', ')}");
-      updateResponse("Third Received: ${String.fromCharCodes(buffer)}");
-      print("[ASCII] ${String.fromCharCodes(buffer)}");
+      // // Flip: start read loop after writing
+      // while (stopwatch.elapsedMilliseconds < 1500) {
+      //   final chunk = port.read(64, timeout: 5);
+      //   if (chunk.isNotEmpty && !String.fromCharCodes(chunk).contains("BT")) {
+      //     buffer.addAll(chunk);
+      //     print("[READ] ${chunk.map((b) => b).join(', ')}");
+      //     if (buffer.contains(10)) break;
+      //   }
+      //   // await Future.delayed(Duration(milliseconds: 5));
+      // }
+      // print("[THIRD RESPONSE] ${buffer.map((b) => b).join(', ')}");
+      // updateResponse("Third Received: ${String.fromCharCodes(buffer)}");
+      // print("[ASCII] ${String.fromCharCodes(buffer)}");
     } else {
       print("[ERROR] Second response did not match expected patterns.");
       updateResponse("Second response invalid, not sending third command.");
     }
 
-    // check third response with regex
-    final thirdValidPatterns = [
-      RegExp(r"K\s*0001\r\n"),
-      RegExp(r"K\s*1\r\n"),
-      RegExp(r"\s*K\s*1\s*[\r\n]+"),
-      RegExp(r"K\s*0*1\s*[\r\n]+"),
-      // also with only a K
-      RegExp(r"K\s*[\r\n]+"),
-      // work only with 1
-      RegExp(r"K\s*1\s*[\r\n]+"),
-      // 00001 or any number with 1
-      RegExp(r"K\s*0*1\s*[\r\n]+"),
-      RegExp(r"K\s*\d*\s*[\r\n]+"),
-    ];
-    bool isThirdValid = thirdValidPatterns.any(
-      (p) => p.hasMatch(String.fromCharCodes(buffer)),
-    );
-    print("[CHECK] Third response valid: $isThirdValid");
-    if (isThirdValid) {
-      print("[INFO] Calibration sequence completed successfully.");
-      updateResponse("Calibration sequence complete!");
-      onComplete();
-    } else {
-      print("[ERROR] Third response did not match expected patterns.");
-      updateResponse("Third response invalid, calibration failed.");
-    }
+    // // check third response with regex
+    // final thirdValidPatterns = [
+    //   RegExp(r"K\s*0001\r\n"),
+    //   RegExp(r"K\s*1\r\n"),
+    //   RegExp(r"\s*K\s*1\s*[\r\n]+"),
+    //   RegExp(r"K\s*0*1\s*[\r\n]+"),
+    //   // also with only a K
+    //   RegExp(r"K\s*[\r\n]+"),
+    //   // work only with 1
+    //   RegExp(r"K\s*1\s*[\r\n]+"),
+    //   // 00001 or any number with 1
+    //   RegExp(r"K\s*0*1\s*[\r\n]+"),
+    //   RegExp(r"K\s*\d*\s*[\r\n]+"),
+    // ];
+    // bool isThirdValid = thirdValidPatterns.any(
+    //   (p) => p.hasMatch(String.fromCharCodes(buffer)),
+    // );
+    // print("[CHECK] Third response valid: $isThirdValid");
+    // if (isThirdValid) {
+    //   print("[INFO] Calibration sequence completed successfully.");
+    //   updateResponse("Calibration sequence complete!");
+    //   onComplete();
+    // } else {
+    //   print("[ERROR] Third response did not match expected patterns.");
+    //   updateResponse("Third response invalid, calibration failed.");
+    // }
   }
 
   // Future<void> sendSerialCommandSequence({
@@ -1415,7 +1416,9 @@ class _HomeState extends State<Home> {
 
   void startMainDataStream(SerialPort port) {
     // Cancel any previous subscription
-    mainDataSubscription?.cancel();
+    if (mainDataSubscription != null) {
+      mainDataSubscription?.cancel();
+    }
 
     SerialPortReader reader = SerialPortReader(port);
     mainDataSubscription = reader.stream.listen(
