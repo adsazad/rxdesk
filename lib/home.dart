@@ -582,6 +582,12 @@ class _HomeState extends State<Home> {
       // the number in between could be anything
       RegExp(r"G\s*\d+\s*[\r\n]+"),
       RegExp(r"G\s*[\r\n]+"), // Matches "G\r\n", "G 1\r\n", "G 0001\r\n", etc.
+      // make only for G also
+      RegExp(r"G\s*[\r\n]+"),
+      RegExp(r"G\s*[\r\n]+"), // Matches "G\r\n", "G 1\r\n", "G 0001\r\n", etc.
+      // make one for only \r\n or \n or \r  any one of these
+      RegExp(r"[\r\n]+"),
+      RegExp(r"\s*[\r\n]+"), // Matches any whitespace followed by \r\n
     ];
     bool isSecondValid = secondValidPatterns.any(
       (p) => p.hasMatch(String.fromCharCodes(buffer)),
