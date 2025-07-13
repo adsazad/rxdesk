@@ -240,7 +240,7 @@ class _HomeState extends State<Home> {
                                                 isSending = false;
                                                 status = "completed";
                                               });
-                                              startMainDataStream(port);
+                                              // startMainDataStream(port);
                                             },
                                           );
                                         },
@@ -467,6 +467,12 @@ class _HomeState extends State<Home> {
     required void Function(String) updateResponse,
     required void Function() onComplete,
   }) async {
+    // stop main stream
+    // if (mainDataSubscription != null) {
+    //   await mainDataSubscription!.cancel();
+    //   mainDataSubscription = null;
+    // }
+
     if (!port.isOpen) {
       print("❌ Port not open.");
       return;
@@ -482,7 +488,8 @@ class _HomeState extends State<Home> {
     // Begin read loop first for first command
     while (stopwatch.elapsedMilliseconds < 1500) {
       final chunk = port.read(64, timeout: 5);
-      if (chunk.isNotEmpty) {
+      // go ahead if only the chunk dont contain BT
+      if (chunk.isNotEmpty && !String.fromCharCodes(chunk).contains("BT")) {
         buffer.addAll(chunk);
         print("[READ] ${chunk.map((b) => b).join(', ')}");
         firstResponse += String.fromCharCodes(chunk);
@@ -547,7 +554,7 @@ class _HomeState extends State<Home> {
       // Flip: start read loop after writing
       while (stopwatch.elapsedMilliseconds < 1500) {
         final chunk = port.read(64, timeout: 5);
-        if (chunk.isNotEmpty) {
+        if (chunk.isNotEmpty && !String.fromCharCodes(chunk).contains("BT")) {
           buffer.addAll(chunk);
           print("[READ] ${chunk.map((b) => b).join(', ')}");
           if (buffer.contains(10)) break;
@@ -594,7 +601,7 @@ class _HomeState extends State<Home> {
       // Flip: start read loop after writing
       while (stopwatch.elapsedMilliseconds < 1500) {
         final chunk = port.read(64, timeout: 5);
-        if (chunk.isNotEmpty) {
+        if (chunk.isNotEmpty && !String.fromCharCodes(chunk).contains("BT")) {
           buffer.addAll(chunk);
           print("[READ] ${chunk.map((b) => b).join(', ')}");
           if (buffer.contains(10)) break;
