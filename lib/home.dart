@@ -588,6 +588,7 @@ class _HomeState extends State<Home> {
       // make one for only \r\n or \n or \r  any one of these
       RegExp(r"[\r\n]+"),
       RegExp(r"\s*[\r\n]+"), // Matches any whitespace followed by \r\n
+      RegExp(r"^\s*[Gg]?\s*$"),
     ];
     bool isSecondValid = secondValidPatterns.any(
       (p) => p.hasMatch(String.fromCharCodes(buffer)),
