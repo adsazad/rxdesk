@@ -240,7 +240,7 @@ class _HomeState extends State<Home> {
                                                 isSending = false;
                                                 status = "completed";
                                               });
-                                              // startMainDataStream(port);
+                                              startMainDataStream(port);
                                             },
                                           );
                                         },
@@ -468,10 +468,10 @@ class _HomeState extends State<Home> {
     required void Function() onComplete,
   }) async {
     // stop main stream
-    // if (mainDataSubscription != null) {
-    //   await mainDataSubscription!.cancel();
-    //   mainDataSubscription = null;
-    // }
+    if (mainDataSubscription != null) {
+      await mainDataSubscription!.cancel();
+      mainDataSubscription = null;
+    }
 
     if (!port.isOpen) {
       print("❌ Port not open.");
