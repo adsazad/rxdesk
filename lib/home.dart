@@ -208,17 +208,17 @@ class _HomeState extends State<Home> {
               );
 
               TextEditingController plusController = TextEditingController(
-                text: globalSettings.flowCalPlus.toString(),
+                text: globalSettings.tidalVolumePlus.toString(),
               );
               TextEditingController minusController = TextEditingController(
-                text: globalSettings.flowCalMinus.toString(),
+                text: globalSettings.tidalVolumeMinus.toString(),
               );
 
               showDialog(
                 context: context,
                 builder: (context) {
                   return AlertDialog(
-                    title: Text("Calibrate Flow"),
+                    title: Text("Calibrate Tidal Volume"),
                     content: Column(
                       mainAxisSize: MainAxisSize.min,
                       children: [
@@ -228,7 +228,7 @@ class _HomeState extends State<Home> {
                             decimal: true,
                           ),
                           decoration: InputDecoration(
-                            labelText: "Flow Calibrator +",
+                            labelText: "Tidal Calibrator +",
                             hintText: "Enter plus value",
                           ),
                         ),
@@ -239,7 +239,7 @@ class _HomeState extends State<Home> {
                             decimal: true,
                           ),
                           decoration: InputDecoration(
-                            labelText: "Flow Calibrator -",
+                            labelText: "Tidal Calibrator -",
                             hintText: "Enter minus value",
                           ),
                         ),
@@ -257,8 +257,8 @@ class _HomeState extends State<Home> {
                               double.tryParse(plusController.text) ?? 0.0;
                           double minus =
                               double.tryParse(minusController.text) ?? 0.0;
-                          globalSettings.setFlowCalPlus(plus);
-                          globalSettings.setFlowCalMinus(minus);
+                          globalSettings.setTidalVolumePlus(plus);
+                          globalSettings.setTidalVolumeMinus(minus);
 
                           // Optionally save to SharedPreferences
                           SharedPreferences.getInstance().then((prefs) {
@@ -885,8 +885,8 @@ class _HomeState extends State<Home> {
           double flow = (data[11] << 8 | data[10]) * 1.0;
           // double vol = (data[13] << 8 | data[12]) * 1.0;
           double co2 = (data[15] << 8 | data[14]) * 1.0;
-          flow =
-              flow + globalSettings.flowCalPlus - globalSettings.flowCalMinus;
+          vol =
+              vol + globalSettings.tidalVolumePlus - globalSettings.tidalVolumeMinus;
 
           saver(ecg: ecg, o2: o2, flow: flow, vol: vol, co2: co2);
           // Update your graph
@@ -1299,10 +1299,10 @@ class _HomeState extends State<Home> {
               double flow = (frame[11] * 256 + frame[10]) * 1.0;
               double co2 = (frame[15] * 256 + frame[14]) * 1.0;
 
-              flow =
-                  flow +
-                  globalSettings.flowCalPlus -
-                  globalSettings.flowCalMinus;
+              vol =
+                  vol +
+                  globalSettings.tidalVolumePlus -
+                  globalSettings.tidalVolumeMinus;
 
               setState(() {
                 flow = flow;
@@ -2251,12 +2251,12 @@ class _HomeState extends State<Home> {
               tabs: [
                 Tab(text: "CO2 Calibration"),
                 Tab(text: "O2 Calibration"),
-                Tab(text: "Tidal Flow Calibration"),
+                Tab(text: "Tidal Volume Calibration"),
               ],
               labelColor: Colors.black,
             ),
             content: SizedBox(
-              width: 350,
+              width: 200,
               child: TabBarView(
                 children: [
                   // Tab 1: CO2 Calibration (your existing logic)
@@ -2269,6 +2269,8 @@ class _HomeState extends State<Home> {
                       return Column(
                         mainAxisSize: MainAxisSize.min,
                         children: [
+                                                    SizedBox(height: 50),
+
                           if (status == "running") LinearProgressIndicator(),
                           if (status == "completed")
                             Icon(Icons.check, color: Colors.green),
@@ -2322,7 +2324,7 @@ class _HomeState extends State<Home> {
                   // Tab 2: O2 Calibration (placeholder)
                   _o2CalibratorTab(),
                   // Tab 3: Tidal Flow Calibration (placeholder)
-                  Center(child: Text("Tidal Flow Calibration content here")),
+                  tidalFlowCalibrationWidget(context),
                 ],
               ),
             ),
@@ -2331,6 +2333,52 @@ class _HomeState extends State<Home> {
       },
     );
   }
+  Widget tidalFlowCalibrationWidget(BuildContext context) {
+  final globalSettings = Provider.of<GlobalSettingsModal>(
+    context,
+    listen: false,
+  );
+
+  TextEditingController plusController = TextEditingController(
+    text: globalSettings.tidalVolumePlus.toString(),
+  );
+  TextEditingController minusController = TextEditingController(
+    text: globalSettings.tidalVolumeMinus.toString(),
+  );
+
+  return Column(
+    mainAxisSize: MainAxisSize.min,
+    children: [
+                                                          SizedBox(height: 50),
+
+      TextField(
+        controller: plusController,
+        keyboardType: TextInputType.numberWithOptions(decimal: true),
+        decoration: InputDecoration(
+          labelText: "Tidal Calibrator +",
+          hintText: "Enter plus value",
+        ),
+        onChanged: (val) {
+          double plus = double.tryParse(val) ?? 0.0;
+          globalSettings.setTidalVolumePlus(plus);
+        },
+      ),
+      SizedBox(height: 12),
+      TextField(
+        controller: minusController,
+        keyboardType: TextInputType.numberWithOptions(decimal: true),
+        decoration: InputDecoration(
+          labelText: "Tidal Calibrator -",
+          hintText: "Enter minus value",
+        ),
+        onChanged: (val) {
+          double minus = double.tryParse(val) ?? 0.0;
+          globalSettings.setTidalVolumeMinus(minus);
+        },
+      ),
+    ],
+  );
+}
 
 _o2CalibratorTab() {
   return Consumer<GlobalSettingsModal>(
@@ -2340,6 +2388,8 @@ _o2CalibratorTab() {
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
+                                                                SizedBox(height: 50),
+
             Text("O2 Sensor Calibration", style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
             SizedBox(height: 12),
             Row(

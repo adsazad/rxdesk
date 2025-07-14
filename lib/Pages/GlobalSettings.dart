@@ -165,10 +165,10 @@ class _GlobalSettingsState extends State<GlobalSettings> {
       text: globalSettings.value2.toString(),
     );
     flowCalPlusController = TextEditingController(
-      text: globalSettings.flowCalPlus.toString(),
+      text: globalSettings.tidalVolumePlus.toString(),
     );
     flowCalMinusController = TextEditingController(
-      text: globalSettings.flowCalMinus.toString(),
+      text: globalSettings.tidalVolumeMinus.toString(),
     );
     applyConversion = globalSettings.applyConversion;
     print("voltage1");
@@ -827,7 +827,7 @@ class _GlobalSettingsState extends State<GlobalSettings> {
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                 children: [
-                  Text('Flow Calibrator +', style: TextStyle(fontSize: 20)),
+                  Text('Tidal Calibrator +', style: TextStyle(fontSize: 20)),
                   Container(
                     width: 160,
                     child: TextFormField(
@@ -857,7 +857,7 @@ class _GlobalSettingsState extends State<GlobalSettings> {
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                 children: [
-                  Text('Flow Calibrator -', style: TextStyle(fontSize: 20)),
+                  Text('Tidal Calibrator -', style: TextStyle(fontSize: 20)),
                   Container(
                     width: 160,
                     child: TextFormField(
