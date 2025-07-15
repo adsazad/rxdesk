@@ -362,6 +362,7 @@ class _HomeState extends State<Home> {
       print("[INFO] Preparing to send: $thirdCommand");
       port.write(thirdCommandBytes);
       print("[INFO] Sent: $thirdCommand");
+      print("COMPLETE");
       onComplete(); // Call onComplete here to signal readiness
 
       // buffer.clear();
@@ -2157,6 +2158,10 @@ class _HomeState extends State<Home> {
     showDialog(
       context: context,
       builder: (context) {
+        String responseText = "";
+        bool isSending = false;
+        String status = "p";
+
         return DefaultTabController(
           length: 3,
           child: AlertDialog(
@@ -2175,10 +2180,6 @@ class _HomeState extends State<Home> {
                   // Tab 1: CO2 Calibration (your existing logic)
                   StatefulBuilder(
                     builder: (context, setState) {
-                      String responseText = "";
-                      bool isSending = false;
-                      String status = "p";
-
                       return Column(
                         mainAxisSize: MainAxisSize.min,
                         children: [
