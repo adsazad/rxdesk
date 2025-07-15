@@ -2279,7 +2279,7 @@ class _HomeState extends State<Home> {
           controller: measuredController,
           keyboardType: TextInputType.numberWithOptions(decimal: true),
           decoration: InputDecoration(
-            labelText: "Tidal Measured Reference",
+            labelText: "Measured volume",
             hintText: "Enter measured value",
           ),
           onChanged: (val) {
@@ -2299,8 +2299,8 @@ class _HomeState extends State<Home> {
           controller: actualController,
           keyboardType: TextInputType.numberWithOptions(decimal: true),
           decoration: InputDecoration(
-            labelText: "Tidal Actual Reference",
-            hintText: "Enter actual value",
+            labelText: "Known Volume",
+            hintText: "Enter actual value (Eg: 3000)",
           ),
           onChanged: (val) {
             double actual = double.tryParse(val) ?? 0.0;
@@ -2318,7 +2318,7 @@ class _HomeState extends State<Home> {
         Consumer<GlobalSettingsModal>(
           builder: (context, globalSettings, child) {
             return Text(
-              "Scaling Factor: ${globalSettings.tidalScalingFactor.toStringAsFixed(4)}",
+              "Error Factor: ${globalSettings.tidalScalingFactor.toStringAsFixed(4)}",
               style: TextStyle(fontWeight: FontWeight.bold),
             );
           },
