@@ -77,6 +77,8 @@ class _GlobalSettingsState extends State<GlobalSettings> {
   TextEditingController value2Controller = TextEditingController();
   TextEditingController flowCalPlusController = TextEditingController();
   TextEditingController flowCalMinusController = TextEditingController();
+  TextEditingController tidalMeasuredController = TextEditingController();
+  TextEditingController tidalActualController = TextEditingController();
 
   var speedValue = 25;
 
@@ -105,6 +107,8 @@ class _GlobalSettingsState extends State<GlobalSettings> {
     value1Controller.dispose();
     voltage2Controller.dispose();
     value2Controller.dispose();
+    tidalMeasuredController.dispose();
+    tidalActualController.dispose();
     super.dispose();
   }
 
@@ -164,11 +168,11 @@ class _GlobalSettingsState extends State<GlobalSettings> {
     value2Controller = TextEditingController(
       text: globalSettings.value2.toString(),
     );
-    flowCalPlusController = TextEditingController(
-      text: globalSettings.tidalVolumePlus.toString(),
+    tidalMeasuredController = TextEditingController(
+      text: globalSettings.tidalMeasuredReference.toString(),
     );
-    flowCalMinusController = TextEditingController(
-      text: globalSettings.tidalVolumeMinus.toString(),
+    tidalActualController = TextEditingController(
+      text: globalSettings.tidalActualReference.toString(),
     );
     applyConversion = globalSettings.applyConversion;
     print("voltage1");
@@ -180,6 +184,11 @@ class _GlobalSettingsState extends State<GlobalSettings> {
       context,
       listen: false,
     );
+    // Calculate scaling factor automatically
+    double measured = double.tryParse(tidalMeasuredController.text) ?? 0.0;
+    double actual = double.tryParse(tidalActualController.text) ?? 0.0;
+    double scaling = measured != 0 ? actual / measured : 1.0;
+
     globalSettings.setAll(
       autoRecordOnOff,
       filterOnOff,
@@ -194,8 +203,9 @@ class _GlobalSettingsState extends State<GlobalSettings> {
       double.parse(voltage2Controller.text),
       double.parse(value2Controller.text),
       applyConversion,
-      double.tryParse(flowCalPlusController.text) ?? 0.0,
-      double.tryParse(flowCalMinusController.text) ?? 0.0,
+      measured,
+      actual,
+      scaling,
     );
     globalSettings.setAppMode(appMode);
 
@@ -205,14 +215,6 @@ class _GlobalSettingsState extends State<GlobalSettings> {
     print(globalSettings);
     String settingJson = globalSettings.toJson();
     prefs!.setString("globalSettings", settingJson);
-
-    // widget.onChange({
-    //   "filterOn": filterOnOff,
-    //   "highPass": highPassValue,
-    //   "lowPass": lowPassValue,
-    //   "notch": notchOnOf,
-    //   "speed": speedValue,
-    // });
   }
 
   _filterOn() {
@@ -827,16 +829,19 @@ class _GlobalSettingsState extends State<GlobalSettings> {
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                 children: [
-                  Text('Tidal Calibrator +', style: TextStyle(fontSize: 20)),
+                  Text(
+                    'Tidal Measured Reference',
+                    style: TextStyle(fontSize: 20),
+                  ),
                   Container(
                     width: 160,
                     child: TextFormField(
-                      controller: flowCalPlusController,
+                      controller: tidalMeasuredController,
                       keyboardType: TextInputType.numberWithOptions(
                         decimal: true,
                       ),
                       decoration: InputDecoration(
-                        hintText: 'e.g. 0.0',
+                        hintText: 'e.g. 1.0',
                         border: OutlineInputBorder(),
                         contentPadding: EdgeInsets.symmetric(
                           horizontal: 12,
@@ -857,16 +862,19 @@ class _GlobalSettingsState extends State<GlobalSettings> {
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                 children: [
-                  Text('Tidal Calibrator -', style: TextStyle(fontSize: 20)),
+                  Text(
+                    'Tidal Actual Reference',
+                    style: TextStyle(fontSize: 20),
+                  ),
                   Container(
                     width: 160,
                     child: TextFormField(
-                      controller: flowCalMinusController,
+                      controller: tidalActualController,
                       keyboardType: TextInputType.numberWithOptions(
                         decimal: true,
                       ),
                       decoration: InputDecoration(
-                        hintText: 'e.g. 0.0',
+                        hintText: 'e.g. 1.0',
                         border: OutlineInputBorder(),
                         contentPadding: EdgeInsets.symmetric(
                           horizontal: 12,
@@ -874,6 +882,34 @@ class _GlobalSettingsState extends State<GlobalSettings> {
                         ),
                       ),
                       onChanged: (newVal) => onChange(),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            Padding(
+              padding: const EdgeInsets.symmetric(
+                horizontal: 16.0,
+                vertical: 8.0,
+              ),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                children: [
+                  Text('Tidal Scaling Factor', style: TextStyle(fontSize: 20)),
+                  Container(
+                    width: 160,
+                    alignment: Alignment.centerLeft,
+                    child: Text(
+                      (double.tryParse(tidalMeasuredController.text) != 0
+                              ? (double.tryParse(tidalActualController.text) ??
+                                      0.0) /
+                                  (double.tryParse(
+                                        tidalMeasuredController.text,
+                                      ) ??
+                                      1.0)
+                              : 1.0)
+                          .toStringAsFixed(4),
+                      style: TextStyle(fontSize: 18),
                     ),
                   ),
                 ],

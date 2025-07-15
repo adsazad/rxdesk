@@ -195,89 +195,6 @@ class _HomeState extends State<Home> {
         "meter": {"decimal": 0, "unit": " ", "convert": (double x) => x},
         "yAxisLabelConvert": (double x) => x < 1000 ? x : x / 1000,
         "yAxisLabelUnit": (double x) => x < 1000 ? "ml/s" : "L/s",
-        // custom button
-        "customButtons": [
-          {
-            "label": "Calibrate",
-            "icon": Icons.refresh,
-            "onPressed": (data) {
-              final context = myBigGraphKey.currentContext ?? this.context;
-              final globalSettings = Provider.of<GlobalSettingsModal>(
-                context,
-                listen: false,
-              );
-
-              TextEditingController plusController = TextEditingController(
-                text: globalSettings.tidalVolumePlus.toString(),
-              );
-              TextEditingController minusController = TextEditingController(
-                text: globalSettings.tidalVolumeMinus.toString(),
-              );
-
-              showDialog(
-                context: context,
-                builder: (context) {
-                  return AlertDialog(
-                    title: Text("Calibrate Tidal Volume"),
-                    content: Column(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        TextField(
-                          controller: plusController,
-                          keyboardType: TextInputType.numberWithOptions(
-                            decimal: true,
-                          ),
-                          decoration: InputDecoration(
-                            labelText: "Tidal Calibrator +",
-                            hintText: "Enter plus value",
-                          ),
-                        ),
-                        SizedBox(height: 12),
-                        TextField(
-                          controller: minusController,
-                          keyboardType: TextInputType.numberWithOptions(
-                            decimal: true,
-                          ),
-                          decoration: InputDecoration(
-                            labelText: "Tidal Calibrator -",
-                            hintText: "Enter minus value",
-                          ),
-                        ),
-                      ],
-                    ),
-                    actions: [
-                      TextButton(
-                        child: Text("Cancel"),
-                        onPressed: () => Navigator.of(context).pop(),
-                      ),
-                      ElevatedButton(
-                        child: Text("Save"),
-                        onPressed: () {
-                          double plus =
-                              double.tryParse(plusController.text) ?? 0.0;
-                          double minus =
-                              double.tryParse(minusController.text) ?? 0.0;
-                          globalSettings.setTidalVolumePlus(plus);
-                          globalSettings.setTidalVolumeMinus(minus);
-
-                          // Optionally save to SharedPreferences
-                          SharedPreferences.getInstance().then((prefs) {
-                            prefs.setString(
-                              "globalSettings",
-                              globalSettings.toJson(),
-                            );
-                          });
-
-                          Navigator.of(context).pop();
-                        },
-                      ),
-                    ],
-                  );
-                },
-              );
-            },
-          },
-        ],
       },
       {
         "name": "Tidal Volume",
@@ -885,10 +802,7 @@ class _HomeState extends State<Home> {
           double flow = (data[11] << 8 | data[10]) * 1.0;
           // double vol = (data[13] << 8 | data[12]) * 1.0;
           double co2 = (data[15] << 8 | data[14]) * 1.0;
-          vol =
-              vol +
-              globalSettings.tidalVolumePlus -
-              globalSettings.tidalVolumeMinus;
+          vol = (vol * globalSettings.tidalScalingFactor);
 
           saver(ecg: ecg, o2: o2, flow: flow, vol: vol, co2: co2);
           // Update your graph
@@ -1301,10 +1215,7 @@ class _HomeState extends State<Home> {
               double flow = (frame[11] * 256 + frame[10]) * 1.0;
               double co2 = (frame[15] * 256 + frame[14]) * 1.0;
 
-              vol =
-                  vol +
-                  globalSettings.tidalVolumePlus -
-                  globalSettings.tidalVolumeMinus;
+              vol = (vol * globalSettings.tidalScalingFactor);
 
               setState(() {
                 flow = flow;
@@ -2342,41 +2253,74 @@ class _HomeState extends State<Home> {
       listen: false,
     );
 
-    TextEditingController plusController = TextEditingController(
-      text: globalSettings.tidalVolumePlus.toString(),
+    TextEditingController measuredController = TextEditingController(
+      text: globalSettings.tidalMeasuredReference.toString(),
     );
-    TextEditingController minusController = TextEditingController(
-      text: globalSettings.tidalVolumeMinus.toString(),
+    TextEditingController actualController = TextEditingController(
+      text: globalSettings.tidalActualReference.toString(),
     );
+
+    // Calculate scaling factor automatically
+    double scalingFactor = 1.0;
+    if (globalSettings.tidalMeasuredReference != 0) {
+      scalingFactor =
+          globalSettings.tidalActualReference /
+          globalSettings.tidalMeasuredReference;
+    }
+
+    // Update scaling factor in globalSettings
+    globalSettings.setTidalScalingFactor(scalingFactor);
 
     return Column(
       mainAxisSize: MainAxisSize.min,
       children: [
-        SizedBox(height: 50),
-
+        SizedBox(height: 24),
         TextField(
-          controller: plusController,
+          controller: measuredController,
           keyboardType: TextInputType.numberWithOptions(decimal: true),
           decoration: InputDecoration(
-            labelText: "Tidal Calibrator +",
-            hintText: "Enter plus value",
+            labelText: "Tidal Measured Reference",
+            hintText: "Enter measured value",
           ),
           onChanged: (val) {
-            double plus = double.tryParse(val) ?? 0.0;
-            globalSettings.setTidalVolumePlus(plus);
+            double measured = double.tryParse(val) ?? 0.0;
+            globalSettings.setTidalMeasuredReference(measured);
+
+            // Recalculate scaling factor
+            double scaling =
+                measured != 0
+                    ? globalSettings.tidalActualReference / measured
+                    : 1.0;
+            globalSettings.setTidalScalingFactor(scaling);
           },
         ),
         SizedBox(height: 12),
         TextField(
-          controller: minusController,
+          controller: actualController,
           keyboardType: TextInputType.numberWithOptions(decimal: true),
           decoration: InputDecoration(
-            labelText: "Tidal Calibrator -",
-            hintText: "Enter minus value",
+            labelText: "Tidal Actual Reference",
+            hintText: "Enter actual value",
           ),
           onChanged: (val) {
-            double minus = double.tryParse(val) ?? 0.0;
-            globalSettings.setTidalVolumeMinus(minus);
+            double actual = double.tryParse(val) ?? 0.0;
+            globalSettings.setTidalActualReference(actual);
+
+            // Recalculate scaling factor
+            double scaling =
+                globalSettings.tidalMeasuredReference != 0
+                    ? actual / globalSettings.tidalMeasuredReference
+                    : 1.0;
+            globalSettings.setTidalScalingFactor(scaling);
+          },
+        ),
+        SizedBox(height: 12),
+        Consumer<GlobalSettingsModal>(
+          builder: (context, globalSettings, child) {
+            return Text(
+              "Scaling Factor: ${globalSettings.tidalScalingFactor.toStringAsFixed(4)}",
+              style: TextStyle(fontWeight: FontWeight.bold),
+            );
           },
         ),
       ],

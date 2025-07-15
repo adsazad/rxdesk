@@ -22,8 +22,9 @@ class GlobalSettingsModal with ChangeNotifier {
   String? com = "none";
   bool applyConversion = false;
 
-  double tidalVolumePlus = 0.0;
-  double tidalVolumeMinus = 0.0;
+  double tidalMeasuredReference = 0.0;
+  double tidalActualReference = 0.0;
+  double tidalScalingFactor = 1.0;
 
   GlobalSettingsModal({
     required this.com,
@@ -40,8 +41,9 @@ class GlobalSettingsModal with ChangeNotifier {
     this.appMode,
     this.sampleRate,
     required this.applyConversion,
-    this.tidalVolumePlus = 0.0,
-    this.tidalVolumeMinus = 0.0,
+    this.tidalMeasuredReference = 0.0,
+    this.tidalActualReference = 0.0,
+    this.tidalScalingFactor = 1.0,
   });
 
   void setAutoRecordOnOff(bool value) {
@@ -86,13 +88,18 @@ class GlobalSettingsModal with ChangeNotifier {
     notifyListeners();
   }
 
-  void setTidalVolumePlus(double value) {
-    tidalVolumePlus = value;
+  void setTidalMeasuredReference(double value) {
+    tidalMeasuredReference = value;
     notifyListeners();
   }
 
-  void setTidalVolumeMinus(double value) {
-    tidalVolumeMinus = value;
+  void setTidalActualReference(double value) {
+    tidalActualReference = value;
+    notifyListeners();
+  }
+
+  void setTidalScalingFactor(double value) {
+    tidalScalingFactor = value;
     notifyListeners();
   }
 
@@ -110,8 +117,9 @@ class GlobalSettingsModal with ChangeNotifier {
     double voltage2,
     double value2,
     bool applyConversion,
-    double tidalVolumePlus,
-    double tidalVolumeMinus,
+    double tidalMeasuredReference,
+    double tidalActualReference,
+    double tidalScalingFactor,
   ) {
     this.autoRecordOnOff = autoRecordOnOff;
     this.filterOnOf = filterOnOf;
@@ -125,8 +133,9 @@ class GlobalSettingsModal with ChangeNotifier {
     this.voltage2 = voltage2;
     this.value2 = value2;
     this.applyConversion = applyConversion;
-    this.tidalVolumePlus = tidalVolumePlus;
-    this.tidalVolumeMinus = tidalVolumeMinus;
+    this.tidalMeasuredReference = tidalMeasuredReference;
+    this.tidalActualReference = tidalActualReference;
+    this.tidalScalingFactor = tidalScalingFactor;
     notifyListeners();
   }
 
@@ -146,8 +155,9 @@ class GlobalSettingsModal with ChangeNotifier {
       "voltage2": voltage2,
       "value2": value2,
       "applyConversion": applyConversion,
-      "tidalVolumePlus": tidalVolumePlus,
-      "tidalVolumeMinus": tidalVolumeMinus,
+      "tidalMeasuredReference": tidalMeasuredReference,
+      "tidalActualReference": tidalActualReference,
+      "tidalScalingFactor": tidalScalingFactor,
     };
     String jsonString = jsonEncode(json);
     return jsonString;
@@ -171,8 +181,9 @@ class GlobalSettingsModal with ChangeNotifier {
     voltage2 = arr["voltage2"];
     value2 = arr["value2"];
     applyConversion = arr['applyConversion'];
-    tidalVolumePlus = arr["tidalVolumePlus"] ?? 0.0;
-    tidalVolumeMinus = arr["tidalVolumeMinus"] ?? 0.0;
+    tidalMeasuredReference = arr["tidalMeasuredReference"] ?? 0.0;
+    tidalActualReference = arr["tidalActualReference"] ?? 0.0;
+    tidalScalingFactor = arr["tidalScalingFactor"] ?? 1.0;
 
     notifyListeners();
   }

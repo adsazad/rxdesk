@@ -49,8 +49,9 @@ void main() async {
       voltage2: 0.77,
       value2: 15.93,
       applyConversion: false,
-      tidalVolumePlus: 0.0,
-      tidalVolumeMinus: 0.0,
+      tidalMeasuredReference: 0.0,
+      tidalActualReference: 0.0,
+      tidalScalingFactor: 1.0,
     );
     globalSettings.fromJson(settingsJson);
   } else {
@@ -68,8 +69,9 @@ void main() async {
       voltage2: 0.77,
       value2: 15.93,
       applyConversion: false,
-      tidalVolumePlus: 0.0,
-      tidalVolumeMinus: 0.0,
+      tidalMeasuredReference: 0.0,
+      tidalActualReference: 0.0,
+      tidalScalingFactor: 1.0,
     );
   }
 
