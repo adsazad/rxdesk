@@ -296,6 +296,9 @@ class _HomeState extends State<Home> {
       // 00002 or any number with 2
       RegExp(r"K\s*0*2\s*[\r\n]+"),
       RegExp(r"K\s*\d*\s*[\r\n]+"),
+      RegExp(r"^\s*K\s*\d*\s*[\r\n]+$"),
+      RegExp(r"^\s*\d+\s*([\r\n]+)?$"),
+      RegExp(r"^\s*K\s*$"),
     ];
     print("HERE2");
     bool isValid = validPatterns.any((p) => p.hasMatch(firstResponse));
