@@ -49,8 +49,8 @@ void main() async {
       voltage2: 0.77,
       value2: 15.93,
       applyConversion: false,
-      flowCalPlus: 0.0,
-      flowCalMinus: 0.0,
+      tidalVolumePlus: 0.0,
+      tidalVolumeMinus: 0.0,
     );
     globalSettings.fromJson(settingsJson);
   } else {
@@ -68,8 +68,8 @@ void main() async {
       voltage2: 0.77,
       value2: 15.93,
       applyConversion: false,
-      flowCalPlus: 0.0,
-      flowCalMinus: 0.0,
+      tidalVolumePlus: 0.0,
+      tidalVolumeMinus: 0.0,
     );
   }
 

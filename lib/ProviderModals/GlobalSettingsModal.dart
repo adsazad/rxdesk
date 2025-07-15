@@ -22,8 +22,8 @@ class GlobalSettingsModal with ChangeNotifier {
   String? com = "none";
   bool applyConversion = false;
 
-  double flowCalPlus = 0.0;
-  double flowCalMinus = 0.0;
+  double tidalVolumePlus = 0.0;
+  double tidalVolumeMinus = 0.0;
 
   GlobalSettingsModal({
     required this.com,
@@ -40,8 +40,8 @@ class GlobalSettingsModal with ChangeNotifier {
     this.appMode,
     this.sampleRate,
     required this.applyConversion,
-    this.flowCalPlus = 0.0,
-    this.flowCalMinus = 0.0,
+    this.tidalVolumePlus = 0.0,
+    this.tidalVolumeMinus = 0.0,
   });
 
   void setAutoRecordOnOff(bool value) {
@@ -86,13 +86,13 @@ class GlobalSettingsModal with ChangeNotifier {
     notifyListeners();
   }
 
-  void setFlowCalPlus(double value) {
-    flowCalPlus = value;
+  void setTidalVolumePlus(double value) {
+    tidalVolumePlus = value;
     notifyListeners();
   }
 
-  void setFlowCalMinus(double value) {
-    flowCalMinus = value;
+  void setTidalVolumeMinus(double value) {
+    tidalVolumeMinus = value;
     notifyListeners();
   }
 
@@ -110,8 +110,8 @@ class GlobalSettingsModal with ChangeNotifier {
     double voltage2,
     double value2,
     bool applyConversion,
-    double flowCalPlus,
-    double flowCalMinus,
+    double tidalVolumePlus,
+    double tidalVolumeMinus,
   ) {
     this.autoRecordOnOff = autoRecordOnOff;
     this.filterOnOf = filterOnOf;
@@ -125,8 +125,8 @@ class GlobalSettingsModal with ChangeNotifier {
     this.voltage2 = voltage2;
     this.value2 = value2;
     this.applyConversion = applyConversion;
-    this.flowCalPlus = flowCalPlus;
-    this.flowCalMinus = flowCalMinus;
+    this.tidalVolumePlus = tidalVolumePlus;
+    this.tidalVolumeMinus = tidalVolumeMinus;
     notifyListeners();
   }
 
@@ -146,8 +146,8 @@ class GlobalSettingsModal with ChangeNotifier {
       "voltage2": voltage2,
       "value2": value2,
       "applyConversion": applyConversion,
-      "flowCalPlus": flowCalPlus,
-      "flowCalMinus": flowCalMinus,
+      "tidalVolumePlus": tidalVolumePlus,
+      "tidalVolumeMinus": tidalVolumeMinus,
     };
     String jsonString = jsonEncode(json);
     return jsonString;
@@ -171,13 +171,9 @@ class GlobalSettingsModal with ChangeNotifier {
     voltage2 = arr["voltage2"];
     value2 = arr["value2"];
     applyConversion = arr['applyConversion'];
-    flowCalPlus = arr["flowCalPlus"] ?? 0.0;
-    flowCalMinus = arr["flowCalMinus"] ?? 0.0;
+    tidalVolumePlus = arr["tidalVolumePlus"] ?? 0.0;
+    tidalVolumeMinus = arr["tidalVolumeMinus"] ?? 0.0;
 
-    // if(arr["hrvDuration"]) {
-    // }else{
-    //   hrvDuration = "300";
-    // }
     notifyListeners();
   }
 }

@@ -174,180 +174,6 @@ class _HomeState extends State<Home> {
         "scalePresetIndex": 3,
         "filterConfig": {"filterOn": false, "lpf": 3, "hpf": 5, "notch": 1},
         "meter": {"decimal": 1, "unit": "%", "convert": (double x) => x / 100},
-        // calibrate button
-        "customButtons": [
-          {
-            "label": "Calibrate",
-            "icon": Icons.refresh,
-            "onPressed": (data) {
-              final context = myBigGraphKey.currentContext ?? this.context;
-
-              showDialog(
-                context: context,
-                builder: (context) {
-                  String responseText = "";
-                  bool isSending = false;
-                  String status = "p";
-
-                  return StatefulBuilder(
-                    builder: (context, setState) {
-                      return AlertDialog(
-                        title: Text("CO2 Sensor Calibration"),
-                        content: SizedBox(
-                          width: 350,
-                          child: SingleChildScrollView(
-                            child: Column(
-                              mainAxisSize: MainAxisSize.min,
-                              children: [
-                                if (status == "running")
-                                  LinearProgressIndicator(),
-
-                                // text calibration in progress
-                                if (status == "completed")
-                                  Icon(Icons.check, color: Colors.green),
-                                if (status == "completed")
-                                  Text(
-                                    "Calibration completed successfully!",
-                                    style: TextStyle(
-                                      color: Colors.green,
-                                      fontWeight: FontWeight.bold,
-                                    ),
-                                  ),
-                                if (status == "running")
-                                  Text(
-                                    "Calibration in progress...",
-                                    style: TextStyle(
-                                      color: Colors.orange,
-                                      fontWeight: FontWeight.bold,
-                                    ),
-                                  ),
-                                if (status == "pending")
-                                  Text(
-                                    "Make sure the sensor is at ambient CO2 levels.",
-                                  ),
-                              ],
-                            ),
-                          ),
-                        ),
-                        actions: [
-                          Row(
-                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                            children: [
-                              ElevatedButton(
-                                child: Text("Calibrate"),
-                                onPressed:
-                                    isSending
-                                        ? null
-                                        : () async {
-                                          setState(() {
-                                            status = "running";
-                                          });
-                                          await sendSerialCommandSequence(
-                                            port: port,
-                                            updateResponse: (resp) {
-                                              setState(() {
-                                                responseText += resp + "\n";
-                                              });
-                                            },
-                                            onComplete: () {
-                                              setState(() {
-                                                isSending = false;
-                                                status = "completed";
-                                              });
-                                              startMainDataStream(port);
-                                            },
-                                          );
-                                        },
-                              ),
-                              TextButton(
-                                child: Text("Exit"),
-                                onPressed: () => Navigator.of(context).pop(),
-                              ),
-                            ],
-                          ),
-
-                          // Row(
-                          //   mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                          //   children: [
-                          //     ElevatedButton(
-                          //       child: Text("Send K 2"),
-                          //       onPressed:
-                          //           isSending
-                          //               ? null
-                          //               : () async {
-                          //                 await sendSerialCommand(
-                          //                   port: port,
-                          //                   command: "K 2\r\n",
-                          //                   updateResponse: (resp) {
-                          //                     setState(() {
-                          //                       responseText += resp + "\n";
-                          //                     });
-                          //                   },
-                          //                 );
-                          //               },
-                          //     ),
-                          //     ElevatedButton(
-                          //       child: Text("Send G"),
-                          //       onPressed:
-                          //           isSending
-                          //               ? null
-                          //               : () async {
-                          //                 await sendSerialCommand(
-                          //                   port: port,
-                          //                   command: "G\r\n",
-                          //                   updateResponse: (resp) {
-                          //                     setState(() {
-                          //                       responseText += resp + "\n";
-                          //                     });
-                          //                   },
-                          //                 );
-                          //               },
-                          //     ),
-                          //     ElevatedButton(
-                          //       child: Text("Send K 1"),
-                          //       onPressed:
-                          //           isSending
-                          //               ? null
-                          //               : () async {
-                          //                 await sendSerialCommand(
-                          //                   port: port,
-                          //                   command: "K 1\r\n",
-                          //                   updateResponse: (resp) {
-                          //                     setState(() {
-                          //                       responseText += resp + "\n";
-                          //                     });
-                          //                   },
-                          //                 );
-                          //               },
-                          //     ),
-                          //     // ElevatedButton(
-                          //     //   child: Text("Send All"),
-                          //     //   onPressed:
-                          //     //       isSending
-                          //     //           ? null
-                          //     //           : () async {
-                          //     //             await sendCalibrationSequence(
-                          //     //               port,
-                          //     //               context,
-                          //     //               onResponse: (resp) {
-                          //     //                 setState(() {
-                          //     //                   responseText += resp + "\n";
-                          //     //                 });
-                          //     //               },
-                          //     //             );
-                          //     //           },
-                          //     // ),
-                          //   ],
-                          // ),
-                        ],
-                      );
-                    },
-                  );
-                },
-              );
-            },
-          },
-        ],
       },
       {
         "name": "Flow",
@@ -382,17 +208,17 @@ class _HomeState extends State<Home> {
               );
 
               TextEditingController plusController = TextEditingController(
-                text: globalSettings.flowCalPlus.toString(),
+                text: globalSettings.tidalVolumePlus.toString(),
               );
               TextEditingController minusController = TextEditingController(
-                text: globalSettings.flowCalMinus.toString(),
+                text: globalSettings.tidalVolumeMinus.toString(),
               );
 
               showDialog(
                 context: context,
                 builder: (context) {
                   return AlertDialog(
-                    title: Text("Calibrate Flow"),
+                    title: Text("Calibrate Tidal Volume"),
                     content: Column(
                       mainAxisSize: MainAxisSize.min,
                       children: [
@@ -402,7 +228,7 @@ class _HomeState extends State<Home> {
                             decimal: true,
                           ),
                           decoration: InputDecoration(
-                            labelText: "Flow Calibrator +",
+                            labelText: "Tidal Calibrator +",
                             hintText: "Enter plus value",
                           ),
                         ),
@@ -413,7 +239,7 @@ class _HomeState extends State<Home> {
                             decimal: true,
                           ),
                           decoration: InputDecoration(
-                            labelText: "Flow Calibrator -",
+                            labelText: "Tidal Calibrator -",
                             hintText: "Enter minus value",
                           ),
                         ),
@@ -431,8 +257,8 @@ class _HomeState extends State<Home> {
                               double.tryParse(plusController.text) ?? 0.0;
                           double minus =
                               double.tryParse(minusController.text) ?? 0.0;
-                          globalSettings.setFlowCalPlus(plus);
-                          globalSettings.setFlowCalMinus(minus);
+                          globalSettings.setTidalVolumePlus(plus);
+                          globalSettings.setTidalVolumeMinus(minus);
 
                           // Optionally save to SharedPreferences
                           SharedPreferences.getInstance().then((prefs) {
@@ -1059,8 +885,10 @@ class _HomeState extends State<Home> {
           double flow = (data[11] << 8 | data[10]) * 1.0;
           // double vol = (data[13] << 8 | data[12]) * 1.0;
           double co2 = (data[15] << 8 | data[14]) * 1.0;
-          flow =
-              flow + globalSettings.flowCalPlus - globalSettings.flowCalMinus;
+          vol =
+              vol +
+              globalSettings.tidalVolumePlus -
+              globalSettings.tidalVolumeMinus;
 
           saver(ecg: ecg, o2: o2, flow: flow, vol: vol, co2: co2);
           // Update your graph
@@ -1473,10 +1301,10 @@ class _HomeState extends State<Home> {
               double flow = (frame[11] * 256 + frame[10]) * 1.0;
               double co2 = (frame[15] * 256 + frame[14]) * 1.0;
 
-              flow =
-                  flow +
-                  globalSettings.flowCalPlus -
-                  globalSettings.flowCalMinus;
+              vol =
+                  vol +
+                  globalSettings.tidalVolumePlus -
+                  globalSettings.tidalVolumeMinus;
 
               setState(() {
                 flow = flow;
@@ -2412,6 +2240,307 @@ class _HomeState extends State<Home> {
     });
   }
 
+  calibratorModel() {
+    final context = myBigGraphKey.currentContext ?? this.context;
+
+    showDialog(
+      context: context,
+      builder: (context) {
+        return DefaultTabController(
+          length: 3,
+          child: AlertDialog(
+            title: TabBar(
+              tabs: [
+                Tab(text: "CO2 Calibration"),
+                Tab(text: "O2 Calibration"),
+                Tab(text: "Tidal Volume Calibration"),
+              ],
+              labelColor: Colors.black,
+            ),
+            content: SizedBox(
+              width: 200,
+              child: TabBarView(
+                children: [
+                  // Tab 1: CO2 Calibration (your existing logic)
+                  StatefulBuilder(
+                    builder: (context, setState) {
+                      String responseText = "";
+                      bool isSending = false;
+                      String status = "p";
+
+                      return Column(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          SizedBox(height: 50),
+
+                          if (status == "running") LinearProgressIndicator(),
+                          if (status == "completed")
+                            Icon(Icons.check, color: Colors.green),
+                          Text(
+                            "This will send a calibration sequence to the CO2 sensor. "
+                            "Make sure the sensor is at ambient CO2 levels ",
+                          ),
+                          SizedBox(height: 16),
+                          Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                            children: [
+                              TextButton(
+                                child: Text("Cancel"),
+                                onPressed: () => Navigator.of(context).pop(),
+                              ),
+                              ElevatedButton(
+                                child: Text("Calibrate"),
+                                onPressed:
+                                    isSending
+                                        ? null
+                                        : () async {
+                                          setState(() {
+                                            status = "running";
+                                            isSending = true;
+                                          });
+                                          await sendSerialCommandSequence(
+                                            port: port,
+                                            updateResponse: (resp) {
+                                              setState(() {
+                                                responseText += resp + "\n";
+                                              });
+                                            },
+                                            onComplete: () {
+                                              setState(() {
+                                                isSending = false;
+                                                status = "completed";
+                                              });
+                                              startMainDataStream(port);
+                                            },
+                                          );
+                                        },
+                              ),
+                            ],
+                          ),
+                          SizedBox(height: 8),
+                          Text(responseText),
+                        ],
+                      );
+                    },
+                  ),
+                  // Tab 2: O2 Calibration (placeholder)
+                  _o2CalibratorTab(),
+                  // Tab 3: Tidal Flow Calibration (placeholder)
+                  tidalFlowCalibrationWidget(context),
+                ],
+              ),
+            ),
+          ),
+        );
+      },
+    );
+  }
+
+  Widget tidalFlowCalibrationWidget(BuildContext context) {
+    final globalSettings = Provider.of<GlobalSettingsModal>(
+      context,
+      listen: false,
+    );
+
+    TextEditingController plusController = TextEditingController(
+      text: globalSettings.tidalVolumePlus.toString(),
+    );
+    TextEditingController minusController = TextEditingController(
+      text: globalSettings.tidalVolumeMinus.toString(),
+    );
+
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        SizedBox(height: 50),
+
+        TextField(
+          controller: plusController,
+          keyboardType: TextInputType.numberWithOptions(decimal: true),
+          decoration: InputDecoration(
+            labelText: "Tidal Calibrator +",
+            hintText: "Enter plus value",
+          ),
+          onChanged: (val) {
+            double plus = double.tryParse(val) ?? 0.0;
+            globalSettings.setTidalVolumePlus(plus);
+          },
+        ),
+        SizedBox(height: 12),
+        TextField(
+          controller: minusController,
+          keyboardType: TextInputType.numberWithOptions(decimal: true),
+          decoration: InputDecoration(
+            labelText: "Tidal Calibrator -",
+            hintText: "Enter minus value",
+          ),
+          onChanged: (val) {
+            double minus = double.tryParse(val) ?? 0.0;
+            globalSettings.setTidalVolumeMinus(minus);
+          },
+        ),
+      ],
+    );
+  }
+
+  _o2CalibratorTab() {
+    return Consumer<GlobalSettingsModal>(
+      builder: (context, globalSettings, child) {
+        return Padding(
+          padding: const EdgeInsets.all(8.0),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              SizedBox(height: 50),
+
+              Text(
+                "O2 Sensor Calibration",
+                style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+              ),
+              SizedBox(height: 12),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                children: [
+                  Text('Voltage 1', style: TextStyle(fontSize: 16)),
+                  SizedBox(
+                    width: 120,
+                    child: TextFormField(
+                      initialValue: globalSettings.voltage1.toString(),
+                      keyboardType: TextInputType.numberWithOptions(
+                        decimal: true,
+                      ),
+                      decoration: InputDecoration(
+                        hintText: 'e.g. 0.96',
+                        border: OutlineInputBorder(),
+                        contentPadding: EdgeInsets.symmetric(
+                          horizontal: 8,
+                          vertical: 4,
+                        ),
+                      ),
+                      onChanged: (val) {
+                        double? v = double.tryParse(val);
+                        if (v != null) {
+                          globalSettings.voltage1 = v;
+                          globalSettings.notifyListeners();
+                        }
+                      },
+                    ),
+                  ),
+                ],
+              ),
+              SizedBox(height: 8),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                children: [
+                  Text('Value 1', style: TextStyle(fontSize: 16)),
+                  SizedBox(
+                    width: 120,
+                    child: TextFormField(
+                      initialValue: globalSettings.value1.toString(),
+                      keyboardType: TextInputType.numberWithOptions(
+                        decimal: true,
+                      ),
+                      decoration: InputDecoration(
+                        hintText: 'e.g. 20.93',
+                        border: OutlineInputBorder(),
+                        contentPadding: EdgeInsets.symmetric(
+                          horizontal: 8,
+                          vertical: 4,
+                        ),
+                      ),
+                      onChanged: (val) {
+                        double? v = double.tryParse(val);
+                        if (v != null) {
+                          globalSettings.value1 = v;
+                          globalSettings.notifyListeners();
+                        }
+                      },
+                    ),
+                  ),
+                ],
+              ),
+              SizedBox(height: 8),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                children: [
+                  Text('Voltage 2', style: TextStyle(fontSize: 16)),
+                  SizedBox(
+                    width: 120,
+                    child: TextFormField(
+                      initialValue: globalSettings.voltage2.toString(),
+                      keyboardType: TextInputType.numberWithOptions(
+                        decimal: true,
+                      ),
+                      decoration: InputDecoration(
+                        hintText: 'e.g. 0.77',
+                        border: OutlineInputBorder(),
+                        contentPadding: EdgeInsets.symmetric(
+                          horizontal: 8,
+                          vertical: 4,
+                        ),
+                      ),
+                      onChanged: (val) {
+                        double? v = double.tryParse(val);
+                        if (v != null) {
+                          globalSettings.voltage2 = v;
+                          globalSettings.notifyListeners();
+                        }
+                      },
+                    ),
+                  ),
+                ],
+              ),
+              SizedBox(height: 8),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                children: [
+                  Text('Value 2', style: TextStyle(fontSize: 16)),
+                  SizedBox(
+                    width: 120,
+                    child: TextFormField(
+                      initialValue: globalSettings.value2.toString(),
+                      keyboardType: TextInputType.numberWithOptions(
+                        decimal: true,
+                      ),
+                      decoration: InputDecoration(
+                        hintText: 'e.g. 15.93',
+                        border: OutlineInputBorder(),
+                        contentPadding: EdgeInsets.symmetric(
+                          horizontal: 8,
+                          vertical: 4,
+                        ),
+                      ),
+                      onChanged: (val) {
+                        double? v = double.tryParse(val);
+                        if (v != null) {
+                          globalSettings.value2 = v;
+                          globalSettings.notifyListeners();
+                        }
+                      },
+                    ),
+                  ),
+                ],
+              ),
+              SizedBox(height: 12),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                children: [
+                  Text("Apply Conversion", style: TextStyle(fontSize: 16)),
+                  Switch(
+                    value: globalSettings.applyConversion,
+                    onChanged: (val) {
+                      globalSettings.setapplyConversion(val);
+                    },
+                  ),
+                ],
+              ),
+            ],
+          ),
+        );
+      },
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return Consumer<DefaultPatientModal>(
@@ -2644,7 +2773,19 @@ class _HomeState extends State<Home> {
                             }
                           },
                         ),
-
+                        // clabirations
+                        IconButtonColumn(
+                          icon: Icons.compass_calibration_outlined,
+                          label: "Calibrate",
+                          onPressed: () {
+                            calibratorModel();
+                            // Navigator.of(context).push(
+                            //   MaterialPageRoute(
+                            //     builder: (context) => CalibrationPage(),
+                            //   ),
+                            // );
+                          },
+                        ),
                         IconButtonColumn(
                           icon: Icons.settings,
                           label: 'Settings',
