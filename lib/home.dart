@@ -201,12 +201,30 @@ class _HomeState extends State<Home> {
                               children: [
                                 if (status == "running")
                                   LinearProgressIndicator(),
+
+                                // text calibration in progress
                                 if (status == "completed")
                                   Icon(Icons.check, color: Colors.green),
-                                Text(
-                                  "This will send a calibration sequence to the CO2 sensor. "
-                                  "Make sure the sensor is at ambient CO2 levels ",
-                                ),
+                                if (status == "completed")
+                                  Text(
+                                    "Calibration completed successfully!",
+                                    style: TextStyle(
+                                      color: Colors.green,
+                                      fontWeight: FontWeight.bold,
+                                    ),
+                                  ),
+                                if (status == "running")
+                                  Text(
+                                    "Calibration in progress...",
+                                    style: TextStyle(
+                                      color: Colors.orange,
+                                      fontWeight: FontWeight.bold,
+                                    ),
+                                  ),
+                                if (status == "pending")
+                                  Text(
+                                    "Make sure the sensor is at ambient CO2 levels.",
+                                  ),
                               ],
                             ),
                           ),
@@ -215,10 +233,6 @@ class _HomeState extends State<Home> {
                           Row(
                             mainAxisAlignment: MainAxisAlignment.spaceBetween,
                             children: [
-                              TextButton(
-                                child: Text("Cancel"),
-                                onPressed: () => Navigator.of(context).pop(),
-                              ),
                               ElevatedButton(
                                 child: Text("Calibrate"),
                                 onPressed:
@@ -244,6 +258,10 @@ class _HomeState extends State<Home> {
                                             },
                                           );
                                         },
+                              ),
+                              TextButton(
+                                child: Text("Exit"),
+                                onPressed: () => Navigator.of(context).pop(),
                               ),
                             ],
                           ),
