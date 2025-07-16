@@ -126,6 +126,19 @@ class _HomeState extends State<Home> {
         "name": "O2",
         "scale": 3,
         "boxValue": 5,
+        "valueConverter": (double x) {
+          x = x * 0.00072105;
+          globalSettings = Provider.of<GlobalSettingsModal>(
+            context,
+            listen: false,
+          );
+          if (globalSettings != null &&
+              globalSettings.applyConversion == true) {
+            double result = o2Calibrate(x);
+            return result;
+          }
+          return x;
+        },
         "unit": "%",
         "minDisplay": 0.0,
         "maxDisplay": 30.0,
@@ -148,7 +161,8 @@ class _HomeState extends State<Home> {
                   ).applyConversion
                   ? " %"
                   : " mV",
-          "convert": (double x) {
+          "convert": (double x, int index) {
+            x = _inMemoryData[index][1];
             x = x * 0.00072105;
             globalSettings = Provider.of<GlobalSettingsModal>(
               context,
@@ -168,7 +182,7 @@ class _HomeState extends State<Home> {
         "scale": 3,
         "boxValue": 30 / 6,
         "labelDecimal": 0,
-        "boxValueConvert": (double x) => x / 100,
+        "valueConverter": (double x) => x / 100,
         "unit": "%",
         "minDisplay": 0,
         "maxDisplay": 30,
@@ -182,7 +196,15 @@ class _HomeState extends State<Home> {
         ],
         "scalePresetIndex": 3,
         "filterConfig": {"filterOn": false, "lpf": 3, "hpf": 5, "notch": 1},
-        "meter": {"decimal": 1, "unit": "%", "convert": (double x) => x / 100},
+        "meter": {
+          "decimal": 1,
+          "unit": "%",
+          "convert": (double x) {
+            // print("CO@METER");
+            // print(x);
+            return x;
+          },
+        },
       },
       {
         "name": "Flow",
@@ -196,11 +218,12 @@ class _HomeState extends State<Home> {
           {"minDisplay": 0.0, "maxDisplay": 4000.0, "boxValue": 800.0},
           {"minDisplay": 0.0, "maxDisplay": 8000.0, "boxValue": 1600.0},
         ],
-        "scalePresetIndex": 2,
-        "boxValue": 100,
+        "scalePresetIndex": 4,
+        "boxValue": 400.0,
+        "boxStep": 25.0,
         "unit": "ml/s",
         "minDisplay": 0.0,
-        "maxDisplay": 550,
+        "maxDisplay": 2000.0,
         "meter": {"decimal": 0, "unit": " ", "convert": (double x) => x},
         "yAxisLabelConvert": (double x) => x < 1000 ? x : x / 1000,
         "yAxisLabelUnit": (double x) => x < 1000 ? "ml/s" : "L/s",
@@ -217,12 +240,12 @@ class _HomeState extends State<Home> {
           {"minDisplay": 0.0, "maxDisplay": 4000.0, "boxValue": 800.0},
           {"minDisplay": 0.0, "maxDisplay": 8000.0, "boxValue": 1600.0},
         ],
-        "scalePresetIndex": 2,
-        "boxValue": 100,
+        "scalePresetIndex": 4,
+        "boxValue": 400.0,
         "boxStep": 25.0,
         "unit": "ml",
         "minDisplay": 0.0,
-        "maxDisplay": 550.0,
+        "maxDisplay": 2000.0,
         "meter": {"decimal": 0, "unit": " ", "convert": (double x) => x},
         "yAxisLabelConvert": (double x) => x < 1000 ? x : x / 1000,
         "yAxisLabelUnit": (double x) => x < 1000 ? "ml" : "L",

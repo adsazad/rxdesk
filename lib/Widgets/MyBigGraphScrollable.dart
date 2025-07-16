@@ -193,6 +193,7 @@ class MyBigGraphV2State extends State<MyBigGraphV2> {
   // Add this near the top of your class
   int _sampleBatchCounter = 0;
   final int _batchThreshold = 5; // 🔁 update graph every 20 samples
+  int fullLengthIndex = 0;
 
   List<double> updateEverything(List<double> values) {
     List<double> processedValues = [];
@@ -201,7 +202,10 @@ class MyBigGraphV2State extends State<MyBigGraphV2> {
       double value = values[i];
       value = applyMultiFilterToChannel(i, value);
       processedValues.add(value);
-
+      final converter = widget.plot[i]["valueConverter"];
+      if (converter != null && converter is Function) {
+        value = converter(value);
+      }
       if (widget.isImported) {
         if (!_clearedForImport) {
           for (var list in allPlotData) list.clear();
@@ -234,7 +238,7 @@ class MyBigGraphV2State extends State<MyBigGraphV2> {
       );
       _sampleBatchCounter = 0;
     }
-
+    fullLengthIndex++;
     return processedValues;
   }
 
@@ -352,7 +356,7 @@ class MyBigGraphV2State extends State<MyBigGraphV2> {
         meter["convert"] != null &&
         meter["convert"] is Function) {
       try {
-        displayValue = meter["convert"](scaled);
+        displayValue = meter["convert"](scaled, fullLengthIndex);
       } catch (_) {
         displayValue = scaled;
       }
@@ -961,79 +965,93 @@ class MyBigGraphV2State extends State<MyBigGraphV2> {
             horizontalLines: _generateSeparationLines(),
           ),
           minX: 0,
-          maxX: widget.isImported
-              ? (allPlotData.isNotEmpty && allPlotData[0].isNotEmpty
-                  ? allPlotData[0].last.x
-                  : widget.windowSize.toDouble())
-              : widget.windowSize.toDouble(),
+          maxX:
+              widget.isImported
+                  ? (allPlotData.isNotEmpty && allPlotData[0].isNotEmpty
+                      ? allPlotData[0].last.x
+                      : widget.windowSize.toDouble())
+                  : widget.windowSize.toDouble(),
           minY: widget.minY,
           maxY: widget.maxY,
-          lineBarsData: List.generate(widget.plot.length, (i) {
-            double totalHeight = widget.maxY - widget.minY;
-            double plotSpacing = totalHeight / widget.plot.length;
+          lineBarsData:
+              List.generate(widget.plot.length, (i) {
+                double totalHeight = widget.maxY - widget.minY;
+                double plotSpacing = totalHeight / widget.plot.length;
 
-            // Prepare shifted spots
-            List<FlSpot> shiftedSpots = allPlotData[i].map((spot) {
-              double channelTop = widget.maxY - plotSpacing * i;
-              double channelBottom = widget.maxY - plotSpacing * (i + 1);
+                // Prepare shifted spots
+                List<FlSpot> shiftedSpots =
+                    allPlotData[i].map((spot) {
+                      double channelTop = widget.maxY - plotSpacing * i;
+                      double channelBottom =
+                          widget.maxY - plotSpacing * (i + 1);
 
-              final minD = (widget.plot[i]["minDisplay"] ?? 0.0).toDouble();
-              final maxD = (widget.plot[i]["maxDisplay"] ?? 100.0).toDouble();
-              final val = spot.y * plotGains[i];
+                      final minD =
+                          (widget.plot[i]["minDisplay"] ?? 0.0).toDouble();
+                      final maxD =
+                          (widget.plot[i]["maxDisplay"] ?? 100.0).toDouble();
+                      final val = spot.y * plotGains[i];
 
-              double clampedVal = val.clamp(minD, maxD) as double;
-              double range = maxD - minD;
-              double percent = (clampedVal - minD) / range;
-              double shiftedY = channelBottom + (percent * plotSpacing);
+                      double clampedVal = val.clamp(minD, maxD) as double;
+                      double range = maxD - minD;
+                      double percent = (clampedVal - minD) / range;
+                      double shiftedY = channelBottom + (percent * plotSpacing);
 
-              if (shiftedY < channelBottom) shiftedY = channelBottom;
-              if (shiftedY > channelTop) shiftedY = channelTop;
+                      if (shiftedY < channelBottom) shiftedY = channelBottom;
+                      if (shiftedY > channelTop) shiftedY = channelTop;
 
-              return FlSpot(spot.x, shiftedY);
-            }).toList();
+                      return FlSpot(spot.x, shiftedY);
+                    }).toList();
 
-            int currentIdx = allCurrentIndexes[i] % widget.windowSize;
+                int currentIdx = allCurrentIndexes[i] % widget.windowSize;
 
-            // Split into two segments for the gap
-            List<FlSpot> segment1 = [];
-            List<FlSpot> segment2 = [];
+                // Split into two segments for the gap
+                List<FlSpot> segment1 = [];
+                List<FlSpot> segment2 = [];
 
-            if (widget.isImported) {
-              segment1 = shiftedSpots;
-            } else {
-              // Segment before the gap
-              for (int j = 0; j <= currentIdx; j++) {
-                if (j < shiftedSpots.length) segment1.add(shiftedSpots[j]);
-              }
-              // Segment after the gap
-              for (int j = currentIdx + gapLength + 1; j < shiftedSpots.length; j++) {
-                segment2.add(shiftedSpots[j]);
-              }
-            }
+                if (widget.isImported) {
+                  segment1 = shiftedSpots;
+                } else {
+                  // Segment before the gap
+                  for (int j = 0; j <= currentIdx; j++) {
+                    if (j < shiftedSpots.length) segment1.add(shiftedSpots[j]);
+                  }
+                  // Segment after the gap
+                  for (
+                    int j = currentIdx + gapLength + 1;
+                    j < shiftedSpots.length;
+                    j++
+                  ) {
+                    segment2.add(shiftedSpots[j]);
+                  }
+                }
 
-            List<LineChartBarData> bars = [];
+                List<LineChartBarData> bars = [];
 
-            if (segment1.isNotEmpty) {
-              bars.add(LineChartBarData(
-                spots: segment1,
-                isCurved: false,
-                color: Colors.black,
-                barWidth: 1.5,
-                dotData: FlDotData(show: false),
-              ));
-            }
-            if (segment2.isNotEmpty) {
-              bars.add(LineChartBarData(
-                spots: segment2,
-                isCurved: false,
-                color: Colors.black,
-                barWidth: 1.5,
-                dotData: FlDotData(show: false),
-              ));
-            }
+                if (segment1.isNotEmpty) {
+                  bars.add(
+                    LineChartBarData(
+                      spots: segment1,
+                      isCurved: false,
+                      color: Colors.black,
+                      barWidth: 1.5,
+                      dotData: FlDotData(show: false),
+                    ),
+                  );
+                }
+                if (segment2.isNotEmpty) {
+                  bars.add(
+                    LineChartBarData(
+                      spots: segment2,
+                      isCurved: false,
+                      color: Colors.black,
+                      barWidth: 1.5,
+                      dotData: FlDotData(show: false),
+                    ),
+                  );
+                }
 
-            return bars;
-          }).expand((e) => e).toList(),
+                return bars;
+              }).expand((e) => e).toList(),
         ),
       ),
     );
