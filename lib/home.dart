@@ -1223,6 +1223,8 @@ class _HomeState extends State<Home> {
     startMainDataStream(port); // Start the main data stream
   }
 
+  int lastNotifierUpdate = DateTime.now().millisecondsSinceEpoch;
+
   void startMainDataStream(SerialPort port) {
     // Cancel any previous subscription
     if (mainDataSubscription != null) {
@@ -1286,12 +1288,18 @@ class _HomeState extends State<Home> {
               double correctedFLOW = current[4];
               double correctedO2 = future[1];
               double correctedCO2 = future[2];
-              setState(() {
-                co2 = correctedCO2; // Update CO2 state
-                co2Notifier.value = correctedCO2;
-                o2Notifier.value = correctedO2;
-                tidalVolumeNotifier.value = correctedVOL;
-              });
+
+              // Throttle UI updates to 10Hz
+              int now = DateTime.now().millisecondsSinceEpoch;
+              if (now - lastNotifierUpdate > 100) {
+                lastNotifierUpdate = now;
+                setState(() {
+                  co2 = correctedCO2;
+                  co2Notifier.value = correctedCO2;
+                  o2Notifier.value = correctedO2;
+                  tidalVolumeNotifier.value = correctedVOL;
+                });
+              }
 
               delayBuffer.removeAt(0);
 
