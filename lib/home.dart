@@ -102,23 +102,12 @@ class _HomeState extends State<Home> {
   late ValueNotifier<double> o2Notifier = ValueNotifier<double>(0.0);
   late ValueNotifier<double> tidalVolumeNotifier = ValueNotifier<double>(0.0);
 
-  double latestCO2 = 0;
-  double latestO2 = 0;
-  double latestTidalVol = 0;
-  Timer? notifierTimer;
-
   @override
   void initState() {
     super.initState();
     co2Notifier = ValueNotifier<double>(0.0);
     o2Notifier = ValueNotifier<double>(0.0);
     tidalVolumeNotifier = ValueNotifier<double>(0.0);
-
-    notifierTimer = Timer.periodic(Duration(milliseconds: 100), (_) {
-      co2Notifier.value = latestCO2;
-      o2Notifier.value = latestO2;
-      tidalVolumeNotifier.value = latestTidalVol;
-    });
 
     initFunc();
 
@@ -889,9 +878,9 @@ class _HomeState extends State<Home> {
           double correctedO2 = future[1]; // future O2
           double correctedCO2 = future[2]; // future CO2
           setState(() {
-            latestCO2 = correctedCO2;
-            latestO2 = correctedO2;
-            latestTidalVol = correctedVOL;
+            co2Notifier.value = correctedCO2;
+            o2Notifier.value = correctedO2;
+            tidalVolumeNotifier.value = correctedVOL;
           });
 
           // 🧼 Step 5: Remove used sample
@@ -1285,8 +1274,14 @@ class _HomeState extends State<Home> {
               if (delaySamples == null || delayBuffer.length <= delaySamples!) {
                 List<double>? edt = myBigGraphKey.currentState
                     ?.updateEverything([ecg, o2, co2, flow, vol]);
-                if (edt != null)
+                if (edt != null) {
                   _inMemoryData.add([edt[0], edt[1], edt[2], edt[3], flow]);
+                  setState(() {
+                    co2Notifier.value = edt[2];
+                    o2Notifier.value = edt[1];
+                    tidalVolumeNotifier.value = edt[4];
+                  });
+                }
                 i += frameLength;
                 continue;
               }
@@ -1300,17 +1295,6 @@ class _HomeState extends State<Home> {
               double correctedO2 = future[1];
               double correctedCO2 = future[2];
 
-              // Throttle UI updates to 10Hz
-              int now = DateTime.now().millisecondsSinceEpoch;
-              if (now - lastNotifierUpdate > 500) {
-                lastNotifierUpdate = now;
-                setState(() {
-                  latestCO2 = correctedCO2;
-                  latestO2 = correctedO2;
-                  latestTidalVol = correctedVOL;
-                });
-              }
-
               delayBuffer.removeAt(0);
 
               List<double>? edt = myBigGraphKey.currentState?.updateEverything([
@@ -1321,6 +1305,7 @@ class _HomeState extends State<Home> {
                 correctedVOL,
               ]);
               if (edt != null) {
+                // print(edt[1]);
                 _inMemoryData.add([
                   edt[0],
                   edt[1],
@@ -1350,8 +1335,7 @@ class _HomeState extends State<Home> {
   @override
   void dispose() {
     timer.cancel(); // Always cancel timer!
-    notifierTimer?.cancel();
-    port.close();
+    port.close(); // Close the serial port
     super.dispose();
   }
 
