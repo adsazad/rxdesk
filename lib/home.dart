@@ -102,12 +102,23 @@ class _HomeState extends State<Home> {
   late ValueNotifier<double> o2Notifier = ValueNotifier<double>(0.0);
   late ValueNotifier<double> tidalVolumeNotifier = ValueNotifier<double>(0.0);
 
+  double latestCO2 = 0;
+  double latestO2 = 0;
+  double latestTidalVol = 0;
+  Timer? notifierTimer;
+
   @override
   void initState() {
     super.initState();
     co2Notifier = ValueNotifier<double>(0.0);
     o2Notifier = ValueNotifier<double>(0.0);
     tidalVolumeNotifier = ValueNotifier<double>(0.0);
+
+    notifierTimer = Timer.periodic(Duration(milliseconds: 100), (_) {
+      co2Notifier.value = latestCO2;
+      o2Notifier.value = latestO2;
+      tidalVolumeNotifier.value = latestTidalVol;
+    });
 
     initFunc();
 
@@ -878,9 +889,9 @@ class _HomeState extends State<Home> {
           double correctedO2 = future[1]; // future O2
           double correctedCO2 = future[2]; // future CO2
           setState(() {
-            co2Notifier.value = correctedCO2;
-            o2Notifier.value = correctedO2;
-            tidalVolumeNotifier.value = correctedVOL;
+            latestCO2 = correctedCO2;
+            latestO2 = correctedO2;
+            latestTidalVol = correctedVOL;
           });
 
           // 🧼 Step 5: Remove used sample
@@ -1291,13 +1302,12 @@ class _HomeState extends State<Home> {
 
               // Throttle UI updates to 10Hz
               int now = DateTime.now().millisecondsSinceEpoch;
-              if (now - lastNotifierUpdate > 100) {
+              if (now - lastNotifierUpdate > 500) {
                 lastNotifierUpdate = now;
                 setState(() {
-                  co2 = correctedCO2;
-                  co2Notifier.value = correctedCO2;
-                  o2Notifier.value = correctedO2;
-                  tidalVolumeNotifier.value = correctedVOL;
+                  latestCO2 = correctedCO2;
+                  latestO2 = correctedO2;
+                  latestTidalVol = correctedVOL;
                 });
               }
 
@@ -1340,7 +1350,8 @@ class _HomeState extends State<Home> {
   @override
   void dispose() {
     timer.cancel(); // Always cancel timer!
-    port.close(); // Close the serial port
+    notifierTimer?.cancel();
+    port.close();
     super.dispose();
   }
 
