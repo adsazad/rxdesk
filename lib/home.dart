@@ -97,9 +97,18 @@ class _HomeState extends State<Home> {
 
   StreamSubscription<Uint8List>? mainDataSubscription;
 
+  double co2 = 0;
+  late ValueNotifier<double> co2Notifier = ValueNotifier<double>(0.0);
+  late ValueNotifier<double> o2Notifier = ValueNotifier<double>(0.0);
+  late ValueNotifier<double> tidalVolumeNotifier = ValueNotifier<double>(0.0);
+
   @override
   void initState() {
     super.initState();
+    co2Notifier = ValueNotifier<double>(0.0);
+    o2Notifier = ValueNotifier<double>(0.0);
+    tidalVolumeNotifier = ValueNotifier<double>(0.0);
+
     initFunc();
 
     // Initialize plotConfig in state
@@ -805,7 +814,8 @@ class _HomeState extends State<Home> {
           double o2 = (data[7] << 8 | data[6]) * 1.0;
           double flow = (data[11] << 8 | data[10]) * 1.0;
           // double vol = (data[13] << 8 | data[12]) * 1.0;
-          double co2 = (data[15] << 8 | data[14]) * 1.0;
+          // Update UI with new values
+          co2 = (data[15] << 8 | data[14]) * 1.0;
           vol = (vol * globalSettings.tidalScalingFactor);
 
           saver(ecg: ecg, o2: o2, flow: flow, vol: vol, co2: co2);
@@ -844,6 +854,11 @@ class _HomeState extends State<Home> {
           double correctedFLOW = current[4]; // live
           double correctedO2 = future[1]; // future O2
           double correctedCO2 = future[2]; // future CO2
+          setState(() {
+            co2Notifier.value = correctedCO2;
+            o2Notifier.value = correctedO2;
+            tidalVolumeNotifier.value = correctedVOL;
+          });
 
           // 🧼 Step 5: Remove used sample
           delayBuffer.removeAt(0);
@@ -1217,7 +1232,7 @@ class _HomeState extends State<Home> {
               double ecg = (frame[3] * 256 + frame[2]) * 1.0;
               double o2 = (frame[7] * 256 + frame[6]) * 1.0;
               double flow = (frame[11] * 256 + frame[10]) * 1.0;
-              double co2 = (frame[15] * 256 + frame[14]) * 1.0;
+              co2 = (frame[15] * 256 + frame[14]) * 1.0;
 
               vol = (vol * globalSettings.tidalScalingFactor);
 
@@ -1248,6 +1263,12 @@ class _HomeState extends State<Home> {
               double correctedFLOW = current[4];
               double correctedO2 = future[1];
               double correctedCO2 = future[2];
+              setState(() {
+                co2 = correctedCO2; // Update CO2 state
+                co2Notifier.value = correctedCO2;
+                o2Notifier.value = correctedO2;
+                tidalVolumeNotifier.value = correctedVOL;
+              });
 
               delayBuffer.removeAt(0);
 
@@ -2186,23 +2207,90 @@ class _HomeState extends State<Home> {
                       return Column(
                         mainAxisSize: MainAxisSize.min,
                         children: [
-                          SizedBox(height: 50),
+                          SizedBox(height: 20),
 
+                          // here i want to show a box with current co2 percentage.
+                          Text(
+                            "CO2 Calibration",
+                            style: TextStyle(
+                              fontWeight: FontWeight.bold,
+                              fontSize: 16,
+                            ),
+                          ),
                           if (status == "running") LinearProgressIndicator(),
                           if (status == "completed")
                             Icon(Icons.check, color: Colors.green),
+                          // Show current CO2 value in a medical professional-looking box
+                          ValueListenableBuilder<double>(
+                            valueListenable: co2Notifier,
+                            builder: (context, value, child) {
+                              return Container(
+                                margin: EdgeInsets.symmetric(vertical: 8),
+                                padding: EdgeInsets.symmetric(
+                                  horizontal: 24,
+                                  vertical: 18,
+                                ),
+                                decoration: BoxDecoration(
+                                  color: Colors.white,
+                                  borderRadius: BorderRadius.circular(12),
+                                  border: Border.all(
+                                    color: Colors.red.shade700,
+                                    width: 2,
+                                  ),
+                                  boxShadow: [
+                                    BoxShadow(
+                                      color: Colors.red.shade100.withOpacity(
+                                        0.2,
+                                      ),
+                                      blurRadius: 8,
+                                      offset: Offset(0, 2),
+                                    ),
+                                  ],
+                                ),
+                                child: Row(
+                                  mainAxisSize: MainAxisSize.min,
+                                  children: [
+                                    Icon(
+                                      Icons.bubble_chart,
+                                      color: Colors.red.shade700,
+                                      size: 28,
+                                    ),
+                                    SizedBox(width: 12),
+                                    Column(
+                                      crossAxisAlignment:
+                                          CrossAxisAlignment.start,
+                                      children: [
+                                        Text(
+                                          "Current CO₂",
+                                          style: TextStyle(
+                                            fontWeight: FontWeight.bold,
+                                            fontSize: 15,
+                                            color: Colors.red.shade700,
+                                          ),
+                                        ),
+                                        Text(
+                                          "${(value / 100).toStringAsFixed(2)} %",
+                                          style: TextStyle(
+                                            fontSize: 22,
+                                            fontWeight: FontWeight.bold,
+                                            color: Colors.black,
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                  ],
+                                ),
+                              );
+                            },
+                          ),
+
                           Text(
-                            "This will send a calibration sequence to the CO2 sensor. "
-                            "Make sure the sensor is at ambient CO2 levels ",
+                            "Please keep the gas pipe in ambient air for calibration.",
                           ),
                           SizedBox(height: 16),
                           Row(
                             mainAxisAlignment: MainAxisAlignment.spaceBetween,
                             children: [
-                              TextButton(
-                                child: Text("Cancel"),
-                                onPressed: () => Navigator.of(context).pop(),
-                              ),
                               ElevatedButton(
                                 child: Text("Calibrate"),
                                 onPressed:
@@ -2230,10 +2318,13 @@ class _HomeState extends State<Home> {
                                           );
                                         },
                               ),
+                              TextButton(
+                                child: Text("Exit"),
+                                onPressed: () => Navigator.of(context).pop(),
+                              ),
                             ],
                           ),
                           SizedBox(height: 8),
-                          Text(responseText),
                         ],
                       );
                     },
@@ -2257,233 +2348,379 @@ class _HomeState extends State<Home> {
       listen: false,
     );
 
-    TextEditingController measuredController = TextEditingController(
+    // Use controllers that persist across rebuilds
+    final measuredController = TextEditingController(
       text: globalSettings.tidalMeasuredReference.toString(),
     );
-    TextEditingController actualController = TextEditingController(
+    final actualController = TextEditingController(
       text: globalSettings.tidalActualReference.toString(),
     );
 
-    // Calculate scaling factor automatically
-    double scalingFactor = 1.0;
-    if (globalSettings.tidalMeasuredReference != 0) {
-      scalingFactor =
-          globalSettings.tidalActualReference /
-          globalSettings.tidalMeasuredReference;
-    }
+    double localMeasured = globalSettings.tidalMeasuredReference;
+    double localActual = globalSettings.tidalActualReference;
+    double localScaling =
+        localMeasured != 0 ? localActual / localMeasured : 1.0;
 
-    // Update scaling factor in globalSettings
-    globalSettings.setTidalScalingFactor(scalingFactor);
+    return StatefulBuilder(
+      builder: (context, setState) {
+        void recalculateScaling() {
+          final measured = double.tryParse(measuredController.text) ?? 0.0;
+          final actual = double.tryParse(actualController.text) ?? 0.0;
+          setState(() {
+            localMeasured = measured;
+            localActual = actual;
+            localScaling = measured != 0 ? actual / measured : 1.0;
+          });
+        }
 
-    return Column(
-      mainAxisSize: MainAxisSize.min,
-      children: [
-        SizedBox(height: 24),
-        TextField(
-          controller: measuredController,
-          keyboardType: TextInputType.numberWithOptions(decimal: true),
-          decoration: InputDecoration(
-            labelText: "Measured volume",
-            hintText: "Enter measured value",
-          ),
-          onChanged: (val) {
-            double measured = double.tryParse(val) ?? 0.0;
-            globalSettings.setTidalMeasuredReference(measured);
-
-            // Recalculate scaling factor
-            double scaling =
-                measured != 0
-                    ? globalSettings.tidalActualReference / measured
-                    : 1.0;
-            globalSettings.setTidalScalingFactor(scaling);
-          },
-        ),
-        SizedBox(height: 12),
-        TextField(
-          controller: actualController,
-          keyboardType: TextInputType.numberWithOptions(decimal: true),
-          decoration: InputDecoration(
-            labelText: "Known Volume",
-            hintText: "Enter actual value (Eg: 3000)",
-          ),
-          onChanged: (val) {
-            double actual = double.tryParse(val) ?? 0.0;
-            globalSettings.setTidalActualReference(actual);
-
-            // Recalculate scaling factor
-            double scaling =
-                globalSettings.tidalMeasuredReference != 0
-                    ? actual / globalSettings.tidalMeasuredReference
-                    : 1.0;
-            globalSettings.setTidalScalingFactor(scaling);
-          },
-        ),
-        SizedBox(height: 12),
-        Consumer<GlobalSettingsModal>(
-          builder: (context, globalSettings, child) {
-            return Text(
-              "Error Factor: ${globalSettings.tidalScalingFactor.toStringAsFixed(4)}",
+        return Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            SizedBox(height: 20),
+            Text(
+              "Tidal Volume Calibration",
+              style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+            ),
+            ValueListenableBuilder<double>(
+              valueListenable: tidalVolumeNotifier,
+              builder: (context, value, child) {
+                return Container(
+                  margin: EdgeInsets.symmetric(vertical: 8),
+                  padding: EdgeInsets.symmetric(horizontal: 24, vertical: 18),
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    borderRadius: BorderRadius.circular(12),
+                    border: Border.all(color: Colors.green.shade700, width: 2),
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.green.shade100.withOpacity(0.2),
+                        blurRadius: 8,
+                        offset: Offset(0, 2),
+                      ),
+                    ],
+                  ),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Icon(
+                        Icons.water_drop,
+                        color: Colors.green.shade700,
+                        size: 28,
+                      ),
+                      SizedBox(width: 12),
+                      Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            "Current Tidal Volume",
+                            style: TextStyle(
+                              fontWeight: FontWeight.bold,
+                              fontSize: 15,
+                              color: Colors.green.shade700,
+                            ),
+                          ),
+                          Text(
+                            "${value.toStringAsFixed(2)} ml",
+                            style: TextStyle(
+                              fontSize: 22,
+                              fontWeight: FontWeight.bold,
+                              color: Colors.black,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ],
+                  ),
+                );
+              },
+            ),
+            SizedBox(height: 8),
+            TextField(
+              controller: measuredController,
+              keyboardType: TextInputType.numberWithOptions(decimal: true),
+              decoration: InputDecoration(
+                labelText: "Measured volume",
+                hintText: "Enter measured value",
+              ),
+              onChanged: (val) => recalculateScaling(),
+            ),
+            SizedBox(height: 12),
+            TextField(
+              controller: actualController,
+              keyboardType: TextInputType.numberWithOptions(decimal: true),
+              decoration: InputDecoration(
+                labelText: "Known Volume",
+                hintText: "Enter actual value (Eg: 3000)",
+              ),
+              onChanged: (val) => recalculateScaling(),
+            ),
+            SizedBox(height: 12),
+            Text(
+              "Error Factor: ${localScaling.toStringAsFixed(4)}",
               style: TextStyle(fontWeight: FontWeight.bold),
-            );
-          },
-        ),
-      ],
+            ),
+            SizedBox(height: 20),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+              children: [
+                ElevatedButton(
+                  onPressed: () {
+                    // Save and close
+                    globalSettings.setTidalMeasuredReference(localMeasured);
+                    globalSettings.setTidalActualReference(localActual);
+                    globalSettings.setTidalScalingFactor(localScaling);
+                    Navigator.of(context).pop();
+                  },
+                  child: Text("Submit"),
+                ),
+                TextButton(
+                  onPressed: () {
+                    Navigator.of(context).pop();
+                  },
+                  child: Text("Exit"),
+                ),
+              ],
+            ),
+          ],
+        );
+      },
     );
   }
 
   _o2CalibratorTab() {
+    final voltage1Controller = TextEditingController();
+    final value1Controller = TextEditingController();
+    final voltage2Controller = TextEditingController();
+    final value2Controller = TextEditingController();
+
     return Consumer<GlobalSettingsModal>(
       builder: (context, globalSettings, child) {
-        return Padding(
-          padding: const EdgeInsets.all(8.0),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              SizedBox(height: 50),
+        voltage1Controller.text = globalSettings.voltage1.toString();
+        value1Controller.text = globalSettings.value1.toString();
+        voltage2Controller.text = globalSettings.voltage2.toString();
+        value2Controller.text = globalSettings.value2.toString();
 
-              Text(
-                "O2 Sensor Calibration",
-                style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
-              ),
-              SizedBox(height: 12),
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                children: [
-                  Text('Voltage 1', style: TextStyle(fontSize: 16)),
-                  SizedBox(
-                    width: 120,
-                    child: TextFormField(
-                      initialValue: globalSettings.voltage1.toString(),
-                      keyboardType: TextInputType.numberWithOptions(
-                        decimal: true,
-                      ),
-                      decoration: InputDecoration(
-                        hintText: 'e.g. 0.96',
-                        border: OutlineInputBorder(),
-                        contentPadding: EdgeInsets.symmetric(
-                          horizontal: 8,
-                          vertical: 4,
-                        ),
-                      ),
-                      onChanged: (val) {
-                        double? v = double.tryParse(val);
-                        if (v != null) {
-                          globalSettings.voltage1 = v;
-                          globalSettings.notifyListeners();
-                        }
-                      },
+        double localVoltage1 = globalSettings.voltage1;
+        double localValue1 = globalSettings.value1;
+        double localVoltage2 = globalSettings.voltage2;
+        double localValue2 = globalSettings.value2;
+        bool localApplyConversion = globalSettings.applyConversion;
+
+        return StatefulBuilder(
+          builder: (context, setState) {
+            Widget fieldRow({
+              required String label,
+              required TextEditingController controller,
+              required VoidCallback? onPick,
+            }) {
+              return Padding(
+                padding: const EdgeInsets.symmetric(vertical: 4.0),
+                child: Row(
+                  children: [
+                    SizedBox(
+                      width: 90,
+                      child: Text(label, style: TextStyle(fontSize: 16)),
                     ),
-                  ),
-                ],
-              ),
-              SizedBox(height: 8),
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                children: [
-                  Text('Value 1', style: TextStyle(fontSize: 16)),
-                  SizedBox(
-                    width: 120,
-                    child: TextFormField(
-                      initialValue: globalSettings.value1.toString(),
-                      keyboardType: TextInputType.numberWithOptions(
-                        decimal: true,
-                      ),
-                      decoration: InputDecoration(
-                        hintText: 'e.g. 20.93',
-                        border: OutlineInputBorder(),
-                        contentPadding: EdgeInsets.symmetric(
-                          horizontal: 8,
-                          vertical: 4,
+                    SizedBox(width: 8),
+                    Expanded(
+                      child: TextFormField(
+                        controller: controller,
+                        keyboardType: TextInputType.numberWithOptions(
+                          decimal: true,
                         ),
-                      ),
-                      onChanged: (val) {
-                        double? v = double.tryParse(val);
-                        if (v != null) {
-                          globalSettings.value1 = v;
-                          globalSettings.notifyListeners();
-                        }
-                      },
-                    ),
-                  ),
-                ],
-              ),
-              SizedBox(height: 8),
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                children: [
-                  Text('Voltage 2', style: TextStyle(fontSize: 16)),
-                  SizedBox(
-                    width: 120,
-                    child: TextFormField(
-                      initialValue: globalSettings.voltage2.toString(),
-                      keyboardType: TextInputType.numberWithOptions(
-                        decimal: true,
-                      ),
-                      decoration: InputDecoration(
-                        hintText: 'e.g. 0.77',
-                        border: OutlineInputBorder(),
-                        contentPadding: EdgeInsets.symmetric(
-                          horizontal: 8,
-                          vertical: 4,
+                        decoration: InputDecoration(
+                          border: OutlineInputBorder(),
+                          contentPadding: EdgeInsets.symmetric(
+                            horizontal: 8,
+                            vertical: 4,
+                          ),
                         ),
+                        onChanged: (val) {
+                          double? v = double.tryParse(val);
+                          if (v != null) {
+                            setState(() {
+                              if (label == 'Voltage 1') localVoltage1 = v;
+                              if (label == 'Value 1') localValue1 = v;
+                              if (label == 'Voltage 2') localVoltage2 = v;
+                              if (label == 'Value 2') localValue2 = v;
+                            });
+                          }
+                        },
                       ),
-                      onChanged: (val) {
-                        double? v = double.tryParse(val);
-                        if (v != null) {
-                          globalSettings.voltage2 = v;
-                          globalSettings.notifyListeners();
-                        }
-                      },
                     ),
-                  ),
-                ],
-              ),
-              SizedBox(height: 8),
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                children: [
-                  Text('Value 2', style: TextStyle(fontSize: 16)),
-                  SizedBox(
-                    width: 120,
-                    child: TextFormField(
-                      initialValue: globalSettings.value2.toString(),
-                      keyboardType: TextInputType.numberWithOptions(
-                        decimal: true,
+                    if (onPick != null)
+                      IconButton(
+                        icon: Icon(Icons.input, color: Colors.blue),
+                        tooltip: "Pick current O₂",
+                        onPressed: onPick,
                       ),
-                      decoration: InputDecoration(
-                        hintText: 'e.g. 15.93',
-                        border: OutlineInputBorder(),
-                        contentPadding: EdgeInsets.symmetric(
-                          horizontal: 8,
-                          vertical: 4,
+                  ],
+                ),
+              );
+            }
+
+            return Padding(
+              padding: const EdgeInsets.all(8.0),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  SizedBox(height: 20),
+                  Text(
+                    "O2 Sensor Calibration",
+                    style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+                  ),
+                  SizedBox(height: 12),
+                  ValueListenableBuilder<double>(
+                    valueListenable: o2Notifier,
+                    builder: (context, value, child) {
+                      double voltage = value * 0.00072105;
+                      final globalSettings = Provider.of<GlobalSettingsModal>(
+                        context,
+                        listen: false,
+                      );
+                      double displayValue =
+                          globalSettings.applyConversion
+                              ? o2Calibrate(voltage)
+                              : voltage;
+                      String unit = globalSettings.applyConversion ? "%" : "V";
+                      return Container(
+                        margin: EdgeInsets.symmetric(vertical: 8),
+                        padding: EdgeInsets.symmetric(
+                          horizontal: 24,
+                          vertical: 18,
                         ),
-                      ),
-                      onChanged: (val) {
-                        double? v = double.tryParse(val);
-                        if (v != null) {
-                          globalSettings.value2 = v;
-                          globalSettings.notifyListeners();
-                        }
-                      },
-                    ),
-                  ),
-                ],
-              ),
-              SizedBox(height: 12),
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                children: [
-                  Text("Apply Conversion", style: TextStyle(fontSize: 16)),
-                  Switch(
-                    value: globalSettings.applyConversion,
-                    onChanged: (val) {
-                      globalSettings.setapplyConversion(val);
+                        decoration: BoxDecoration(
+                          color: Colors.white,
+                          borderRadius: BorderRadius.circular(12),
+                          border: Border.all(
+                            color: Colors.blue.shade700,
+                            width: 2,
+                          ),
+                          boxShadow: [
+                            BoxShadow(
+                              color: Colors.blue.shade100.withOpacity(0.2),
+                              blurRadius: 8,
+                              offset: Offset(0, 2),
+                            ),
+                          ],
+                        ),
+                        child: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Icon(
+                              Icons.bubble_chart,
+                              color: Colors.blue.shade700,
+                              size: 28,
+                            ),
+                            SizedBox(width: 12),
+                            Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  "Current O₂",
+                                  style: TextStyle(
+                                    fontWeight: FontWeight.bold,
+                                    fontSize: 15,
+                                    color: Colors.blue.shade700,
+                                  ),
+                                ),
+                                Text(
+                                  "${displayValue.toStringAsFixed(2)} $unit",
+                                  style: TextStyle(
+                                    fontSize: 22,
+                                    fontWeight: FontWeight.bold,
+                                    color: Colors.black,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ],
+                        ),
+                      );
                     },
                   ),
+                  SizedBox(height: 8),
+                  fieldRow(
+                    label: 'Voltage 1',
+                    controller: voltage1Controller,
+                    onPick: () {
+                      double currentO2Volts = o2Notifier.value * 0.00072105;
+                      voltage1Controller.text = currentO2Volts.toStringAsFixed(
+                        4,
+                      );
+                      setState(() {
+                        localVoltage1 = currentO2Volts;
+                      });
+                    },
+                  ),
+                  fieldRow(
+                    label: 'Value 1',
+                    controller: value1Controller,
+                    onPick: null,
+                  ),
+                  fieldRow(
+                    label: 'Voltage 2',
+                    controller: voltage2Controller,
+                    onPick: () {
+                      double currentO2Volts = o2Notifier.value * 0.00072105;
+                      voltage2Controller.text = currentO2Volts.toStringAsFixed(
+                        4,
+                      );
+                      setState(() {
+                        localVoltage2 = currentO2Volts;
+                      });
+                    },
+                  ),
+                  fieldRow(
+                    label: 'Value 2',
+                    controller: value2Controller,
+                    onPick: null,
+                  ),
+                  SizedBox(height: 12),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                    children: [
+                      Text("Apply Conversion", style: TextStyle(fontSize: 16)),
+                      Switch(
+                        value: localApplyConversion,
+                        onChanged: (val) {
+                          setState(() {
+                            localApplyConversion = val;
+                          });
+                        },
+                      ),
+                    ],
+                  ),
+                  SizedBox(height: 20),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                    children: [
+                      ElevatedButton(
+                        onPressed: () {
+                          globalSettings.voltage1 = localVoltage1;
+                          globalSettings.value1 = localValue1;
+                          globalSettings.voltage2 = localVoltage2;
+                          globalSettings.value2 = localValue2;
+                          globalSettings.setapplyConversion(
+                            localApplyConversion,
+                          );
+                          globalSettings.notifyListeners();
+                          // Navigator.of(context).pop();
+                        },
+                        child: Text("Submit"),
+                      ),
+                      TextButton(
+                        onPressed: () {
+                          Navigator.of(context).pop();
+                        },
+                        child: Text("Exit"),
+                      ),
+                    ],
+                  ),
                 ],
               ),
-            ],
-          ),
+            );
+          },
         );
       },
     );
