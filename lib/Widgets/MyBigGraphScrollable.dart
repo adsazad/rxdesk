@@ -1095,6 +1095,14 @@ class MyBigGraphV2State extends State<MyBigGraphV2> {
     });
   }
 
+  // reset only x axis timer
+  void resetXAxisTimer() {
+    setState(() {
+      _cycleCount = 0;
+      // fullLengthIndex = 0; // Reset the full length index
+    });
+  }
+
   @override
   Widget build(BuildContext context) {
     return Row(

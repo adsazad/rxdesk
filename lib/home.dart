@@ -117,6 +117,7 @@ class _HomeState extends State<Home> {
     initFunc();
 
     // Initialize plotConfig in state
+
     plotConfig = [
       {
         "name": "ECG",
@@ -2473,6 +2474,8 @@ class _HomeState extends State<Home> {
                           label: isRecording ? "Stop" : "Record",
                           onPressed: () async {
                             if (!isRecording) {
+                              // reset graph
+                              myBigGraphKey.currentState?.resetXAxisTimer();
                               recordStartIndex = sampleCounter;
                               print(
                                 "Recording started at index: $recordStartIndex",
