@@ -14,6 +14,7 @@ class PatientsList extends StatefulWidget {
 
 class _PatientsListState extends State<PatientsList> {
   List<Patient> _patients = [];
+  String _searchQuery = '';
 
   @override
   void initState() {
@@ -41,11 +42,38 @@ class _PatientsListState extends State<PatientsList> {
       builder: (context, defaultProvider, child) {
         final defaultPatient = defaultProvider.patient;
 
+        // Filter patients by search query
+        final filteredPatients =
+            _searchQuery.isEmpty
+                ? _patients
+                : _patients
+                    .where(
+                      (p) =>
+                          (p.name ?? '').toLowerCase().contains(_searchQuery),
+                    )
+                    .toList();
+
         return Scaffold(
           backgroundColor: const Color(0xFFF5F6FA),
           appBar: AppBar(title: const Text("Patients"), centerTitle: true),
           body: Column(
             children: [
+              // Search Bar
+              Padding(
+                padding: const EdgeInsets.fromLTRB(16, 16, 16, 0),
+                child: TextField(
+                  decoration: InputDecoration(
+                    hintText: 'Search by patient name...',
+                    prefixIcon: Icon(Icons.search),
+                    border: OutlineInputBorder(),
+                  ),
+                  onChanged: (val) {
+                    setState(() {
+                      _searchQuery = val.trim().toLowerCase();
+                    });
+                  },
+                ),
+              ),
               // Add Patient Button
               Container(
                 alignment: Alignment.centerLeft,
@@ -81,7 +109,7 @@ class _PatientsListState extends State<PatientsList> {
               // Patient List
               Expanded(
                 child:
-                    _patients.isEmpty
+                    filteredPatients.isEmpty
                         ? const Center(
                           child: Text(
                             "No patients found.",
@@ -90,9 +118,9 @@ class _PatientsListState extends State<PatientsList> {
                         )
                         : ListView.builder(
                           padding: const EdgeInsets.all(16),
-                          itemCount: _patients.length,
+                          itemCount: filteredPatients.length,
                           itemBuilder: (context, index) {
-                            final patient = _patients[index];
+                            final patient = filteredPatients[index];
                             final isDefault = _isDefault(
                               patient,
                               defaultPatient,

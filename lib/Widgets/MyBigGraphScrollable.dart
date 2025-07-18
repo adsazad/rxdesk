@@ -1059,6 +1059,7 @@ class MyBigGraphV2State extends State<MyBigGraphV2> {
 
   double pixelsPerSample = 1; // ✅ Tune this as needed
   ScrollController _scrollController = ScrollController(); // At state level
+
   void reset() {
     setState(() {
       // Clear all data
@@ -1088,6 +1089,9 @@ class MyBigGraphV2State extends State<MyBigGraphV2> {
 
       // Optionally refresh filters again
       _refreshMultiFilter();
+
+      // Reset cycle count for X axis timer
+      _cycleCount = 0;
     });
   }
 

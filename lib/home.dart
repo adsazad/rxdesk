@@ -6,6 +6,7 @@ import 'dart:math';
 import 'dart:typed_data';
 import 'dart:ui';
 import 'package:path_provider/path_provider.dart';
+import 'package:spirobtvo/Pages/RecordingsListPage.dart';
 import 'package:spirobtvo/ProviderModals/ImportFileProvider.dart';
 import 'package:spirobtvo/Widgets/MyBigGraphScrollable.dart';
 import 'package:spirobtvo/data/local/database.dart';
@@ -101,6 +102,10 @@ class _HomeState extends State<Home> {
   late ValueNotifier<double> co2Notifier = ValueNotifier<double>(0.0);
   late ValueNotifier<double> o2Notifier = ValueNotifier<double>(0.0);
   late ValueNotifier<double> tidalVolumeNotifier = ValueNotifier<double>(0.0);
+
+  DateTime? recordingStartTime;
+  Duration recordingDuration = Duration.zero;
+  Timer? recordingTimer;
 
   @override
   void initState() {
@@ -448,81 +453,6 @@ class _HomeState extends State<Home> {
     //   updateResponse("Third response invalid, calibration failed.");
     // }
   }
-
-  // Future<void> sendSerialCommandSequence({
-  //   required SerialPort port,
-  //   // required String command,
-  //   required void Function(String) updateResponse,
-  // }) async {
-  //   if (!port.isOpen) {
-  //     print("❌ Port not open.");
-  //     return;
-  //   }
-
-  //   port.flush(); // clear junk before starting
-
-  //   final buffer = <int>[];
-  //   final stopwatch = Stopwatch()..start();
-
-  //   // Begin read loop first
-  //   while (stopwatch.elapsedMilliseconds < 1500) {
-  //     final chunk = port.read(64, timeout: 5); // 50ms blocking read
-  //     // print("[DEBUG] Read chunk: ${chunk}");
-  //     if (chunk.isNotEmpty) {
-  //       buffer.addAll(chunk);
-  //       print("[READ] ${chunk.map((b) => b).join(', ')}");
-
-  //       // Exit if response ends in \n (10)
-  //       if (buffer.contains(10)) break;
-  //     }
-
-  //     final fullCommand = 'K 2\r\n';
-  //     final commandBytes = Uint8List.fromList(fullCommand.codeUnits);
-  //     bool commandOneWritten = false;
-
-  //     print("[INFO] Preparing to send: $fullCommand");
-
-  //     // Send command after ~100ms or so, once reader is running
-  //     if (!commandOneWritten && stopwatch.elapsedMilliseconds >= 100) {
-  //       port.write(commandBytes);
-  //       print("[INFO] Sent: $fullCommand");
-  //       commandOneWritten = true;
-  //     }
-
-  //     // await Future.delayed(Duration(milliseconds: 10));
-  //   }
-
-  //   print("[FINAL RESPONSE] ${buffer.map((b) => b).join(', ')}");
-  //   updateResponse("Received: ${String.fromCharCodes(buffer)}");
-  //   print("[ASCII] ${String.fromCharCodes(buffer)}");
-
-  //   // once the first response is received, send the next commands
-  //   final secondCommand = 'G\r\n';
-  //   final secondCommandBytes = Uint8List.fromList(secondCommand.codeUnits);
-  //   bool commandOneWritten = false;
-  //   print("[INFO] Preparing to send: $secondCommand");
-  //   port.write(secondCommandBytes);
-  //   print("[INFO] Sent: $secondCommand");
-  //   buffer.clear(); // Clear buffer for next command
-  //   stopwatch.reset(); // Reset stopwatch for next command
-  //   while (stopwatch.elapsedMilliseconds < 1500) {
-  //     final chunk = port.read(64, timeout: 5); // 50ms blocking read
-  //     if (chunk.isNotEmpty) {
-  //       buffer.addAll(chunk);
-  //       print("[READ] ${chunk.map((b) => b).join(', ')}");
-
-  //       // Exit if response ends in \n (10)
-  //       if (buffer.contains(10)) break;
-  //     }
-
-  //     // Send command after ~100ms or so, once reader is running
-  //     if (!commandOneWritten && stopwatch.elapsedMilliseconds >= 100) {
-  //       port.write(secondCommandBytes);
-  //       print("[INFO] Sent: $secondCommand");
-  //       commandOneWritten = true;
-  //     }
-  //   }
-  // }
 
   Future<void> sendSerialCommand({
     required SerialPort port,
@@ -971,255 +901,6 @@ class _HomeState extends State<Home> {
     double co2Max = -double.infinity;
     double co2Min = double.infinity;
 
-    // upcommingData.listen((data){
-    //   print(data);
-    // });
-
-    // 42 54 67 05 00 00 67 05 00 00 14 dc f0 00 00 00 00 00
-    // Listen to incoming data
-    // reader.stream.listen(
-    //   (data) {
-    //     final hexString = data
-    //         .map((b) => b.toRadixString(16).padLeft(2, '0'))
-    //         .join(' ');
-    //     if (data[0] == 'B'.codeUnitAt(0) && data[1] == 'T'.codeUnitAt(0)) {
-    //       double vol = (data[13] << 8 | data[12]) * 1.0;
-
-    //       // Update buffer
-    //       recentVolumes.add(vol);
-    //       if (recentVolumes.length > 10) {
-    //         recentVolumes.removeAt(0);
-    //       }
-
-    //       // Check for exhalation pattern
-    //       int nonZeroCount = recentVolumes.where((v) => v > 50).length;
-    //       bool currentIsZero = vol <= 5;
-
-    //       if (nonZeroCount >= 5 && currentIsZero && wasExhaling) {
-    //         onExhalationDetected(); // ✅ Call your function here
-    //         wasExhaling = false; // Reset flag
-    //       }
-
-    //       if (vol > 50) {
-    //         wasExhaling = true;
-    //       }
-
-    //       double ecg =
-    //           (data[3] * 256 + data[2]) *
-    //           1.0; // ECG: ecg2 (MSB, byte 3) + ecg1 (LSB, byte 2)
-    //       double o2 =
-    //           (data[7] * 256 + data[6]) *
-    //           1.0; // O2:  O2_2 (MSB, byte 7) + O2_1 (LSB, byte 6)
-    //       double flow =
-    //           (data[11] * 256 + data[10]) *
-    //           1.0; // Flow: flow2 (MSB, byte 11) + flow1 (LSB, byte 10)
-    //       double co2 =
-    //           (data[15] * 256 + data[14]) *
-    //           1.0; // CO2: co2_2 (MSB, byte 15) + co2_1 (LSB, byte 14)
-    //       // double vol =
-    //       //     (data[13] * 256 + data[12]) * 1.0; // Vol: Vol2 (MSB) + Vol1 (LSB)
-
-    //       // flow = 9.82 *1000/ flow;
-    //       //
-    //       setState(() {
-    //         flow = flow;
-    //       });
-
-    //       rawDataFull.add(ecg);
-    //       // print(flow);
-    //       saver(ecg: ecg, o2: o2, flow: flow, vol: vol, co2: co2);
-
-    //       // // updateEverything(scaledEcg, scaledO2, scaledFlow, scaledCo2);
-    //       // List<double>? edt =  myBigGraphKey.currentState?.updateEverything([ecg, o2, co2, vol]);
-    //       // // Update your graph
-    //       // _inMemoryData.add([edt![0], edt![1], edt![2], edt![3], flow]);
-
-    //       // Update your graph
-    //       // ➕ Step 1: Add incoming raw data to buffer
-    //       delayBuffer.add([ecg, o2, co2, vol, flow]);
-
-    //       // 🧹 Step 2: Prevent memory leak by limiting buffer
-    //       int bufferSizeLimit = ((delaySamples ?? 0) + 1) * 2;
-    //       if (delayBuffer.length > bufferSizeLimit) {
-    //         delayBuffer.removeAt(0);
-    //       }
-
-    //       // 🛑 Step 3: If delaySamples not available, plot raw data
-    //       if (delaySamples == null || delayBuffer.length <= delaySamples!) {
-    //         // Optional: Plot raw data until delay is known
-    //         List<double>? edt = myBigGraphKey.currentState?.updateEverything([
-    //           ecg,
-    //           o2,
-    //           co2,
-    //           vol,
-    //         ]);
-    //         if (edt != null) {
-    //           _inMemoryData.add([edt[0], edt[1], edt[2], edt[3], flow]);
-    //         }
-    //         return;
-    //       }
-
-    //       // ✅ Step 4: Build delay-corrected values
-    //       var current = delayBuffer[0]; // time t
-    //       var future = delayBuffer[delaySamples!]; // time t + delay
-
-    //       double correctedECG = current[0]; // live
-    //       double correctedVOL = current[3]; // live
-    //       double correctedFLOW = current[4]; // live
-    //       double correctedO2 = future[1]; // future O2
-    //       double correctedCO2 = future[2]; // future CO2
-
-    //       // 🧼 Step 5: Remove used sample
-    //       delayBuffer.removeAt(0);
-
-    //       // ✅ Step 6: Plot delay-corrected values
-    //       List<double>? edt = myBigGraphKey.currentState?.updateEverything([
-    //         correctedECG,
-    //         correctedO2,
-    //         correctedCO2,
-    //         correctedVOL,
-    //       ]);
-
-    //       // ✅ Step 7: Store to memory
-    //       if (edt != null) {
-    //         _inMemoryData.add([edt[0], edt[1], edt[2], edt[3], correctedFLOW]);
-    //       }
-    //     } else {
-    //       print("⚠️ Invalid frame header: ${data[0]}, ${data[1]}");
-    //     }
-    //   },
-    //   onDone: () {
-    //     print("Serial Done");
-    //   },
-    //   onError: (e) {
-    //     print("❌ Serial port error: $e");
-    //   },
-    // );
-    // reader.stream.listen(
-    //   (data) {
-    //     // final hexString = data
-    //     //     .map((b) => b.toRadixString(16).padLeft(2, '0'))
-    //     //     .join(' ');
-    //     // print("Packet Start");
-    //     // print(hexString);
-    //     // print("Packet End");
-    //     int frameLength = 18;
-    //     for (int i = 0; i <= data.length - frameLength;) {
-    //       // Look for a valid frame header
-    //       if (data[i] == 'B'.codeUnitAt(0) &&
-    //           data[i + 1] == 'T'.codeUnitAt(0)) {
-    //         // Check that we have a full frame ahead
-    //         if (i + frameLength <= data.length) {
-    //           final frame = data.sublist(i, i + frameLength);
-    //           // print("DATACOM HERE");
-
-    //           // Your existing logic here
-    //           // double vol = (frame[13] << 8 | frame[12]) * 1.0;
-    //           double vol = (frame[13] * 256 + frame[12]) * 1.0;
-
-    //           recentVolumes.add(vol);
-    //           if (recentVolumes.length > 10) {
-    //             recentVolumes.removeAt(0);
-    //           }
-
-    //           // Check for exhalation pattern
-    //           int nonZeroCount = recentVolumes.where((v) => v > 50).length;
-    //           bool currentIsZero = vol <= 5;
-
-    //           if (nonZeroCount >= 5 && currentIsZero && wasExhaling) {
-    //             onExhalationDetected();
-    //             wasExhaling = false;
-    //           }
-
-    //           if (vol > 50) {
-    //             wasExhaling = true;
-    //           }
-
-    //           double ecg = (frame[3] * 256 + frame[2]) * 1.0;
-    //           double o2 = (frame[7] * 256 + frame[6]) * 1.0;
-    //           double flow = (frame[11] * 256 + frame[10]) * 1.0;
-    //           double co2 = (frame[15] * 256 + frame[14]) * 1.0;
-
-    //           // flow calibrator
-    //           flow =
-    //               flow +
-    //               globalSettings.flowCalPlus -
-    //               globalSettings.flowCalMinus;
-
-    //           // flow = 9.82 * 1000 / flow;
-
-    //           setState(() {
-    //             flow = flow;
-    //           });
-
-    //           rawDataFull.add(ecg);
-    //           saver(ecg: ecg, o2: o2, flow: flow, vol: vol, co2: co2);
-
-    //           // delayBuffer.add([ecg, o2, co2, vol, flow]);  // commenting this stop delay correction
-
-    //           int bufferSizeLimit = ((delaySamples ?? 0) + 1) * 2;
-    //           if (delayBuffer.length > bufferSizeLimit) {
-    //             delayBuffer.removeAt(0);
-    //           }
-
-    //           if (delaySamples == null || delayBuffer.length <= delaySamples!) {
-    //             // print("DATACOMHERE2");
-    //             List<double>? edt = myBigGraphKey.currentState
-    //                 ?.updateEverything([ecg, o2, co2, flow, vol]);
-    //             if (edt != null) {
-    //               _inMemoryData.add([edt[0], edt[1], edt[2], edt[3], flow]);
-    //             }
-    //             i += frameLength;
-    //             continue;
-    //           }
-
-    //           var current = delayBuffer[0];
-    //           var future = delayBuffer[delaySamples!];
-
-    //           double correctedECG = current[0];
-    //           double correctedVOL = current[3];
-    //           double correctedFLOW = current[4];
-    //           double correctedO2 = future[1];
-    //           double correctedCO2 = future[2];
-
-    //           delayBuffer.removeAt(0);
-
-    //           List<double>? edt = myBigGraphKey.currentState?.updateEverything([
-    //             correctedECG,
-    //             correctedO2,
-    //             correctedCO2,
-    //             correctedFLOW,
-    //             correctedVOL,
-    //           ]);
-
-    //           if (edt != null) {
-    //             _inMemoryData.add([
-    //               edt[0],
-    //               edt[1],
-    //               edt[2],
-    //               edt[3],
-    //               correctedFLOW,
-    //             ]);
-    //           }
-
-    //           i += frameLength; // move to next possible frame
-    //         } else {
-    //           // Not enough bytes for a full frame, break to wait for next chunk
-    //           break;
-    //         }
-    //       } else {
-    //         // Not a valid frame header, move forward by 1 byte and search again
-    //         i++;
-    //       }
-    //     }
-    //   },
-    //   onDone: () {
-    //     print("Serial Done");
-    //   },
-    //   onError: (e) {
-    //     print("❌ Serial port error: $e");
-    //   },
-    // );
     startMainDataStream(port); // Start the main data stream
   }
 
@@ -1334,9 +1015,28 @@ class _HomeState extends State<Home> {
 
   @override
   void dispose() {
-    timer.cancel(); // Always cancel timer!
-    port.close(); // Close the serial port
+    recordingTimer?.cancel();
+    timer.cancel();
+    port.close();
     super.dispose();
+  }
+
+  void startRecordingTimer() {
+    recordingStartTime = DateTime.now();
+    recordingDuration = Duration.zero;
+    recordingTimer?.cancel();
+    recordingTimer = Timer.periodic(Duration(seconds: 1), (_) {
+      setState(() {
+        recordingDuration = DateTime.now().difference(recordingStartTime!);
+      });
+    });
+  }
+
+  void stopRecordingTimer() {
+    recordingTimer?.cancel();
+    recordingTimer = null;
+    recordingStartTime = null;
+    recordingDuration = Duration.zero;
   }
 
   playPause() {
@@ -1973,96 +1673,6 @@ class _HomeState extends State<Home> {
       importProvider.clear();
     }
   }
-
-  // Future<void> saveRecordingSlice() async {
-  //   if (!_saverInitialized) {
-  //     print("❌ DataSaver not initialized.");
-  //     return;
-  //   }
-
-  //   final file = File(dataSaver.path);
-  //   if (!file.existsSync()) {
-  //     print("❌ File does not exist.");
-  //     return;
-  //   }
-
-  //   final fullBytes = await file.readAsBytes();
-
-  //   if (fullBytes.length < 4) {
-  //     print("❌ File too small to contain header.");
-  //     return;
-  //   }
-
-  //   final headerLen = ByteData.sublistView(
-  //     fullBytes,
-  //     0,
-  //     4,
-  //   ).getUint32(0, Endian.little);
-  //   if (headerLen <= 0 || headerLen > 8192) {
-  //     print("❌ Invalid JSON header length: $headerLen");
-  //     return;
-  //   }
-
-  //   final headerEnd = 4 + headerLen;
-  //   if (headerEnd >= fullBytes.length) {
-  //     print("❌ File doesn't contain enough bytes for header + samples.");
-  //     return;
-  //   }
-
-  //   final sampleBytes = fullBytes.sublist(headerEnd);
-  //   const bytesPerSample = 5 * 8; // 5 float64 values
-
-  //   final maxSamples = sampleBytes.length ~/ bytesPerSample;
-  //   print("Max samples in file: $maxSamples");
-  //   print(recordStartIndex);
-  //   print(recordEndIndex);
-  //   final clampedEndIndex = min(recordEndIndex ?? 0, maxSamples);
-  //   final clampedStartIndex = min(recordStartIndex ?? 0, clampedEndIndex);
-
-  //   final startByte = clampedStartIndex * bytesPerSample;
-  //   final endByte = clampedEndIndex * bytesPerSample;
-
-  //   if (startByte >= endByte || endByte > sampleBytes.length) {
-  //     print("❌ Invalid byte range. Start: $startByte, End: $endByte");
-  //     return;
-  //   }
-
-  //   final selectedBytes = sampleBytes.sublist(startByte, endByte);
-  //   final headerJsonBytes = fullBytes.sublist(4, headerEnd);
-  //   final lengthBytes = fullBytes.sublist(0, 4);
-
-  //   // ✅ Get documents directory
-  //   final Directory docsDir = await getApplicationDocumentsDirectory();
-
-  //   // ✅ Build the custom path
-  //   final String recordingsPath = p.join(docsDir.path, 'SpiroBT', 'Records');
-
-  //   // ✅ Create the folder if it doesn't exist
-  //   final recordingsDir = Directory(recordingsPath);
-  //   if (!await recordingsDir.exists()) {
-  //     await recordingsDir.create(recursive: true);
-  //   }
-
-  //   // ✅ Ask user where to save using FilePicker
-  //   String? savePath = await FilePicker.platform.saveFile(
-  //     dialogTitle: 'Save your recorded file',
-  //     fileName: 'recorded_data.bin',
-  //     initialDirectory: recordingsPath, // May be ignored on some platforms
-  //   );
-
-  //   if (savePath == null) {
-  //     print("⚠️ User cancelled save dialog.");
-  //     return;
-  //   }
-
-  //   await File(
-  //     savePath,
-  //   ).writeAsBytes(lengthBytes + headerJsonBytes + selectedBytes);
-  //   print("✅ Saved recording to: $savePath");
-  //   ScaffoldMessenger.of(context).showSnackBar(
-  //     SnackBar(content: Text("Recording saved to file successfully.")),
-  //   );
-  // }
 
   Future<void> saveRecordingSlice() async {
     if (!_saverInitialized) {
@@ -2792,9 +2402,49 @@ class _HomeState extends State<Home> {
                     child: Row(
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
+                        if (isRecording)
+                          Container(
+                            margin: const EdgeInsets.symmetric(horizontal: 4.0),
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 12.0,
+                              vertical: 4.0,
+                            ),
+                            decoration: BoxDecoration(
+                              color: Colors.red.shade50,
+                              borderRadius: BorderRadius.circular(4),
+                              border: Border.all(color: Colors.red, width: 2),
+                              boxShadow: [
+                                BoxShadow(
+                                  color: Colors.red.shade100.withOpacity(0.2),
+                                  blurRadius: 6,
+                                  offset: Offset(0, 2),
+                                ),
+                              ],
+                            ),
+                            child: Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                Icon(
+                                  Icons.fiber_manual_record,
+                                  color: Colors.red,
+                                  size: 22,
+                                ),
+                                SizedBox(width: 8),
+                                Text(
+                                  "${recordingDuration.inMinutes.toString().padLeft(2, '0')}:${(recordingDuration.inSeconds % 60).toString().padLeft(2, '0')}",
+                                  style: TextStyle(
+                                    fontWeight: FontWeight.bold,
+                                    color: Colors.red.shade700,
+                                    fontSize: 18,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+
                         IconButtonColumn(
-                          icon: Icons.play_arrow,
-                          label: "Play",
+                          icon: isPlaying ? Icons.pause : Icons.play_arrow,
+                          label: isPlaying ? "Pause" : "Play",
                           onPressed: () {
                             if (isPlaying) {
                               final globalSettings =
@@ -2802,19 +2452,17 @@ class _HomeState extends State<Home> {
                                     context,
                                     listen: false,
                                   );
-
                               port.close();
                               resetAllData();
                               setState(() {
-                                isPlaying = !isPlaying;
+                                isPlaying = false;
                               });
                             } else {
                               init();
                               setState(() {
-                                isPlaying = !isPlaying;
+                                isPlaying = true;
                               });
                             }
-                            // Replace with your actual toggle logic
                           },
                         ),
                         IconButtonColumn(
@@ -2832,6 +2480,7 @@ class _HomeState extends State<Home> {
                               setState(() {
                                 isRecording = true;
                               });
+                              startRecordingTimer(); // Start timer
                               ScaffoldMessenger.of(context).showSnackBar(
                                 SnackBar(content: Text("Recording started")),
                               );
@@ -2850,89 +2499,100 @@ class _HomeState extends State<Home> {
                                 isRecording = false;
                                 isPlaying = false;
                               });
+                              stopRecordingTimer(); // Stop timer
                               await flushRemainingData();
                               await saveRecordingSlice(); // implement next
                               resetAllData();
                             }
                           },
                         ),
-
                         IconButtonColumn(
                           icon: Icons.save_alt,
                           label: "Load Data",
-                          onPressed: () async {
-                            setState(() {
-                              isImported = true;
-                            });
-
-                            try {
-                              // Step 1: Import file
-                              final result = await importBinFile();
-
-                              if (result == null ||
-                                  !result.containsKey('samples') ||
-                                  !result.containsKey('patient')) {
-                                print("Invalid file structure");
-                                return;
-                              }
-
-                              // Step 2: Set patient info
-                              // setState(() {
-                              //   defaultPatient = result['patient'];
-                              // });
-                              final patient = result['patient'];
-                              final defaultProvider =
-                                  Provider.of<DefaultPatientModal>(
-                                    context,
-                                    listen: false,
-                                  );
-                              final prefs =
-                                  await SharedPreferences.getInstance();
-                              prefs.setString(
-                                'default_patient',
-                                jsonEncode(patient),
-                              );
-                              defaultProvider.setDefault(patient);
-
-                              final samples =
-                                  result['samples'] as List<dynamic>;
-
-                              // Step 3: Push all samples to graph and memory
-                              for (final sample in samples) {
-                                if (sample is List && sample.length >= 5) {
-                                  final List<double> numericSample =
-                                      sample
-                                          .map((e) => (e as num).toDouble())
-                                          .toList();
-
-                                  if (numericSample.length >= 5) {
-                                    // Flip the last two values
-                                    final temp = numericSample[3];
-                                    numericSample[3] = numericSample[4];
-                                    numericSample[4] = temp;
-                                  }
-
-                                  final edt = myBigGraphKey.currentState
-                                      ?.updateEverything(numericSample);
-                                  if (edt != null && edt.length >= 5) {
-                                    _inMemoryData.add([
-                                      edt[0],
-                                      edt[1],
-                                      edt[2],
-                                      edt[3],
-                                      edt[4],
-                                    ]);
-                                  }
-                                }
-                              }
-
-                              print("Imported ${samples.length} samples.");
-                              onExhalationDetected();
-                            } catch (e) {
-                              print("❌ Error while importing: $e");
-                            }
+                          onPressed: () {
+                            Navigator.of(context).push(
+                              MaterialPageRoute(
+                                builder: (context) => RecordingsListPage(),
+                              ),
+                            );
                           },
                         ),
+                        // IconButtonColumn(
+                        //   icon: Icons.save_alt,
+                        //   label: "Load Data",
+                        //   onPressed: () async {
+                        //     setState(() {
+                        //       isImported = true;
+                        //     });
+
+                        //     try {
+                        //       // Step 1: Import file
+                        //       final result = await importBinFile();
+
+                        //       if (result == null ||
+                        //           !result.containsKey('samples') ||
+                        //           !result.containsKey('patient')) {
+                        //         print("Invalid file structure");
+                        //         return;
+                        //       }
+
+                        //       // Step 2: Set patient info
+                        //       // setState(() {
+                        //       //   defaultPatient = result['patient'];
+                        //       // });
+                        //       final patient = result['patient'];
+                        //       final defaultProvider =
+                        //           Provider.of<DefaultPatientModal>(
+                        //             context,
+                        //             listen: false,
+                        //           );
+                        //       final prefs =
+                        //           await SharedPreferences.getInstance();
+                        //       prefs.setString(
+                        //         'default_patient',
+                        //         jsonEncode(patient),
+                        //       );
+                        //       defaultProvider.setDefault(patient);
+
+                        //       final samples =
+                        //           result['samples'] as List<dynamic>;
+
+                        //       // Step 3: Push all samples to graph and memory
+                        //       for (final sample in samples) {
+                        //         if (sample is List && sample.length >= 5) {
+                        //           final List<double> numericSample =
+                        //               sample
+                        //                   .map((e) => (e as num).toDouble())
+                        //                   .toList();
+
+                        //           if (numericSample.length >= 5) {
+                        //             // Flip the last two values
+                        //             final temp = numericSample[3];
+                        //             numericSample[3] = numericSample[4];
+                        //             numericSample[4] = temp;
+                        //           }
+
+                        //           final edt = myBigGraphKey.currentState
+                        //               ?.updateEverything(numericSample);
+                        //           if (edt != null && edt.length >= 5) {
+                        //             _inMemoryData.add([
+                        //               edt[0],
+                        //               edt[1],
+                        //               edt[2],
+                        //               edt[3],
+                        //               edt[4],
+                        //             ]);
+                        //           }
+                        //         }
+                        //       }
+
+                        //       print("Imported ${samples.length} samples.");
+                        //       onExhalationDetected();
+                        //     } catch (e) {
+                        //       print("❌ Error while importing: $e");
+                        //     }
+                        //   },
+                        // ),
                         IconButtonColumn(
                           icon: Icons.person,
                           label: "Patients",
@@ -3043,6 +2703,15 @@ class _HomeState extends State<Home> {
                                 ),
                               );
                             }
+                          },
+                        ),
+                        //
+                        IconButtonColumn(
+                          icon: Icons.exit_to_app,
+                          label: "Exit",
+                          onPressed: () {
+                            // Close the app
+                            SystemNavigator.pop();
                           },
                         ),
                       ],
