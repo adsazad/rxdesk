@@ -5,6 +5,9 @@ import 'package:flutter/material.dart';
 import 'package:pdf/pdf.dart';
 import 'package:pdf/widgets.dart' as pw;
 import 'package:printing/printing.dart';
+import 'package:provider/provider.dart' as pvrd;
+import 'package:spirobtvo/ProviderModals/GlobalSettingsModal.dart';
+import 'package:flutter/services.dart';
 
 class ReportPreviewPage extends StatefulWidget {
   final Map<String, dynamic> patient;
@@ -51,7 +54,49 @@ class _ReportPreviewPageState extends State<ReportPreviewPage> {
     }).toList();
   }
 
+  List<Map<String, dynamic>> getAveragedBreathStats(
+    List<Map<String, dynamic>> breathStats,
+    int samplingRate,
+    int intervalSeconds,
+  ) {
+    int samplesPerInterval = samplingRate * intervalSeconds;
+    List<Map<String, dynamic>> averagedStats = [];
+
+    for (int i = 0; i < breathStats.length; i += samplesPerInterval) {
+      final group = breathStats.sublist(
+        i,
+        (i + samplesPerInterval).clamp(0, breathStats.length),
+      );
+
+      if (group.isEmpty) continue;
+
+      Map<String, dynamic> avgRow = {};
+      // Calculate time string for this interval
+      int seconds = ((i + samplesPerInterval) / samplingRate).floor();
+      avgRow['time'] =
+          "${(seconds ~/ 60).toString().padLeft(2, '0')}:${(seconds % 60).toString().padLeft(2, '0')}";
+
+      // Average numeric columns
+      final keys = group.first.keys.where((k) => k != 'index');
+      for (var key in keys) {
+        final values = group.map((row) => row[key]).whereType<num>().toList();
+        avgRow[key] =
+            values.isNotEmpty
+                ? values.reduce((a, b) => a + b) / values.length
+                : '-';
+      }
+      averagedStats.add(avgRow);
+    }
+    return averagedStats;
+  }
+
   Future<Uint8List> _buildPdf(PdfPageFormat format) async {
+    // global settings from provider
+    final globalSettings = pvrd.Provider.of<GlobalSettingsModal>(
+      context,
+      listen: false,
+    );
+
     print('Building PDF with format: $format');
 
     print(widget.breathStats);
@@ -64,33 +109,123 @@ class _ReportPreviewPageState extends State<ReportPreviewPage> {
     final reportDate = DateTime.now().toString().split(' ').first;
 
     // Dynamically get headers and rows
-    final headers = getBreathStatsHeaders(widget.breathStats);
-    final rows = getBreathStatsRows(widget.breathStats, headers);
+    final samplingRate = 300;
+    final intervalSeconds = 10;
+    final averagedStats = getAveragedBreathStats(
+      widget.breathStats,
+      samplingRate,
+      intervalSeconds,
+    );
+
+    final headers = [
+      'time',
+      ...averagedStats.first.keys.where((k) => k != 'time'),
+    ];
+    final rows =
+        averagedStats.map((row) {
+          return headers.map((h) {
+            final val = row[h];
+            if (val == null) return '-';
+            if (val is double) return val.toStringAsFixed(3);
+            return val.toString();
+          }).toList();
+        }).toList();
 
     print('Headers: $headers');
     print('Rows: $rows');
+
+    // Load logo image bytes before building PDF widgets
+    final logoBytes =
+        (await rootBundle.load('assets/logo.png')).buffer.asUint8List();
 
     pdf.addPage(
       pw.MultiPage(
         pageFormat: format,
         build:
             (context) => [
-              pw.Center(
-                child: pw.Text(
-                  'Breath Stats Report',
-                  style: pw.TextStyle(
-                    fontSize: 28,
-                    fontWeight: pw.FontWeight.bold,
+              pw.Row(
+                mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
+                children: [
+                  pw.Column(
+                    crossAxisAlignment: pw.CrossAxisAlignment.start,
+                    children: [
+                      pw.Text(
+                        globalSettings.hospitalName ?? 'Hospital Name',
+                        style: pw.TextStyle(
+                          fontSize: 14,
+                          fontWeight: pw.FontWeight.bold,
+                        ),
+                      ),
+                      if (globalSettings.hospitalAddress != null &&
+                          globalSettings.hospitalAddress!.isNotEmpty)
+                        pw.Text(
+                          globalSettings.hospitalAddress!,
+                          style: pw.TextStyle(
+                            fontSize: 10,
+                            color: PdfColors.grey700,
+                          ),
+                        ),
+                    ],
                   ),
-                ),
+                  pw.Image(pw.MemoryImage(logoBytes), width: 60, height: 60),
+                ],
               ),
-              pw.SizedBox(height: 16),
-              pw.Text('Patient Name: $patientName'),
-              pw.Text('Age: $patientAge'),
-              pw.Text('Gender: $patientGender'),
-              pw.Text('Weight: $patientWeight kg'),
-              pw.Text('Date: $reportDate'),
+              pw.SizedBox(height: 2),
               pw.Divider(),
+              pw.Row(
+                mainAxisAlignment: pw.MainAxisAlignment.start,
+                children: [
+                  pw.Expanded(
+                    child: pw.Column(
+                      crossAxisAlignment: pw.CrossAxisAlignment.start,
+                      children: [
+                        pw.Text(
+                          'Patient Name: $patientName',
+                          style: pw.TextStyle(
+                            color: PdfColors.grey700,
+                            fontSize: 10,
+                          ),
+                        ),
+                        pw.Text(
+                          'Age: $patientAge',
+                          style: pw.TextStyle(
+                            color: PdfColors.grey700,
+                            fontSize: 10,
+                          ),
+                        ),
+                        pw.Text(
+                          'Gender: $patientGender',
+                          style: pw.TextStyle(
+                            color: PdfColors.grey700,
+                            fontSize: 10,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  pw.Expanded(
+                    child: pw.Column(
+                      crossAxisAlignment: pw.CrossAxisAlignment.start,
+                      children: [
+                        pw.Text(
+                          'Weight: $patientWeight kg',
+                          style: pw.TextStyle(
+                            color: PdfColors.grey700,
+                            fontSize: 10,
+                          ),
+                        ),
+                        pw.Text(
+                          'Date: $reportDate',
+                          style: pw.TextStyle(
+                            color: PdfColors.grey700,
+                            fontSize: 10,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
               if (widget.graphBase64List != null &&
                   widget.graphBase64List!.isNotEmpty)
                 ...widget.graphBase64List!.map(
@@ -103,10 +238,11 @@ class _ReportPreviewPageState extends State<ReportPreviewPage> {
                     ),
                   ),
                 ),
-              pw.Text(
-                'Breath Stats:',
-                style: pw.TextStyle(fontWeight: pw.FontWeight.bold),
-              ),
+              pw.Divider(),
+              // pw.Text(
+              //   'Breath Stats:',
+              //   style: pw.TextStyle(fontWeight: pw.FontWeight.bold),
+              // ),
               pw.SizedBox(height: 8),
               pw.TableHelper.fromTextArray(
                 headers: headers,

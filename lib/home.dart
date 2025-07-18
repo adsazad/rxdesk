@@ -1576,6 +1576,7 @@ class _HomeState extends State<Home> {
   }
 
   Future<void> importBinFileFromPath(String path) async {
+    print("Importing file from path: $path");
     setState(() {
       isImported = true;
     });
@@ -1604,6 +1605,7 @@ class _HomeState extends State<Home> {
         print("❌ File doesn't contain full header.");
         return;
       }
+      showImportingDialog(context); // Show dialog
 
       final jsonBytes = bytes.sublist(4, 4 + headerLen);
       final String jsonText = utf8.decode(jsonBytes);
@@ -1654,6 +1656,7 @@ class _HomeState extends State<Home> {
           );
           if (edt != null && edt.length >= 5) {
             _inMemoryData.add([edt[0], edt[1], edt[2], edt[3], edt[4]]);
+            // print("✅ Added sample: $edt");
           }
         }
       }
@@ -1662,7 +1665,37 @@ class _HomeState extends State<Home> {
       onExhalationDetected();
     } catch (e) {
       print("❌ Error while importing: $e");
+    } finally {
+      Navigator.of(context, rootNavigator: true).pop(); // Dismiss dialog
+      setState(() {
+        isImported = false;
+      });
     }
+    print("✅ Import completed.");
+  }
+
+  void showImportingDialog(BuildContext context) {
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder:
+          (context) => Dialog(
+            child: Padding(
+              padding: const EdgeInsets.all(24.0),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  CircularProgressIndicator(),
+                  SizedBox(height: 18),
+                  Text(
+                    "Importing file...",
+                    style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                  ),
+                ],
+              ),
+            ),
+          ),
+    );
   }
 
   @override

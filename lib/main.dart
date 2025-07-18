@@ -52,6 +52,10 @@ void main() async {
       tidalMeasuredReference: 0.0,
       tidalActualReference: 0.0,
       tidalScalingFactor: 1.0,
+      hospitalName: '',
+      hospitalAddress: '',
+      hospitalContact: '',
+      hospitalEmail: '',
     );
     globalSettings.fromJson(settingsJson);
   } else {
@@ -72,6 +76,10 @@ void main() async {
       tidalMeasuredReference: 0.0,
       tidalActualReference: 0.0,
       tidalScalingFactor: 1.0,
+      hospitalName: '',
+      hospitalAddress: '',
+      hospitalContact: '',
+      hospitalEmail: '',
     );
   }
 
@@ -86,11 +94,9 @@ void main() async {
             create: (context) => DefaultPatientModal(),
           ),
           pvrd.Provider<AppDatabase>(
-            create: (context) => AppDatabase(), // <-- Add this line
-            dispose:
-                (context, db) => db.close(), // <-- Clean up when not needed
+            create: (context) => AppDatabase(),
+            dispose: (context, db) => db.close(),
           ),
-          // Add to your MultiProvider list
           pvrd.ChangeNotifierProvider<ImportFileProvider>(
             create: (_) => ImportFileProvider(),
           ),

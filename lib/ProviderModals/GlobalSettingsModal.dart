@@ -26,6 +26,11 @@ class GlobalSettingsModal with ChangeNotifier {
   double tidalActualReference = 0.0;
   double tidalScalingFactor = 1.0;
 
+  String hospitalName = '';
+  String hospitalAddress = '';
+  String hospitalContact = '';
+  String hospitalEmail = '';
+
   GlobalSettingsModal({
     required this.com,
     required this.autoRecordOnOff,
@@ -44,6 +49,10 @@ class GlobalSettingsModal with ChangeNotifier {
     this.tidalMeasuredReference = 0.0,
     this.tidalActualReference = 0.0,
     this.tidalScalingFactor = 1.0,
+    this.hospitalName = '',
+    this.hospitalAddress = '',
+    this.hospitalContact = '',
+    this.hospitalEmail = '',
   });
 
   void setAutoRecordOnOff(bool value) {
@@ -103,6 +112,26 @@ class GlobalSettingsModal with ChangeNotifier {
     notifyListeners();
   }
 
+  void setHospitalName(String value) {
+    hospitalName = value;
+    notifyListeners();
+  }
+
+  void setHospitalAddress(String value) {
+    hospitalAddress = value;
+    notifyListeners();
+  }
+
+  void setHospitalContact(String value) {
+    hospitalContact = value;
+    notifyListeners();
+  }
+
+  void setHospitalEmail(String value) {
+    hospitalEmail = value;
+    notifyListeners();
+  }
+
   void setAll(
     bool autoRecordOnOff,
     bool filterOnOf,
@@ -158,6 +187,10 @@ class GlobalSettingsModal with ChangeNotifier {
       "tidalMeasuredReference": tidalMeasuredReference,
       "tidalActualReference": tidalActualReference,
       "tidalScalingFactor": tidalScalingFactor,
+      "hospitalName": hospitalName,
+      "hospitalAddress": hospitalAddress,
+      "hospitalContact": hospitalContact,
+      "hospitalEmail": hospitalEmail,
     };
     String jsonString = jsonEncode(json);
     return jsonString;
@@ -184,6 +217,10 @@ class GlobalSettingsModal with ChangeNotifier {
     tidalMeasuredReference = arr["tidalMeasuredReference"] ?? 0.0;
     tidalActualReference = arr["tidalActualReference"] ?? 0.0;
     tidalScalingFactor = arr["tidalScalingFactor"] ?? 1.0;
+    hospitalName = arr["hospitalName"] ?? '';
+    hospitalAddress = arr["hospitalAddress"] ?? '';
+    hospitalContact = arr["hospitalContact"] ?? '';
+    hospitalEmail = arr["hospitalEmail"] ?? '';
 
     notifyListeners();
   }
