@@ -1587,7 +1587,7 @@ class _HomeState extends State<Home> {
       final bytes = await file.readAsBytes();
 
       if (bytes.length < 4) {
-        print("❌ File too short to contain header.");
+        print("❌ File  too short to contain header.");
         return;
       }
 
