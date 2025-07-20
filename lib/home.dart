@@ -1667,9 +1667,6 @@ class _HomeState extends State<Home> {
       print("❌ Error while importing: $e");
     } finally {
       Navigator.of(context, rootNavigator: true).pop(); // Dismiss dialog
-      setState(() {
-        isImported = false;
-      });
     }
     print("✅ Import completed.");
   }
@@ -1704,7 +1701,10 @@ class _HomeState extends State<Home> {
     final importProvider = Provider.of<ImportFileProvider>(context);
     if (importProvider.filePath != null) {
       importBinFileFromPath(importProvider.filePath!);
-      importProvider.clear();
+      // Schedule clear after build is complete
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        importProvider.clear();
+      });
     }
   }
 
@@ -2708,6 +2708,9 @@ class _HomeState extends State<Home> {
                           icon: Icons.picture_as_pdf,
                           label: "Print PDF",
                           onPressed: () async {
+                            print("Print PDF button pressed");
+                            print("isImported: $isImported");
+                            print("cp: $cp");
                             if (isImported &&
                                 cp != null &&
                                 cp!['breathStats'] is List) {

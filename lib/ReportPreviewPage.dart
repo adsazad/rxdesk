@@ -1,6 +1,7 @@
 import 'dart:convert';
 import 'dart:io';
 import 'dart:typed_data';
+import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:pdf/pdf.dart';
 import 'package:pdf/widgets.dart' as pw;
@@ -8,6 +9,10 @@ import 'package:printing/printing.dart';
 import 'package:provider/provider.dart' as pvrd;
 import 'package:spirobtvo/ProviderModals/GlobalSettingsModal.dart';
 import 'package:flutter/services.dart';
+import 'package:flutter/rendering.dart';
+import 'package:flutter/painting.dart';
+import 'package:spirobtvo/Widgets/ChartsBuilder.dart';
+import 'dart:developer' as developer;
 
 class ReportPreviewPage extends StatefulWidget {
   final Map<String, dynamic> patient;
@@ -29,10 +34,15 @@ class ReportPreviewPage extends StatefulWidget {
 class _ReportPreviewPageState extends State<ReportPreviewPage> {
   late String htmlContent;
 
+  Uint8List? chartImage;
+
   @override
   void initState() {
     super.initState();
-    // pdf
+    WidgetsBinding.instance.addPostFrameCallback((_) async {
+      chartImage = await _captureChartImage(_rerChartKey);
+      setState(() {}); // Now chartImage is ready for PDF
+    });
   }
 
   List<String> getBreathStatsHeaders(List<Map<String, dynamic>> breathStats) {
@@ -90,6 +100,17 @@ class _ReportPreviewPageState extends State<ReportPreviewPage> {
     return averagedStats;
   }
 
+  final GlobalKey _rerChartKey = GlobalKey();
+
+  Future<Uint8List?> _captureChartImage(GlobalKey key) async {
+    RenderRepaintBoundary? boundary =
+        key.currentContext?.findRenderObject() as RenderRepaintBoundary?;
+    if (boundary == null) return null;
+    var image = await boundary.toImage(pixelRatio: 3.0);
+    ByteData? byteData = await image.toByteData(format: ImageByteFormat.png);
+    return byteData?.buffer.asUint8List();
+  }
+
   Future<Uint8List> _buildPdf(PdfPageFormat format) async {
     // global settings from provider
     final globalSettings = pvrd.Provider.of<GlobalSettingsModal>(
@@ -110,19 +131,11 @@ class _ReportPreviewPageState extends State<ReportPreviewPage> {
 
     // Dynamically get headers and rows
     final samplingRate = 300;
-    final intervalSeconds = 10;
-    final averagedStats = getAveragedBreathStats(
-      widget.breathStats,
-      samplingRate,
-      intervalSeconds,
-    );
+    final timeRows = convertIndexToTimeRows(widget.breathStats, samplingRate);
 
-    final headers = [
-      'time',
-      ...averagedStats.first.keys.where((k) => k != 'time'),
-    ];
+    final headers = ['time', ...timeRows.first.keys.where((k) => k != 'time')];
     final rows =
-        averagedStats.map((row) {
+        timeRows.map((row) {
           return headers.map((h) {
             final val = row[h];
             if (val == null) return '-';
@@ -138,6 +151,7 @@ class _ReportPreviewPageState extends State<ReportPreviewPage> {
     final logoBytes =
         (await rootBundle.load('assets/logo.png')).buffer.asUint8List();
 
+    // First page (existing content)
     pdf.addPage(
       pw.MultiPage(
         pageFormat: format,
@@ -269,6 +283,47 @@ class _ReportPreviewPageState extends State<ReportPreviewPage> {
       ),
     );
 
+    // // Capture chart image
+    // Uint8List? chartImage;
+    // try {
+    //   // Ensure the chart is painted before capturing
+    //   await Future.delayed(const Duration(milliseconds: 100));
+    //   chartImage = await _captureChartImage(_rerChartKey);
+    // } catch (e) {
+    //   // Use dart:developer log instead of print
+    //   developer.log(
+    //     "Error capturing chart image: $e",
+    //     name: 'ReportPreviewPage',
+    //   );
+    //   print("Error capturing chart image: $e");
+    //   chartImage = null;
+    // }
+
+    // Add last page with chart image
+    pdf.addPage(
+      pw.Page(
+        pageFormat: format,
+        build:
+            (context) => pw.Column(
+              crossAxisAlignment: pw.CrossAxisAlignment.start,
+              children: [
+                pw.Text(
+                  'RER vs Time Chart',
+                  style: pw.TextStyle(
+                    fontSize: 18,
+                    fontWeight: pw.FontWeight.bold,
+                  ),
+                ),
+                pw.SizedBox(height: 16),
+                if (chartImage != null)
+                  pw.Image(pw.MemoryImage(chartImage!), width: 500, height: 250)
+                else
+                  pw.Text('Chart image not available.'),
+              ],
+            ),
+      ),
+    );
+
     return pdf.save();
   }
 
@@ -276,24 +331,33 @@ class _ReportPreviewPageState extends State<ReportPreviewPage> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
+        leading: BackButton(),
         title: const Text('Report Preview'),
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.picture_as_pdf),
-            tooltip: 'Export as PDF',
-            onPressed: () async {
-              await Printing.layoutPdf(onLayout: _buildPdf);
-            },
+        elevation: 0,
+      ),
+      body: Stack(
+        children: [
+          PdfPreview(
+            build: _buildPdf,
+            canChangePageFormat: false,
+            canChangeOrientation: false,
+            canDebug: false,
+            allowPrinting: false,
+            allowSharing: false,
+          ),
+          Offstage(
+            offstage: true,
+            child: RepaintBoundary(
+              key: _rerChartKey,
+              child: ChartsBuilder.buildTimeVsRERChart(
+                context,
+                widget.breathStats,
+                width: 600,
+                height: 300,
+              ),
+            ),
           ),
         ],
-      ),
-      body: PdfPreview(
-        build: _buildPdf,
-        canChangePageFormat: false,
-        canChangeOrientation: false,
-        canDebug: false,
-        allowPrinting: false,
-        allowSharing: false,
       ),
     );
   }
@@ -395,4 +459,20 @@ Future<File> generateBreathStatsPdf({
   final file = File(filePath);
   await file.writeAsBytes(await pdf.save());
   return file;
+}
+
+List<Map<String, dynamic>> convertIndexToTimeRows(
+  List<Map<String, dynamic>> breathStats,
+  int samplingRate,
+) {
+  return breathStats.map((row) {
+    final idx = row['index'] ?? 0;
+    final seconds = (idx / samplingRate).floor();
+    final timeStr =
+        "${(seconds ~/ 60).toString().padLeft(2, '0')}:${(seconds % 60).toString().padLeft(2, '0')}";
+    final newRow = Map<String, dynamic>.from(row);
+    newRow['time'] = timeStr;
+    newRow.remove('index');
+    return newRow;
+  }).toList();
 }
