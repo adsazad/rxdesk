@@ -7,6 +7,7 @@ import 'dart:typed_data';
 import 'dart:ui';
 import 'package:path_provider/path_provider.dart';
 import 'package:spirobtvo/Pages/RecordingsListPage.dart';
+import 'package:spirobtvo/ProtocolManifests/ProtocolManifest.dart';
 import 'package:spirobtvo/ProviderModals/ImportFileProvider.dart';
 import 'package:spirobtvo/Widgets/BreathStatsTableModal.dart';
 import 'package:spirobtvo/Widgets/MyBigGraphScrollable.dart';
@@ -259,7 +260,7 @@ class _HomeState extends State<Home> {
       },
     ];
 
-    // startTestLoop(); // Start the test loop
+    startTestLoop(); // Start the test loop
   }
 
   Future<void> sendSerialCommandSequence({
@@ -1663,9 +1664,36 @@ class _HomeState extends State<Home> {
     final randomName = 'recording_${uuid.v4()}.bin';
     final savePath = p.join(recordingsPath, randomName);
 
+    // --- Add protocol details to header JSON ---
+    Map<String, dynamic> headerJson = {};
+    try {
+      headerJson = jsonDecode(utf8.decode(headerJsonBytes));
+    } catch (e) {
+      print("❌ Failed to decode header JSON: $e");
+    }
+
+    // Get protocol details
+    dynamic protocolDetails;
+    try {
+      protocolDetails = ProtocolManifest().getSelectedProtocol(context);
+    } catch (e) {
+      protocolDetails = {"error": e.toString()};
+    }
+    headerJson['protocolDetails'] = protocolDetails;
+
+    // Encode new header JSON and recalculate length
+    final newHeaderJsonBytes = utf8.encode(jsonEncode(headerJson));
+    final newHeaderLenBytes = Uint8List(4)
+      ..buffer.asByteData().setUint32(
+        0,
+        newHeaderJsonBytes.length,
+        Endian.little,
+      );
+
+    // Save file with updated header
     await File(
       savePath,
-    ).writeAsBytes(lengthBytes + headerJsonBytes + selectedBytes);
+    ).writeAsBytes(newHeaderLenBytes + newHeaderJsonBytes + selectedBytes);
     print("✅ Saved recording to: $savePath");
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(content: Text("Recording saved to file successfully.")),
@@ -2411,7 +2439,8 @@ class _HomeState extends State<Home> {
                             } else {
                               // Stop recording
 
-                              port.close();
+                              // comment for simulatedrecordings
+                              // port.close();
 
                               print("Stopping recording...");
 

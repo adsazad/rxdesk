@@ -128,10 +128,11 @@ class _GlobalSettingsState extends State<GlobalSettings> {
     );
     availablePorts = await SerialPort.availablePorts;
     var seen = <String>{};
-    var copts = availablePorts
-        .where((e) => seen.add(e))
-        .map((e) => {"label": e, "value": e})
-        .toList();
+    var copts =
+        availablePorts
+            .where((e) => seen.add(e))
+            .map((e) => {"label": e, "value": e})
+            .toList();
 
     // Ensure "none" is present only once at the start
     copts.removeWhere((e) => e["value"] == "none");
@@ -577,148 +578,52 @@ class _GlobalSettingsState extends State<GlobalSettings> {
   }
 
   Widget _deviceSettingsTab() {
-  final globalSettings = Provider.of<GlobalSettingsModal>(context);
-  return SingleChildScrollView(
-    child: Column(
-      children: [
-        SizedBox(height: 10),
-        Container(
-          margin: EdgeInsets.all(10),
-          decoration: BoxDecoration(
-            border: Border.all(color: Colors.blue),
-            borderRadius: BorderRadius.circular(10),
-          ),
-          child: Column(
-            children: [
-              // Hardware COM Port Dropdown (always enabled)
-              Padding(
-                padding: EdgeInsets.all(10),
-                child: Row(
-                  children: [
-                    Expanded(
-                      flex: 2,
-                      child: Text("Hardware COM Port", style: TextStyle(fontSize: 20)),
-                    ),
-                    Expanded(
-                      flex: 3,
-                      child: DropdownButtonFormField<dynamic>(
-                        value: com,
-                        decoration: InputDecoration(
-                          contentPadding: EdgeInsets.symmetric(horizontal: 12, vertical: 0),
-                          border: OutlineInputBorder(),
-                        ),
-                        items: comOptions.map((e) {
-                          return DropdownMenuItem<dynamic>(
-                            child: Text(e["label"]),
-                            value: e["value"],
-                          );
-                        }).toList(),
-                        onChanged: (d) {
-                          setState(() {
-                            com = d;
-                          });
-                          onChange();
-                        },
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-              // Device Type Dropdown
-              Padding(
-                padding: EdgeInsets.all(10),
-                child: Row(
-                  children: [
-                    Expanded(
-                      flex: 2,
-                      child: Text("Device Type", style: TextStyle(fontSize: 20)),
-                    ),
-                    Expanded(
-                      flex: 3,
-                      child: DropdownButtonFormField<String>(
-                        value: globalSettings.deviceType,
-                        decoration: InputDecoration(
-                          contentPadding: EdgeInsets.symmetric(horizontal: 12, vertical: 0),
-                          border: OutlineInputBorder(),
-                        ),
-                        items: [
-                          DropdownMenuItem(value: "none", child: Text("None")),
-                          DropdownMenuItem(value: "ergoCycle", child: Text("Ergo Cycle")),
-                          DropdownMenuItem(value: "treadmill", child: Text("Treadmill")),
-                        ],
-                        onChanged: (val) {
-                          setState(() {
-                            globalSettings.setDeviceType(val!);
-                          });
-                          onChange();
-                        },
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-              // Machine COM Port Dropdown (enabled only if deviceType != "none")
-              Padding(
-                padding: EdgeInsets.all(10),
-                child: Row(
-                  children: [
-                    Expanded(
-                      flex: 2,
-                      child: Text("Machine COM Port", style: TextStyle(fontSize: 20)),
-                    ),
-                    Expanded(
-                      flex: 3,
-                      child: DropdownButtonFormField<dynamic>(
-                        value: globalSettings.machineCom,
-                        decoration: InputDecoration(
-                          contentPadding: EdgeInsets.symmetric(horizontal: 12, vertical: 0),
-                          border: OutlineInputBorder(),
-                        ),
-                        items: comOptions.map((e) {
-                          return DropdownMenuItem<dynamic>(
-                            child: Text(e["label"]),
-                            value: e["value"],
-                          );
-                        }).toList(),
-                        onChanged: globalSettings.deviceType == "none"
-                            ? null
-                            : (d) {
-                                setState(() {
-                                  globalSettings.setMachineCom(d);
-                                });
-                                onChange();
-                              },
-                        disabledHint: Text("Select Device Type"),
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-              // Ergo Protocol Dropdown (only if deviceType == "ergoCycle")
-              if (globalSettings.deviceType == "ergoCycle")
+    final globalSettings = Provider.of<GlobalSettingsModal>(context);
+    return SingleChildScrollView(
+      child: Column(
+        children: [
+          SizedBox(height: 10),
+          Container(
+            margin: EdgeInsets.all(10),
+            decoration: BoxDecoration(
+              border: Border.all(color: Colors.blue),
+              borderRadius: BorderRadius.circular(10),
+            ),
+            child: Column(
+              children: [
+                // Hardware COM Port Dropdown (always enabled)
                 Padding(
                   padding: EdgeInsets.all(10),
                   child: Row(
                     children: [
                       Expanded(
                         flex: 2,
-                        child: Text("Ergo Protocol", style: TextStyle(fontSize: 20)),
+                        child: Text(
+                          "Hardware COM Port",
+                          style: TextStyle(fontSize: 20),
+                        ),
                       ),
                       Expanded(
                         flex: 3,
-                        child: DropdownButtonFormField<String>(
-                          value: globalSettings.ergoProtocol,
+                        child: DropdownButtonFormField<dynamic>(
+                          value: com,
                           decoration: InputDecoration(
-                            contentPadding: EdgeInsets.symmetric(horizontal: 12, vertical: 0),
+                            contentPadding: EdgeInsets.symmetric(
+                              horizontal: 12,
+                              vertical: 0,
+                            ),
                             border: OutlineInputBorder(),
                           ),
-                          items: [
-                            DropdownMenuItem(value: "Ramp Protocol", child: Text("Ramp Protocol")),
-                            DropdownMenuItem(value: "Incremental Step Protocol", child: Text("Incremental Step Protocol")),
-                          ],
-                          onChanged: (val) {
+                          items:
+                              comOptions.map((e) {
+                                return DropdownMenuItem<dynamic>(
+                                  child: Text(e["label"]),
+                                  value: e["value"],
+                                );
+                              }).toList(),
+                          onChanged: (d) {
                             setState(() {
-                              globalSettings.setErgoProtocol(val!);
+                              com = d;
                             });
                             onChange();
                           },
@@ -727,31 +632,46 @@ class _GlobalSettingsState extends State<GlobalSettings> {
                     ],
                   ),
                 ),
-              // Treadmill Protocol Dropdown (only if deviceType == "treadmill")
-              if (globalSettings.deviceType == "treadmill")
+                // Device Type Dropdown
                 Padding(
                   padding: EdgeInsets.all(10),
                   child: Row(
                     children: [
                       Expanded(
                         flex: 2,
-                        child: Text("Treadmill Protocol", style: TextStyle(fontSize: 20)),
+                        child: Text(
+                          "Device Type",
+                          style: TextStyle(fontSize: 20),
+                        ),
                       ),
                       Expanded(
                         flex: 3,
                         child: DropdownButtonFormField<String>(
-                          value: globalSettings.treadmillProtocol,
+                          value: globalSettings.deviceType,
                           decoration: InputDecoration(
-                            contentPadding: EdgeInsets.symmetric(horizontal: 12, vertical: 0),
+                            contentPadding: EdgeInsets.symmetric(
+                              horizontal: 12,
+                              vertical: 0,
+                            ),
                             border: OutlineInputBorder(),
                           ),
                           items: [
-                            DropdownMenuItem(value: "Bruce", child: Text("Bruce")),
-                            DropdownMenuItem(value: "Modified Bruce", child: Text("Modified Bruce")),
+                            DropdownMenuItem(
+                              value: "none",
+                              child: Text("None"),
+                            ),
+                            DropdownMenuItem(
+                              value: "ergoCycle",
+                              child: Text("Ergo Cycle"),
+                            ),
+                            DropdownMenuItem(
+                              value: "treadmill",
+                              child: Text("Treadmill"),
+                            ),
                           ],
                           onChanged: (val) {
                             setState(() {
-                              globalSettings.setTreadmillProtocol(val!);
+                              globalSettings.setDeviceType(val!);
                             });
                             onChange();
                           },
@@ -760,13 +680,148 @@ class _GlobalSettingsState extends State<GlobalSettings> {
                     ],
                   ),
                 ),
-            ],
+                // Machine COM Port Dropdown (enabled only if deviceType != "none")
+                Padding(
+                  padding: EdgeInsets.all(10),
+                  child: Row(
+                    children: [
+                      Expanded(
+                        flex: 2,
+                        child: Text(
+                          "Machine COM Port",
+                          style: TextStyle(fontSize: 20),
+                        ),
+                      ),
+                      Expanded(
+                        flex: 3,
+                        child: DropdownButtonFormField<dynamic>(
+                          value: globalSettings.machineCom,
+                          decoration: InputDecoration(
+                            contentPadding: EdgeInsets.symmetric(
+                              horizontal: 12,
+                              vertical: 0,
+                            ),
+                            border: OutlineInputBorder(),
+                          ),
+                          items:
+                              comOptions.map((e) {
+                                return DropdownMenuItem<dynamic>(
+                                  child: Text(e["label"]),
+                                  value: e["value"],
+                                );
+                              }).toList(),
+                          onChanged:
+                              globalSettings.deviceType == "none"
+                                  ? null
+                                  : (d) {
+                                    setState(() {
+                                      globalSettings.setMachineCom(d);
+                                    });
+                                    onChange();
+                                  },
+                          disabledHint: Text("Select Device Type"),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                // Ergo Protocol Dropdown (only if deviceType == "ergoCycle")
+                if (globalSettings.deviceType == "ergoCycle")
+                  Padding(
+                    padding: EdgeInsets.all(10),
+                    child: Row(
+                      children: [
+                        Expanded(
+                          flex: 2,
+                          child: Text(
+                            "Ergo Protocol",
+                            style: TextStyle(fontSize: 20),
+                          ),
+                        ),
+                        Expanded(
+                          flex: 3,
+                          child: DropdownButtonFormField<String>(
+                            value: globalSettings.ergoProtocol,
+                            decoration: InputDecoration(
+                              contentPadding: EdgeInsets.symmetric(
+                                horizontal: 12,
+                                vertical: 0,
+                              ),
+                              border: OutlineInputBorder(),
+                            ),
+                            items: [
+                              DropdownMenuItem(
+                                value: "ramp_protocol",
+                                child: Text("Ramp Protocol"),
+                              ),
+                              DropdownMenuItem(
+                                value: "incremental_step_protocol",
+                                child: Text("Incremental Step Protocol"),
+                              ),
+                            ],
+                            onChanged: (val) {
+                              setState(() {
+                                globalSettings.setErgoProtocol(val!);
+                              });
+                              onChange();
+                            },
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                // Treadmill Protocol Dropdown (only if deviceType == "treadmill")
+                if (globalSettings.deviceType == "treadmill")
+                  Padding(
+                    padding: EdgeInsets.all(10),
+                    child: Row(
+                      children: [
+                        Expanded(
+                          flex: 2,
+                          child: Text(
+                            "Treadmill Protocol",
+                            style: TextStyle(fontSize: 20),
+                          ),
+                        ),
+                        Expanded(
+                          flex: 3,
+                          child: DropdownButtonFormField<String>(
+                            value: globalSettings.treadmillProtocol,
+                            decoration: InputDecoration(
+                              contentPadding: EdgeInsets.symmetric(
+                                horizontal: 12,
+                                vertical: 0,
+                              ),
+                              border: OutlineInputBorder(),
+                            ),
+                            items: [
+                              DropdownMenuItem(
+                                value: "Bruce",
+                                child: Text("Bruce"),
+                              ),
+                              DropdownMenuItem(
+                                value: "Modified Bruce",
+                                child: Text("Modified Bruce"),
+                              ),
+                            ],
+                            onChanged: (val) {
+                              setState(() {
+                                globalSettings.setTreadmillProtocol(val!);
+                              });
+                              onChange();
+                            },
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+              ],
+            ),
           ),
-        ),
-      ],
-    ),
-  );
-}
+        ],
+      ),
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -871,7 +926,7 @@ class _GlobalSettingsState extends State<GlobalSettings> {
                       ],
                     ),
                   ),
-                 
+
                   Divider(),
                   SizedBox(height: 10),
                 ],
