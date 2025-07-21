@@ -16,6 +16,7 @@ class RampProtocol {
   static const List<Map<String, dynamic>> phases = [
     {
       "name": "Resting Phase",
+      // "duration": 180, // seconds
       "duration": 180, // seconds
       "description": "2–3 minutes sitting quietly on the ergometer.",
     },

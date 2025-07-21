@@ -6,45 +6,35 @@ import 'package:spirobtvo/ProviderModals/GlobalSettingsModal.dart';
 
 class ProtocolManifest {
   static final Map<String, dynamic> _ergoProtocols = {
-    "Ramp Protocol": () => RampProtocol().getProtocolDetails(),
-    "Incremental Step Protocol":
+    "ramp_protocol": () => RampProtocol().getProtocolDetails(),
+    "incremental_step_protocol":
         () => IncrementalStepProtocol().getProtocolDetails(),
   };
 
   static final Map<String, dynamic> _treadmillProtocols = {
-    "Bruce": () => throw Exception("Bruce protocol not implemented yet"),
-    "Modified Bruce":
-        () => throw Exception("Modified Bruce protocol not implemented yet"),
+    "Bruce": () => null,
+    "Modified Bruce": () => null,
   };
 
-  dynamic getSelectedProtocol(BuildContext context) {
-    final globalSettings = Provider.of<GlobalSettingsModal>(
-      context,
-      listen: false,
-    );
-
+  dynamic getSelectedProtocol(GlobalSettingsModal globalSettings) {
+    print("Selected Device Type: ${globalSettings.deviceType}");
     switch (globalSettings.deviceType) {
       case "ergoCycle":
         final protocolGetter = _ergoProtocols[globalSettings.ergoProtocol];
         if (protocolGetter != null) {
           return protocolGetter();
         }
-        throw Exception(
-          "Unknown ergoCycle protocol selected: ${globalSettings.ergoProtocol}",
-        );
+        return null;
       case "treadmill":
         final protocolGetter =
             _treadmillProtocols[globalSettings.treadmillProtocol];
         if (protocolGetter != null) {
           return protocolGetter();
         }
-        throw Exception(
-          "Unknown treadmill protocol selected: ${globalSettings.treadmillProtocol}",
-        );
+        return null;
+      case "none":
       default:
-        throw Exception(
-          "Unknown device type selected: ${globalSettings.deviceType}",
-        );
+        return null;
     }
   }
 }

@@ -9,10 +9,10 @@ import 'package:path_provider/path_provider.dart';
 import 'package:spirobtvo/Pages/RecordingsListPage.dart';
 import 'package:spirobtvo/ProtocolManifests/ProtocolManifest.dart';
 import 'package:spirobtvo/ProviderModals/ImportFileProvider.dart';
+import 'package:spirobtvo/Services/Utility.dart';
 import 'package:spirobtvo/Widgets/BreathStatsTableModal.dart';
 import 'package:spirobtvo/Widgets/MyBigGraphScrollable.dart';
 import 'package:spirobtvo/data/local/database.dart';
-import 'package:syncfusion_flutter_xlsio/xlsio.dart' as xlsio;
 
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -260,7 +260,7 @@ class _HomeState extends State<Home> {
       },
     ];
 
-    startTestLoop(); // Start the test loop
+    // startTestLoop(); // Start the test loop
   }
 
   Future<void> sendSerialCommandSequence({
@@ -1025,12 +1025,14 @@ class _HomeState extends State<Home> {
   }
 
   void startRecordingTimer() {
-    recordingStartTime = DateTime.now();
-    recordingDuration = Duration.zero;
     recordingTimer?.cancel();
-    recordingTimer = Timer.periodic(Duration(seconds: 1), (_) {
+    recordingDuration = Duration.zero;
+
+    // Use sampleCounter and samplingRate to calculate duration
+    recordingTimer = Timer.periodic(Duration(milliseconds: 200), (_) {
       setState(() {
-        recordingDuration = DateTime.now().difference(recordingStartTime!);
+        // Replace 300 with your actual sampling rate if needed
+        recordingDuration = Duration(seconds: (sampleCounter / 300).floor());
       });
     });
   }
@@ -1087,85 +1089,6 @@ class _HomeState extends State<Home> {
     );
   }
 
-  String getAvailableFilePath(
-    String basePath,
-    String baseName,
-    String extension,
-  ) {
-    int counter = 1;
-    String filePath = '$basePath/$baseName.$extension';
-
-    while (File(filePath).existsSync()) {
-      filePath = '$basePath/$baseName($counter).$extension';
-      counter++;
-    }
-
-    return filePath;
-  }
-
-  Future<void> exportBreathStatsToExcel(Map<String, dynamic> cp) async {
-    if (cp['breathStats'] == null || !(cp['breathStats'] is List)) return;
-
-    final breathStats = List<Map<String, dynamic>>.from(cp['breathStats']);
-    final workbook = xlsio.Workbook();
-    final sheet = workbook.worksheets[0];
-
-    // ✅ Custom headers
-    final customHeaders = [
-      'O%',
-      'CO2%',
-      'HR',
-      'VO2%',
-      'VCO2%',
-      'VE MINTUE',
-      'RER',
-      'ESTIMATED CO',
-    ];
-
-    for (int i = 0; i < customHeaders.length; i++) {
-      sheet.getRangeByIndex(1, i + 1).setText(customHeaders[i]);
-    }
-
-    // Fill data according to the custom order
-    for (int r = 0; r < breathStats.length; r++) {
-      final row = breathStats[r];
-      sheet
-          .getRangeByIndex(r + 2, 1)
-          .setText(row['o2']?.toStringAsFixed(2) ?? '');
-      sheet
-          .getRangeByIndex(r + 2, 2)
-          .setText(row['co2']?.toStringAsFixed(2) ?? '');
-      sheet
-          .getRangeByIndex(r + 2, 3)
-          .setText(row['hr']?.toStringAsFixed(0) ?? '');
-      sheet
-          .getRangeByIndex(r + 2, 4)
-          .setText(row['vo2']?.toStringAsFixed(2) ?? '');
-      sheet
-          .getRangeByIndex(r + 2, 5)
-          .setText(row['vco2']?.toStringAsFixed(2) ?? '');
-      sheet
-          .getRangeByIndex(r + 2, 6)
-          .setText(row['minuteVentilation']?.toStringAsFixed(2) ?? '');
-      sheet
-          .getRangeByIndex(r + 2, 7)
-          .setText(row['rer']?.toStringAsFixed(2) ?? '');
-      sheet
-          .getRangeByIndex(r + 2, 8)
-          .setText(row['co']?.toStringAsFixed(2) ?? '');
-    }
-
-    final dir = await getDownloadsDirectory();
-    final path = getAvailableFilePath(dir!.path, 'CPET_breathstats', 'xlsx');
-    final bytes = workbook.saveAsStream();
-    File(path)
-      ..createSync(recursive: true)
-      ..writeAsBytesSync(bytes);
-    workbook.dispose();
-
-    print("✅ Excel exported to: $path");
-  }
-
   void showBreathStatsTableModal(
     BuildContext context,
     Map<String, dynamic> cp,
@@ -1179,7 +1102,9 @@ class _HomeState extends State<Home> {
             breathStats: liveData,
             onDownload: () async {
               if (liveData.isNotEmpty) {
-                await exportBreathStatsToExcel({'breathStats': liveData});
+                await Utility().exportBreathStatsToExcel({
+                  'breathStats': liveData,
+                });
                 ScaffoldMessenger.of(context).showSnackBar(
                   SnackBar(content: Text('Excel downloaded successfully!')),
                 );
@@ -1244,92 +1169,8 @@ class _HomeState extends State<Home> {
               : 'No Patient',
           style: TextStyle(fontSize: 18.5, fontWeight: FontWeight.bold),
         ),
-        if (defaultPatient != null)
-          Card(
-            margin: const EdgeInsets.all(16),
-            elevation: 4,
-            color: Colors.grey[900],
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(16),
-            ),
-            child: Padding(
-              padding: const EdgeInsets.all(20.0),
-              child: Row(
-                children: [
-                  CircleAvatar(
-                    radius: 32,
-                    backgroundColor: Colors.blueGrey.shade900,
-                    child: Icon(
-                      Icons.person,
-                      color: Colors.blue.shade200,
-                      size: 36,
-                    ),
-                  ),
-                  const SizedBox(width: 24),
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          defaultPatient['name'] ?? '',
-                          style: const TextStyle(
-                            fontSize: 22,
-                            fontWeight: FontWeight.bold,
-                            color: Colors.white,
-                          ),
-                        ),
-                        const SizedBox(height: 6),
-                        Row(
-                          children: [
-                            Icon(
-                              Icons.transgender,
-                              size: 18,
-                              color: Colors.grey,
-                            ),
-                            const SizedBox(width: 4),
-                            Text(
-                              "Gender: ${defaultPatient['gender'] ?? ''}",
-                              style: TextStyle(color: Colors.white70),
-                            ),
-                            const SizedBox(width: 16),
-                            Icon(Icons.cake, size: 18, color: Colors.grey),
-                            const SizedBox(width: 4),
-                            Text(
-                              "Age: ${defaultPatient['age'] ?? ''}",
-                              style: TextStyle(color: Colors.white70),
-                            ),
-                          ],
-                        ),
-                        const SizedBox(height: 6),
-                        Row(
-                          children: [
-                            Icon(Icons.height, size: 18, color: Colors.grey),
-                            const SizedBox(width: 4),
-                            Text(
-                              "Height: ${defaultPatient['height'] ?? ''} cm",
-                              style: TextStyle(color: Colors.white70),
-                            ),
-                            const SizedBox(width: 16),
-                            Icon(
-                              Icons.monitor_weight,
-                              size: 18,
-                              color: Colors.grey,
-                            ),
-                            const SizedBox(width: 4),
-                            Text(
-                              "Weight: ${defaultPatient['weight'] ?? ''} kg",
-                              style: TextStyle(color: Colors.white70),
-                            ),
-                          ],
-                        ),
-                      ],
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          ),
-        SizedBox(height: 10),
+
+        protocolDisplay(),
 
         Row(
           children: [
@@ -1675,7 +1516,11 @@ class _HomeState extends State<Home> {
     // Get protocol details
     dynamic protocolDetails;
     try {
-      protocolDetails = ProtocolManifest().getSelectedProtocol(context);
+      final globalSettings = Provider.of<GlobalSettingsModal>(
+        context,
+        listen: false,
+      );
+      protocolDetails = ProtocolManifest().getSelectedProtocol(globalSettings);
     } catch (e) {
       protocolDetails = {"error": e.toString()};
     }
@@ -2312,6 +2157,108 @@ class _HomeState extends State<Home> {
     );
   }
 
+  Widget protocolDisplay() {
+    return Consumer<GlobalSettingsModal>(
+      builder: (context, globalSettings, child) {
+        print("GLOBAL SETTING");
+        print(globalSettings.toJson());
+        final protocol = ProtocolManifest().getSelectedProtocol(globalSettings);
+        if (protocol == null) {
+          return Text("No protocol selected");
+        }
+
+        // Calculate current phase based on recordingDuration
+        String phaseName = "Unknown";
+        int phaseIndex = -1;
+        Duration elapsed = recordingDuration;
+        if (protocol['phases'] is List) {
+          int secondsPassed = elapsed.inSeconds;
+          int cumulative = 0;
+          for (int i = 0; i < protocol['phases'].length; i++) {
+            final phase = protocol['phases'][i];
+            int phaseDuration = (phase['duration'] ?? 0) as int;
+            if (secondsPassed < cumulative + phaseDuration) {
+              phaseName = phase['name'] ?? "Phase ${i + 1}";
+              phaseIndex = i;
+              break;
+            }
+            cumulative += phaseDuration;
+          }
+          if (phaseIndex == -1 && protocol['phases'].isNotEmpty) {
+            phaseName = "Completed";
+          }
+        }
+
+        return Card(
+          margin: const EdgeInsets.symmetric(vertical: 12, horizontal: 16),
+          elevation: 3,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(12),
+          ),
+          child: Padding(
+            padding: const EdgeInsets.all(16.0),
+            child: Row(
+              children: [
+                SizedBox(width: 12),
+                Column(
+                  crossAxisAlignment: CrossAxisAlignment.center,
+                  children: [
+                    recordingIndicator(),
+                    SizedBox(height: 8),
+                    Text("${protocol['name']}", style: TextStyle(fontSize: 14)),
+                    SizedBox(height: 8),
+                    Text(
+                      "Phase: $phaseName",
+                      style: TextStyle(
+                        fontSize: 14,
+                        fontWeight: FontWeight.w500,
+                      ),
+                    ),
+                  ],
+                ),
+              ],
+            ),
+          ),
+        );
+      },
+    );
+  }
+
+  Widget recordingIndicator() {
+    if (!isRecording) return SizedBox.shrink();
+    return Container(
+      margin: const EdgeInsets.symmetric(horizontal: 4.0),
+      padding: const EdgeInsets.symmetric(horizontal: 12.0, vertical: 4.0),
+      decoration: BoxDecoration(
+        color: Colors.red.shade50,
+        borderRadius: BorderRadius.circular(4),
+        border: Border.all(color: Colors.red, width: 2),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.red.shade100.withOpacity(0.2),
+            blurRadius: 6,
+            offset: Offset(0, 2),
+          ),
+        ],
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(Icons.fiber_manual_record, color: Colors.red, size: 22),
+          SizedBox(width: 8),
+          Text(
+            "${recordingDuration.inMinutes.toString().padLeft(2, '0')}:${(recordingDuration.inSeconds % 60).toString().padLeft(2, '0')}",
+            style: TextStyle(
+              fontWeight: FontWeight.bold,
+              color: Colors.red.shade700,
+              fontSize: 18,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return Consumer<DefaultPatientModal>(
@@ -2352,46 +2299,6 @@ class _HomeState extends State<Home> {
                     child: Row(
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
-                        if (isRecording)
-                          Container(
-                            margin: const EdgeInsets.symmetric(horizontal: 4.0),
-                            padding: const EdgeInsets.symmetric(
-                              horizontal: 12.0,
-                              vertical: 4.0,
-                            ),
-                            decoration: BoxDecoration(
-                              color: Colors.red.shade50,
-                              borderRadius: BorderRadius.circular(4),
-                              border: Border.all(color: Colors.red, width: 2),
-                              boxShadow: [
-                                BoxShadow(
-                                  color: Colors.red.shade100.withOpacity(0.2),
-                                  blurRadius: 6,
-                                  offset: Offset(0, 2),
-                                ),
-                              ],
-                            ),
-                            child: Row(
-                              mainAxisSize: MainAxisSize.min,
-                              children: [
-                                Icon(
-                                  Icons.fiber_manual_record,
-                                  color: Colors.red,
-                                  size: 22,
-                                ),
-                                SizedBox(width: 8),
-                                Text(
-                                  "${recordingDuration.inMinutes.toString().padLeft(2, '0')}:${(recordingDuration.inSeconds % 60).toString().padLeft(2, '0')}",
-                                  style: TextStyle(
-                                    fontWeight: FontWeight.bold,
-                                    color: Colors.red.shade700,
-                                    fontSize: 18,
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ),
-
                         IconButtonColumn(
                           icon: isPlaying ? Icons.pause : Icons.play_arrow,
                           label: isPlaying ? "Pause" : "Play",
@@ -2423,6 +2330,7 @@ class _HomeState extends State<Home> {
                           label: isRecording ? "Stop" : "Record",
                           onPressed: () async {
                             if (!isRecording) {
+                              resetAllData(); // Reset all data before starting
                               // reset graph
                               myBigGraphKey.currentState?.resetXAxisTimer();
                               recordStartIndex = sampleCounter;
@@ -2440,7 +2348,7 @@ class _HomeState extends State<Home> {
                               // Stop recording
 
                               // comment for simulatedrecordings
-                              // port.close();
+                              port.close();
 
                               print("Stopping recording...");
 

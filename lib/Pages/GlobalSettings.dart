@@ -795,14 +795,14 @@ class _GlobalSettingsState extends State<GlobalSettings> {
                               border: OutlineInputBorder(),
                             ),
                             items: [
-                              DropdownMenuItem(
-                                value: "Bruce",
-                                child: Text("Bruce"),
-                              ),
-                              DropdownMenuItem(
-                                value: "Modified Bruce",
-                                child: Text("Modified Bruce"),
-                              ),
+                              // DropdownMenuItem(
+                              //   value: "Bruce",
+                              //   child: Text("Bruce"),
+                              // ),
+                              // DropdownMenuItem(
+                              //   value: "Modified Bruce",
+                              //   child: Text("Modified Bruce"),
+                              // ),
                             ],
                             onChanged: (val) {
                               setState(() {
