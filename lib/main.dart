@@ -56,6 +56,8 @@ void main() async {
       hospitalAddress: '',
       hospitalContact: '',
       hospitalEmail: '',
+      deviceType: "none",
+      machineCom: "none",
     );
     globalSettings.fromJson(settingsJson);
   } else {
@@ -80,6 +82,8 @@ void main() async {
       hospitalAddress: '',
       hospitalContact: '',
       hospitalEmail: '',
+      deviceType: "none",
+      machineCom: "none",
     );
   }
 

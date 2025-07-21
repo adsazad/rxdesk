@@ -126,23 +126,22 @@ class _GlobalSettingsState extends State<GlobalSettings> {
       context,
       listen: false,
     );
-    // var res = await jsonDecode(prefs!.getString("user").toString());
     availablePorts = await SerialPort.availablePorts;
-    print(availablePorts);
-    var seen = <String>{}; // Set to track unique values
-    var copts =
-        availablePorts
-            .where((e) => seen.add(e))
-            .map((e) => {"label": e, "value": e})
-            .toList();
+    var seen = <String>{};
+    var copts = availablePorts
+        .where((e) => seen.add(e))
+        .map((e) => {"label": e, "value": e})
+        .toList();
+
+    // Ensure "none" is present only once at the start
+    copts.removeWhere((e) => e["value"] == "none");
+    copts.insert(0, {"label": "None", "value": "none"});
+
     setState(() {
       comOptions = copts;
-      print(comOptions);
       com = globalSettings.com.toString();
       if (com == null || com == "none") {
-        if (comOptions.isNotEmpty) {
-          com = comOptions.first["value"];
-        }
+        com = comOptions.first["value"];
       }
 
       filterOnOff = globalSettings.filterOnOf;
@@ -577,10 +576,202 @@ class _GlobalSettingsState extends State<GlobalSettings> {
     );
   }
 
+  Widget _deviceSettingsTab() {
+  final globalSettings = Provider.of<GlobalSettingsModal>(context);
+  return SingleChildScrollView(
+    child: Column(
+      children: [
+        SizedBox(height: 10),
+        Container(
+          margin: EdgeInsets.all(10),
+          decoration: BoxDecoration(
+            border: Border.all(color: Colors.blue),
+            borderRadius: BorderRadius.circular(10),
+          ),
+          child: Column(
+            children: [
+              // Hardware COM Port Dropdown (always enabled)
+              Padding(
+                padding: EdgeInsets.all(10),
+                child: Row(
+                  children: [
+                    Expanded(
+                      flex: 2,
+                      child: Text("Hardware COM Port", style: TextStyle(fontSize: 20)),
+                    ),
+                    Expanded(
+                      flex: 3,
+                      child: DropdownButtonFormField<dynamic>(
+                        value: com,
+                        decoration: InputDecoration(
+                          contentPadding: EdgeInsets.symmetric(horizontal: 12, vertical: 0),
+                          border: OutlineInputBorder(),
+                        ),
+                        items: comOptions.map((e) {
+                          return DropdownMenuItem<dynamic>(
+                            child: Text(e["label"]),
+                            value: e["value"],
+                          );
+                        }).toList(),
+                        onChanged: (d) {
+                          setState(() {
+                            com = d;
+                          });
+                          onChange();
+                        },
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              // Device Type Dropdown
+              Padding(
+                padding: EdgeInsets.all(10),
+                child: Row(
+                  children: [
+                    Expanded(
+                      flex: 2,
+                      child: Text("Device Type", style: TextStyle(fontSize: 20)),
+                    ),
+                    Expanded(
+                      flex: 3,
+                      child: DropdownButtonFormField<String>(
+                        value: globalSettings.deviceType,
+                        decoration: InputDecoration(
+                          contentPadding: EdgeInsets.symmetric(horizontal: 12, vertical: 0),
+                          border: OutlineInputBorder(),
+                        ),
+                        items: [
+                          DropdownMenuItem(value: "none", child: Text("None")),
+                          DropdownMenuItem(value: "ergoCycle", child: Text("Ergo Cycle")),
+                          DropdownMenuItem(value: "treadmill", child: Text("Treadmill")),
+                        ],
+                        onChanged: (val) {
+                          setState(() {
+                            globalSettings.setDeviceType(val!);
+                          });
+                          onChange();
+                        },
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              // Machine COM Port Dropdown (enabled only if deviceType != "none")
+              Padding(
+                padding: EdgeInsets.all(10),
+                child: Row(
+                  children: [
+                    Expanded(
+                      flex: 2,
+                      child: Text("Machine COM Port", style: TextStyle(fontSize: 20)),
+                    ),
+                    Expanded(
+                      flex: 3,
+                      child: DropdownButtonFormField<dynamic>(
+                        value: globalSettings.machineCom,
+                        decoration: InputDecoration(
+                          contentPadding: EdgeInsets.symmetric(horizontal: 12, vertical: 0),
+                          border: OutlineInputBorder(),
+                        ),
+                        items: comOptions.map((e) {
+                          return DropdownMenuItem<dynamic>(
+                            child: Text(e["label"]),
+                            value: e["value"],
+                          );
+                        }).toList(),
+                        onChanged: globalSettings.deviceType == "none"
+                            ? null
+                            : (d) {
+                                setState(() {
+                                  globalSettings.setMachineCom(d);
+                                });
+                                onChange();
+                              },
+                        disabledHint: Text("Select Device Type"),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              // Ergo Protocol Dropdown (only if deviceType == "ergoCycle")
+              if (globalSettings.deviceType == "ergoCycle")
+                Padding(
+                  padding: EdgeInsets.all(10),
+                  child: Row(
+                    children: [
+                      Expanded(
+                        flex: 2,
+                        child: Text("Ergo Protocol", style: TextStyle(fontSize: 20)),
+                      ),
+                      Expanded(
+                        flex: 3,
+                        child: DropdownButtonFormField<String>(
+                          value: globalSettings.ergoProtocol,
+                          decoration: InputDecoration(
+                            contentPadding: EdgeInsets.symmetric(horizontal: 12, vertical: 0),
+                            border: OutlineInputBorder(),
+                          ),
+                          items: [
+                            DropdownMenuItem(value: "Ramp Protocol", child: Text("Ramp Protocol")),
+                            DropdownMenuItem(value: "Incremental Step Protocol", child: Text("Incremental Step Protocol")),
+                          ],
+                          onChanged: (val) {
+                            setState(() {
+                              globalSettings.setErgoProtocol(val!);
+                            });
+                            onChange();
+                          },
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              // Treadmill Protocol Dropdown (only if deviceType == "treadmill")
+              if (globalSettings.deviceType == "treadmill")
+                Padding(
+                  padding: EdgeInsets.all(10),
+                  child: Row(
+                    children: [
+                      Expanded(
+                        flex: 2,
+                        child: Text("Treadmill Protocol", style: TextStyle(fontSize: 20)),
+                      ),
+                      Expanded(
+                        flex: 3,
+                        child: DropdownButtonFormField<String>(
+                          value: globalSettings.treadmillProtocol,
+                          decoration: InputDecoration(
+                            contentPadding: EdgeInsets.symmetric(horizontal: 12, vertical: 0),
+                            border: OutlineInputBorder(),
+                          ),
+                          items: [
+                            DropdownMenuItem(value: "Bruce", child: Text("Bruce")),
+                            DropdownMenuItem(value: "Modified Bruce", child: Text("Modified Bruce")),
+                          ],
+                          onChanged: (val) {
+                            setState(() {
+                              globalSettings.setTreadmillProtocol(val!);
+                            });
+                            onChange();
+                          },
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+            ],
+          ),
+        ),
+      ],
+    ),
+  );
+}
+
   @override
   Widget build(BuildContext context) {
     return DefaultTabController(
-      length: 2,
+      length: 3,
       child: Scaffold(
         appBar: AppBar(
           title: Text("Settings"),
@@ -593,6 +784,11 @@ class _GlobalSettingsState extends State<GlobalSettings> {
                 iconMargin: EdgeInsets.only(bottom: 4),
               ),
               Tab(
+                text: "Others Settings",
+                icon: Icon(Icons.settings, color: Colors.white),
+                iconMargin: EdgeInsets.only(bottom: 4),
+              ),
+              Tab(
                 text: "Hospital Info",
                 icon: Icon(Icons.local_hospital, color: Colors.white),
                 iconMargin: EdgeInsets.only(bottom: 4),
@@ -601,13 +797,12 @@ class _GlobalSettingsState extends State<GlobalSettings> {
             labelColor: Colors.white,
             unselectedLabelColor: Colors.grey[400],
             indicatorColor: Colors.white,
-
-            // Optionally, you can set the TabBar background color in the AppBar
           ),
         ),
         body: TabBarView(
           children: [
-            // Tab 1: Device Settings (existing content)
+            _deviceSettingsTab(), // Device Settings tab
+            // Tab 2: Other Settings (existing content)
             SingleChildScrollView(
               child: Column(
                 children: [
@@ -676,32 +871,7 @@ class _GlobalSettingsState extends State<GlobalSettings> {
                       ],
                     ),
                   ),
-                  Divider(),
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                    children: [
-                      Text("COM Port", style: TextStyle(fontSize: 20)),
-                      DropdownButton<dynamic>(
-                        value:
-                            comOptions.any((e) => e["value"] == com)
-                                ? com
-                                : null,
-                        items:
-                            comOptions.map((e) {
-                              return DropdownMenuItem<dynamic>(
-                                child: Text(e["label"]),
-                                value: e["value"],
-                              );
-                            }).toList(),
-                        onChanged: (d) {
-                          setState(() {
-                            com = d;
-                          });
-                          onChange();
-                        },
-                      ),
-                    ],
-                  ),
+                 
                   Divider(),
                   SizedBox(height: 10),
                 ],

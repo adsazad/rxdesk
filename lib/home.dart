@@ -8,6 +8,7 @@ import 'dart:ui';
 import 'package:path_provider/path_provider.dart';
 import 'package:spirobtvo/Pages/RecordingsListPage.dart';
 import 'package:spirobtvo/ProviderModals/ImportFileProvider.dart';
+import 'package:spirobtvo/Widgets/BreathStatsTableModal.dart';
 import 'package:spirobtvo/Widgets/MyBigGraphScrollable.dart';
 import 'package:spirobtvo/data/local/database.dart';
 import 'package:syncfusion_flutter_xlsio/xlsio.dart' as xlsio;
@@ -1168,140 +1169,27 @@ class _HomeState extends State<Home> {
     BuildContext context,
     Map<String, dynamic> cp,
   ) {
+    final liveData = breathStatsNotifier.value?.reversed.toList() ?? [];
     showDialog(
       context: context,
       barrierDismissible: true,
       builder:
-          (context) => Dialog(
-            insetPadding: EdgeInsets.symmetric(horizontal: 16, vertical: 32),
-            child: Container(
-              width: MediaQuery.of(context).size.width * 0.9,
-              height: MediaQuery.of(context).size.height * 0.8,
-              padding: const EdgeInsets.all(16),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    "Breath Stats Table",
-                    style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-                  ),
-                  Container(
-                    alignment: Alignment.topRight,
-                    child: ElevatedButton.icon(
-                      onPressed: () async {
-                        final liveData = breathStatsNotifier.value;
-
-                        if (liveData != null &&
-                            liveData is List<Map<String, dynamic>> &&
-                            liveData.isNotEmpty) {
-                          await exportBreathStatsToExcel({
-                            'breathStats': liveData,
-                          });
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            SnackBar(
-                              content: Text('Excel downloaded successfully!'),
-                            ),
-                          );
-                        } else {
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            SnackBar(content: Text('No data to export')),
-                          );
-                        }
-                      },
-                      icon: Icon(Icons.download),
-                      label: Text("Download Excel"),
-                    ),
-                  ),
-                  SizedBox(height: 16),
-                  Expanded(
-                    child: StatefulBuilder(
-                      builder: (context, setState) {
-                        modalSetState = setState;
-                        return AnimatedBuilder(
-                          animation: breathStatsNotifier,
-                          builder: (context, _) {
-                            return breathStatsTable(
-                              breathStatsNotifier.value?.reversed.toList() ??
-                                  [],
-                            );
-                          },
-                        );
-                      },
-                    ),
-                  ),
-
-                  SizedBox(height: 12),
-                  Align(
-                    alignment: Alignment.bottomRight,
-                    child: ElevatedButton(
-                      onPressed: () => Navigator.pop(context),
-                      child: Text("Close"),
-                    ),
-                  ),
-                ],
-              ),
-            ),
+          (context) => BreathStatsTableModal(
+            breathStats: liveData,
+            onDownload: () async {
+              if (liveData.isNotEmpty) {
+                await exportBreathStatsToExcel({'breathStats': liveData});
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(content: Text('Excel downloaded successfully!')),
+                );
+              } else {
+                ScaffoldMessenger.of(
+                  context,
+                ).showSnackBar(SnackBar(content: Text('No data to export')));
+              }
+            },
+            onClose: () => Navigator.pop(context),
           ),
-    );
-  }
-
-  Widget breathStatsTable(List<Map<String, dynamic>> data) {
-    final headers = [
-      'O%',
-      'CO2%',
-      'HR',
-      'VO2%',
-      'VCO2%',
-      'VE MINTUE',
-      'RER',
-      'ESTIMATED CO',
-    ];
-    final verticalController = ScrollController();
-    final horizontalController = ScrollController();
-
-    return Scrollbar(
-      thumbVisibility: true,
-      controller: verticalController,
-      child: ScrollConfiguration(
-        behavior: const ScrollBehavior().copyWith(
-          dragDevices: {PointerDeviceKind.touch, PointerDeviceKind.mouse},
-        ),
-        child: SingleChildScrollView(
-          controller: verticalController,
-          scrollDirection: Axis.vertical,
-
-          child: Center(
-            child: DataTable(
-              columns:
-                  headers
-                      .map(
-                        (h) => DataColumn(
-                          label: Text(
-                            h,
-                            style: TextStyle(fontWeight: FontWeight.bold),
-                          ),
-                        ),
-                      )
-                      .toList(),
-              rows:
-                  data.map((row) {
-                    return DataRow(
-                      cells: [
-                        DataCell(Text((row['o2'] ?? ''))),
-                        DataCell(Text((row['co2'] ?? ''))),
-                        DataCell(Text((row['hr'] ?? ''))),
-                        DataCell(Text((row['vo2'] ?? '').toStringAsFixed(2))),
-                        DataCell(Text((row['vco2'] ?? '').toStringAsFixed(2))),
-                        DataCell(Text((row['vol'] ?? '').toString())),
-                        DataCell(Text((row['rer'] ?? '').toStringAsFixed(2))),
-                        DataCell(Text((row['co'] ?? '').toString())),
-                      ],
-                    );
-                  }).toList(),
-            ),
-          ),
-        ),
-      ),
     );
   }
 

@@ -31,6 +31,11 @@ class GlobalSettingsModal with ChangeNotifier {
   String hospitalContact = '';
   String hospitalEmail = '';
 
+  String deviceType = "none"; // "none", "ergoCycle", "treadmill"
+  String machineCom = "none";
+  String ergoProtocol = "Ramp Protocol"; // "Ramp Protocol", "Incremental Step Protocol"
+  String treadmillProtocol = "Bruce"; // "Bruce", "Modified Bruce"
+
   GlobalSettingsModal({
     required this.com,
     required this.autoRecordOnOff,
@@ -53,6 +58,10 @@ class GlobalSettingsModal with ChangeNotifier {
     this.hospitalAddress = '',
     this.hospitalContact = '',
     this.hospitalEmail = '',
+    this.deviceType = "none",
+    this.machineCom = "none",
+    this.ergoProtocol = "Ramp Protocol",
+    this.treadmillProtocol = "Bruce",
   });
 
   void setAutoRecordOnOff(bool value) {
@@ -132,6 +141,26 @@ class GlobalSettingsModal with ChangeNotifier {
     notifyListeners();
   }
 
+  void setDeviceType(String value) {
+    deviceType = value;
+    notifyListeners();
+  }
+
+  void setMachineCom(String value) {
+    machineCom = value;
+    notifyListeners();
+  }
+
+  void setErgoProtocol(String value) {
+    ergoProtocol = value;
+    notifyListeners();
+  }
+
+  void setTreadmillProtocol(String value) {
+    treadmillProtocol = value;
+    notifyListeners();
+  }
+
   void setAll(
     bool autoRecordOnOff,
     bool filterOnOf,
@@ -191,6 +220,10 @@ class GlobalSettingsModal with ChangeNotifier {
       "hospitalAddress": hospitalAddress,
       "hospitalContact": hospitalContact,
       "hospitalEmail": hospitalEmail,
+      "deviceType": deviceType,
+      "machineCom": machineCom,
+      "ergoProtocol": ergoProtocol,
+      "treadmillProtocol": treadmillProtocol,
     };
     String jsonString = jsonEncode(json);
     return jsonString;
@@ -221,6 +254,10 @@ class GlobalSettingsModal with ChangeNotifier {
     hospitalAddress = arr["hospitalAddress"] ?? '';
     hospitalContact = arr["hospitalContact"] ?? '';
     hospitalEmail = arr["hospitalEmail"] ?? '';
+    deviceType = arr["deviceType"] ?? "none";
+    machineCom = arr["machineCom"] ?? "none";
+    ergoProtocol = arr["ergoProtocol"] ?? "Ramp Protocol";
+    treadmillProtocol = arr["treadmillProtocol"] ?? "Bruce";
 
     notifyListeners();
   }
