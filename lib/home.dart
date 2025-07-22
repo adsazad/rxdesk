@@ -9,6 +9,7 @@ import 'package:path_provider/path_provider.dart';
 import 'package:spirobtvo/Pages/RecordingsListPage.dart';
 import 'package:spirobtvo/ProtocolManifests/ProtocolManifest.dart';
 import 'package:spirobtvo/ProviderModals/ImportFileProvider.dart';
+import 'package:spirobtvo/Services/MachineControllers/LodeErgometerController.dart';
 import 'package:spirobtvo/Services/Utility.dart';
 import 'package:spirobtvo/Widgets/BreathStatsTableModal.dart';
 import 'package:spirobtvo/Widgets/MyBigGraphScrollable.dart';
@@ -2189,36 +2190,50 @@ class _HomeState extends State<Home> {
           }
         }
 
-        return Card(
-          margin: const EdgeInsets.symmetric(vertical: 12, horizontal: 16),
-          elevation: 3,
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(12),
-          ),
-          child: Padding(
-            padding: const EdgeInsets.all(16.0),
-            child: Row(
-              children: [
-                SizedBox(width: 12),
-                Column(
-                  crossAxisAlignment: CrossAxisAlignment.center,
+        return Column(
+          children: [
+            if (globalSettings.deviceType == "ergoCycle")
+              LodeErgometerWidget(
+                globalSettings: globalSettings,
+                onLog: (log) {
+                  print("Ergometer Log: $log");
+                },
+              ),
+            Card(
+              margin: const EdgeInsets.symmetric(vertical: 12, horizontal: 16),
+              elevation: 3,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(12),
+              ),
+              child: Padding(
+                padding: const EdgeInsets.all(16.0),
+                child: Row(
                   children: [
-                    recordingIndicator(),
-                    SizedBox(height: 8),
-                    Text("${protocol['name']}", style: TextStyle(fontSize: 14)),
-                    SizedBox(height: 8),
-                    Text(
-                      "Phase: $phaseName",
-                      style: TextStyle(
-                        fontSize: 14,
-                        fontWeight: FontWeight.w500,
-                      ),
+                    SizedBox(width: 12),
+                    Column(
+                      crossAxisAlignment: CrossAxisAlignment.center,
+                      children: [
+                        recordingIndicator(),
+                        SizedBox(height: 8),
+                        Text(
+                          "${protocol['name']}",
+                          style: TextStyle(fontSize: 14),
+                        ),
+                        SizedBox(height: 8),
+                        Text(
+                          "Phase: $phaseName",
+                          style: TextStyle(
+                            fontSize: 14,
+                            fontWeight: FontWeight.w500,
+                          ),
+                        ),
+                      ],
                     ),
                   ],
                 ),
-              ],
+              ),
             ),
-          ),
+          ],
         );
       },
     );
