@@ -3,7 +3,6 @@ name: Flutter Windows Build
 on:
   push:
     branches: [ windows-build ]
-  pull_request:
 
 jobs:
   build-windows:
