@@ -2192,13 +2192,13 @@ class _HomeState extends State<Home> {
 
         return Column(
           children: [
-            if (globalSettings.deviceType == "ergoCycle")
-              LodeErgometerWidget(
-                globalSettings: globalSettings,
-                onLog: (log) {
-                  print("Ergometer Log: $log");
-                },
-              ),
+            // if (globalSettings.deviceType == "ergoCycle")
+            //   LodeErgometerWidget(
+            //     globalSettings: globalSettings,
+            //     onLog: (log) {
+            //       print("Ergometer Log: $log");
+            //     },
+            //   ),
             Card(
               margin: const EdgeInsets.symmetric(vertical: 12, horizontal: 16),
               elevation: 3,
