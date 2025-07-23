@@ -86,6 +86,12 @@ class DataSaver {
     );
   }
 
+  reset() {
+    initialized = false;
+    _file = File('');
+    print("DataSaver reset. Call init() to reinitialize.");
+  }
+
   /// Optional: Get path to the file
   String get path => _file.path;
 }

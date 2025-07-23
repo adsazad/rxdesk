@@ -72,7 +72,7 @@ class _HomeState extends State<Home> {
   SharedPreferences? prefs;
 
   bool isPlaying = false;
-  late DataSaver dataSaver;
+  DataSaver dataSaver = DataSaver();
 
   List<List<double>> _inMemoryData = [];
 
@@ -1585,7 +1585,9 @@ class _HomeState extends State<Home> {
       sampleCounter = 0;
       bufSampleCounter = 0;
       _saverInitialized = false;
-      dataSaver = DataSaver();
+      if (dataSaver.initialized) {
+        dataSaver.reset();
+      }
       recordStartIndex = null;
       recordEndIndex = null;
       isRecording = false;
