@@ -17,7 +17,7 @@ class ProtocolManifest {
   };
 
   dynamic getSelectedProtocol(GlobalSettingsModal globalSettings) {
-    print("Selected Device Type: ${globalSettings.deviceType}");
+    // print("Selected Device Type: ${globalSettings.deviceType}");
     switch (globalSettings.deviceType) {
       case "ergoCycle":
         final protocolGetter = _ergoProtocols[globalSettings.ergoProtocol];

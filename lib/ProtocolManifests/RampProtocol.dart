@@ -33,8 +33,8 @@ class RampProtocol {
     },
     {
       "name": "Recovery Phase",
-      "duration": 360, // seconds
-      "description": "4–6 minutes of unloaded pedalling and rest.",
+      "duration": 180, // seconds
+      "description": "3 minutes of unloaded pedalling and rest.",
     },
   ];
 

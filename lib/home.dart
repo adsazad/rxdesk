@@ -72,7 +72,7 @@ class _HomeState extends State<Home> {
   SharedPreferences? prefs;
 
   bool isPlaying = false;
-  final dataSaver = DataSaver();
+  late DataSaver dataSaver;
 
   List<List<double>> _inMemoryData = [];
 
@@ -1441,7 +1441,7 @@ class _HomeState extends State<Home> {
 
   Future<void> saveRecordingSlice() async {
     if (!_saverInitialized) {
-      print("❌ DataSaver not initialized.");
+      print("❌ DataSaver not initialized. SRS");
       return;
     }
 
@@ -1585,6 +1585,7 @@ class _HomeState extends State<Home> {
       sampleCounter = 0;
       bufSampleCounter = 0;
       _saverInitialized = false;
+      dataSaver = DataSaver();
       recordStartIndex = null;
       recordEndIndex = null;
       isRecording = false;
@@ -2161,8 +2162,8 @@ class _HomeState extends State<Home> {
   Widget protocolDisplay() {
     return Consumer<GlobalSettingsModal>(
       builder: (context, globalSettings, child) {
-        print("GLOBAL SETTING");
-        print(globalSettings.toJson());
+        // print("GLOBAL SETTING");
+        // print(globalSettings.toJson());
         final protocol = ProtocolManifest().getSelectedProtocol(globalSettings);
         if (protocol == null) {
           return Text("No protocol selected");

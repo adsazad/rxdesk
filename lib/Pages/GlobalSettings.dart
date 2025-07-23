@@ -140,10 +140,11 @@ class _GlobalSettingsState extends State<GlobalSettings> {
 
     setState(() {
       comOptions = copts;
-      com = globalSettings.com.toString();
-      if (com == null || com == "none") {
-        com = comOptions.first["value"];
-      }
+
+      // Set com only if it's available in comOptions, otherwise default to first option
+      String selectedCom = globalSettings.com?.toString() ?? "none";
+      bool found = comOptions.any((e) => e["value"] == selectedCom);
+      com = found ? selectedCom : comOptions.first["value"];
 
       filterOnOff = globalSettings.filterOnOf;
       highPassValue = globalSettings.highPass;

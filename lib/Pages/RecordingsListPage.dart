@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:spirobtvo/ProviderModals/ImportFileProvider.dart';
 import 'package:spirobtvo/data/local/database.dart';
+import "package:drift/drift.dart" as drift;
 
 class RecordingsListPage extends StatefulWidget {
   @override
@@ -17,7 +18,14 @@ class _RecordingsListPageState extends State<RecordingsListPage> {
   void initState() {
     super.initState();
     db = Provider.of<AppDatabase>(context, listen: false);
-    recordingsFuture = db.select(db.recordings).get();
+    // Order by createdAt descending (latest first)
+    recordingsFuture =
+        (db.select(db.recordings)..orderBy([
+          (tbl) => drift.OrderingTerm(
+            expression: tbl.createdAt,
+            mode: drift.OrderingMode.desc,
+          ),
+        ])).get();
   }
 
   Future<List<Map<String, dynamic>>> getRecordingsWithPatientNames() async {
