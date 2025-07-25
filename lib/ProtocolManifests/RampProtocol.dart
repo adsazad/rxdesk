@@ -59,7 +59,8 @@ class RampProtocol {
     {
       "id": "ramp_phase",
       "name": "Ramp Phase",
-      "duration": 600, // seconds
+      // "duration": 600, // seconds
+      "duration": 300, // seconds
       "description":
           "Increase workload by 10–30 watts per minute until exhaustion.",
     },
