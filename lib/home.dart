@@ -110,6 +110,9 @@ class _HomeState extends State<Home> {
   Duration recordingDuration = Duration.zero;
   Timer? recordingTimer;
 
+  List<Map<String, dynamic>> markers =
+      []; // [{name: "Phase", length: 123}, ...]
+
   @override
   void initState() {
     super.initState();
@@ -590,6 +593,9 @@ class _HomeState extends State<Home> {
   List<double> _buffer = []; // Store [ecg, o2, co2, vol, flow, ecg, o2, ...]
   final int _samplesPerBatch = 300 * 5; // 5 seconds worth of data
   int bufSampleCounter = 0; // Reset this to 0 when starting a new batch
+  bool _isAppendingBatch = false;
+  Future? _initFuture; // Add this to your class
+
   Future<void> saver({
     required double ecg,
     required double o2,
@@ -606,26 +612,31 @@ class _HomeState extends State<Home> {
 
     // 🛠 Make sure init is awaited before marking initialized
     if (!_saverInitialized) {
-      if (!dataSaver.initialized) {
-        print("✅ Initializing DataSaver...");
-        await dataSaver.init(
-          filename: "spirobt-${DateTime.now().microsecondsSinceEpoch}.bin",
-          patientInfo: patient,
-        );
-        _saverInitialized = true; // ✅ Set this *after* init completes
-        sampleCounter = 0;
-      }
+      _initFuture ??= () async {
+        if (!dataSaver.initialized) {
+          print("✅ Initializing DataSaver...");
+          await dataSaver.init(
+            filename: "spirobt-${DateTime.now().microsecondsSinceEpoch}.bin",
+            patientInfo: patient,
+          );
+          _saverInitialized = true;
+          sampleCounter = 0;
+        }
+      }();
+      await _initFuture;
     }
 
     _buffer.addAll([ecg, o2, co2, vol, flow]);
     sampleCounter++;
     bufSampleCounter++;
 
-    if (bufSampleCounter >= _samplesPerBatch) {
+    if (bufSampleCounter >= _samplesPerBatch && !_isAppendingBatch) {
+      _isAppendingBatch = true;
       print("Batch of ${_buffer.length ~/ 5} samples ready to save.");
       await dataSaver.appendBatch(_buffer);
       _buffer.clear();
       bufSampleCounter = 0; // Reset buffer sample counter
+      _isAppendingBatch = false; // Reset appending state
     }
   }
 
@@ -701,6 +712,11 @@ class _HomeState extends State<Home> {
         vol = cp!["minuteVentilation"];
         respirationRate = cp!["respirationRate"];
         bpm = stats["bpm"];
+        final defaultProvider = Provider.of<DefaultPatientModal>(
+          context,
+          listen: false,
+        );
+        final patient = defaultProvider.patient;
         if (patient != null) {
           double weight = double.parse(patient["weight"]);
           votwokg = votwo / weight;
@@ -1527,6 +1543,8 @@ class _HomeState extends State<Home> {
     }
     headerJson['protocolDetails'] = protocolDetails;
 
+    // also add markers
+    headerJson['markers'] = markers;
     // Encode new header JSON and recalculate length
     final newHeaderJsonBytes = utf8.encode(jsonEncode(headerJson));
     final newHeaderLenBytes = Uint8List(4)
@@ -1585,6 +1603,7 @@ class _HomeState extends State<Home> {
       sampleCounter = 0;
       bufSampleCounter = 0;
       _saverInitialized = false;
+      _initFuture = null;
       if (dataSaver.initialized) {
         dataSaver.reset();
       }
@@ -2161,11 +2180,27 @@ class _HomeState extends State<Home> {
     );
   }
 
+  _stopRecording() async {
+    // comment for simulatedrecordings
+    port.close();
+
+    print("Stopping recording...");
+
+    recordEndIndex = sampleCounter;
+    print("Recording stopped at index: $recordEndIndex");
+    setState(() {
+      isRecording = false;
+      isPlaying = false;
+    });
+    stopRecordingTimer(); // Stop timer
+    await flushRemainingData();
+    await saveRecordingSlice(); // implement next
+    resetAllData();
+  }
+
   Widget protocolDisplay() {
     return Consumer<GlobalSettingsModal>(
       builder: (context, globalSettings, child) {
-        // print("GLOBAL SETTING");
-        // print(globalSettings.toJson());
         final protocol = ProtocolManifest().getSelectedProtocol(globalSettings);
         if (protocol == null) {
           return Text("No protocol selected");
@@ -2175,6 +2210,8 @@ class _HomeState extends State<Home> {
         String phaseName = "Unknown";
         int phaseIndex = -1;
         Duration elapsed = recordingDuration;
+
+        // Track phase markers: [{name, length}]
         if (protocol['phases'] is List) {
           int secondsPassed = elapsed.inSeconds;
           int cumulative = 0;
@@ -2184,24 +2221,39 @@ class _HomeState extends State<Home> {
             if (secondsPassed < cumulative + phaseDuration) {
               phaseName = phase['name'] ?? "Phase ${i + 1}";
               phaseIndex = i;
+
+              // Find last protocol_phase marker for this phase
+              final lastIndex = markers.lastIndexWhere(
+                (m) =>
+                    m["type"] == "protocol_phase" && m["name"] == phase["id"],
+              );
+              if (lastIndex == -1) {
+                markers.add({
+                  "name": phase["id"],
+                  "length": sampleCounter,
+                  "type": "protocol_phase",
+                });
+              } else {
+                markers[lastIndex] = {
+                  "name": phase["id"],
+                  "length": sampleCounter,
+                  "type": "protocol_phase",
+                };
+              }
               break;
             }
             cumulative += phaseDuration;
           }
           if (phaseIndex == -1 && protocol['phases'].isNotEmpty) {
             phaseName = "Completed";
+            WidgetsBinding.instance.addPostFrameCallback((_) {
+              if (isRecording) _stopRecording();
+            });
           }
         }
 
         return Column(
           children: [
-            // if (globalSettings.deviceType == "ergoCycle")
-            //   LodeErgometerWidget(
-            //     globalSettings: globalSettings,
-            //     onLog: (log) {
-            //       print("Ergometer Log: $log");
-            //     },
-            //   ),
             Card(
               margin: const EdgeInsets.symmetric(vertical: 12, horizontal: 16),
               elevation: 3,
@@ -2364,24 +2416,7 @@ class _HomeState extends State<Home> {
                               );
                             } else {
                               // Stop recording
-
-                              // comment for simulatedrecordings
-                              port.close();
-
-                              print("Stopping recording...");
-
-                              recordEndIndex = sampleCounter;
-                              print(
-                                "Recording stopped at index: $recordEndIndex",
-                              );
-                              setState(() {
-                                isRecording = false;
-                                isPlaying = false;
-                              });
-                              stopRecordingTimer(); // Stop timer
-                              await flushRemainingData();
-                              await saveRecordingSlice(); // implement next
-                              resetAllData();
+                              _stopRecording();
                             }
                           },
                         ),
