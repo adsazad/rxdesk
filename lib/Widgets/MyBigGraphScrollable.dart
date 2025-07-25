@@ -195,6 +195,43 @@ class MyBigGraphV2State extends State<MyBigGraphV2> {
   final int _batchThreshold = 5; // 🔁 update graph every 20 samples
   int fullLengthIndex = 0;
 
+  List<double> updateEverythingWithoutGraph(List<double> values) {
+    List<double> processedValues = [];
+
+    for (int i = 0; i < values.length; i++) {
+      double value = values[i];
+      value = applyMultiFilterToChannel(i, value);
+      processedValues.add(value);
+      final converter = widget.plot[i]["valueConverter"];
+      if (converter != null && converter is Function) {
+        value = converter(value);
+      }
+      // Do NOT update allPlotData or plotNotifier
+      // Only process values
+    }
+
+    fullLengthIndex++;
+    return processedValues;
+  }
+
+  clean() {
+    // to reset data to original state of streight lines
+    for (int i = 0; i < widget.plot.length; i++) {
+      allPlotData[i].clear();
+      allCurrentIndexes[i] = 0;
+      for (int j = 0; j < widget.windowSize; j++) {
+        allPlotData[i].add(FlSpot(j.toDouble(), 0.0));
+      }
+    }
+    // _clearedForImport = false;
+  }
+
+  cycleMinus() {
+    setState(() {
+      _cycleCount--;
+    });
+  }
+
   List<double> updateEverything(List<double> values) {
     List<double> processedValues = [];
 

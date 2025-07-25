@@ -1180,12 +1180,19 @@ class _HomeState extends State<Home> {
 
     return (Column(
       children: [
+        // if (importProgressPercent > 0)
+        //   LinearProgressIndicator(
+        //     value: importProgressPercent,
+        //     backgroundColor: Colors.grey[300],
+        //     color: Colors.blue,
+        //   ),
         Text(
           defaultPatient != null
               ? 'Patient: ' + defaultPatient['name']
               : 'No Patient',
           style: TextStyle(fontSize: 18.5, fontWeight: FontWeight.bold),
         ),
+        _nextPreviousButtons(),
 
         protocolDisplay(),
 
@@ -1322,19 +1329,118 @@ class _HomeState extends State<Home> {
     return {"patient": patientInfo, "samples": samples};
   }
 
+  // Future<void> importBinFileFromPath(String path) async {
+  //   print("Importing file from path: $path");
+  //   setState(() {
+  //     isImported = true;
+  //   });
+
+  //   try {
+  //     // Step 1: Import file
+  //     final file = File(path);
+  //     final bytes = await file.readAsBytes();
+
+  //     if (bytes.length < 4) {
+  //       print("❌ File  too short to contain header.");
+  //       return;
+  //     }
+
+  //     final headerLen = ByteData.sublistView(
+  //       bytes,
+  //       0,
+  //       4,
+  //     ).getUint32(0, Endian.little);
+  //     if (headerLen <= 0 || headerLen > 8192) {
+  //       print("❌ Invalid header length: $headerLen");
+  //       return;
+  //     }
+
+  //     if (bytes.length < 4 + headerLen) {
+  //       print("❌ File doesn't contain full header.");
+  //       return;
+  //     }
+  //     // showImportingDialog(context); // Show dialog
+
+  //     final jsonBytes = bytes.sublist(4, 4 + headerLen);
+  //     final String jsonText = utf8.decode(jsonBytes);
+  //     final Map<String, dynamic> patient = jsonDecode(jsonText);
+
+  //     const bytesPerSample = 5 * 8;
+  //     final sampleData = bytes.sublist(4 + headerLen);
+  //     final int sampleCount = sampleData.length ~/ bytesPerSample;
+  //     print(patient);
+
+  //     List<List<double>> samples = [];
+  //     for (int i = 0; i < sampleCount; i++) {
+  //       final start = i * bytesPerSample;
+  //       final chunk = sampleData.sublist(start, start + bytesPerSample);
+  //       final bd = ByteData.sublistView(chunk);
+
+  //       samples.add([
+  //         bd.getFloat64(0, Endian.little), // ECG
+  //         bd.getFloat64(8, Endian.little), // O2
+  //         bd.getFloat64(16, Endian.little), // CO2
+  //         bd.getFloat64(24, Endian.little), // Vol
+  //         bd.getFloat64(32, Endian.little), // Flow
+  //       ]);
+  //     }
+
+  //     // Step 2: Set patient info
+  //     final defaultProvider = Provider.of<DefaultPatientModal>(
+  //       context,
+  //       listen: false,
+  //     );
+  //     final prefs = await SharedPreferences.getInstance();
+  //     prefs.setString('default_patient', jsonEncode(patient));
+  //     defaultProvider.setDefault(patient);
+
+  //     // Step 3: Push all samples to graph and memory
+  //     _inMemoryData.clear();
+  //     for (final sample in samples) {
+  //       if (sample.length >= 5) {
+  //         final List<double> numericSample =
+  //             sample.map((e) => (e as num).toDouble()).toList();
+  //         if (numericSample.length >= 5) {
+  //           // Flip the last two values
+  //           final temp = numericSample[3];
+  //           numericSample[3] = numericSample[4];
+  //           numericSample[4] = temp;
+  //         }
+  //         final edt = myBigGraphKey.currentState?.updateEverything(
+  //           numericSample,
+  //         );
+  //         if (edt != null && edt.length >= 5) {
+  //           _inMemoryData.add([edt[0], edt[1], edt[2], edt[3], edt[4]]);
+  //         }
+  //       }
+  //     }
+
+  //     print("Imported ${samples.length} samples.");
+  //     onExhalationDetected();
+  //   } catch (e) {
+  //     print("❌ Error while importing: $e");
+  //   }
+  //   print("✅ Import completed.");
+  // }
+  double importProgressPercent = 0.0;
+  double currentImportDisplayIndex = 0;
+  File? importedFile;
+
   Future<void> importBinFileFromPath(String path) async {
     print("Importing file from path: $path");
     setState(() {
       isImported = true;
+      importProgressPercent = 0.0;
     });
 
     try {
       // Step 1: Import file
       final file = File(path);
+      importedFile = file;
       final bytes = await file.readAsBytes();
 
       if (bytes.length < 4) {
-        print("❌ File  too short to contain header.");
+        print("❌ File too short to contain header.");
         return;
       }
 
@@ -1352,7 +1458,6 @@ class _HomeState extends State<Home> {
         print("❌ File doesn't contain full header.");
         return;
       }
-      showImportingDialog(context); // Show dialog
 
       final jsonBytes = bytes.sublist(4, 4 + headerLen);
       final String jsonText = utf8.decode(jsonBytes);
@@ -1361,21 +1466,7 @@ class _HomeState extends State<Home> {
       const bytesPerSample = 5 * 8;
       final sampleData = bytes.sublist(4 + headerLen);
       final int sampleCount = sampleData.length ~/ bytesPerSample;
-
-      List<List<double>> samples = [];
-      for (int i = 0; i < sampleCount; i++) {
-        final start = i * bytesPerSample;
-        final chunk = sampleData.sublist(start, start + bytesPerSample);
-        final bd = ByteData.sublistView(chunk);
-
-        samples.add([
-          bd.getFloat64(0, Endian.little), // ECG
-          bd.getFloat64(8, Endian.little), // O2
-          bd.getFloat64(16, Endian.little), // CO2
-          bd.getFloat64(24, Endian.little), // Vol
-          bd.getFloat64(32, Endian.little), // Flow
-        ]);
-      }
+      print(patient);
 
       // Step 2: Set patient info
       final defaultProvider = Provider.of<DefaultPatientModal>(
@@ -1386,36 +1477,172 @@ class _HomeState extends State<Home> {
       prefs.setString('default_patient', jsonEncode(patient));
       defaultProvider.setDefault(patient);
 
-      // Step 3: Push all samples to graph and memory
+      // Step 3: Push all samples to graph and memory (combined loop)
       _inMemoryData.clear();
-      for (final sample in samples) {
-        if (sample.length >= 5) {
-          final List<double> numericSample =
-              sample.map((e) => (e as num).toDouble()).toList();
-          if (numericSample.length >= 5) {
-            // Flip the last two values
-            final temp = numericSample[3];
-            numericSample[3] = numericSample[4];
-            numericSample[4] = temp;
-          }
-          final edt = myBigGraphKey.currentState?.updateEverything(
-            numericSample,
-          );
-          if (edt != null && edt.length >= 5) {
-            _inMemoryData.add([edt[0], edt[1], edt[2], edt[3], edt[4]]);
-            // print("✅ Added sample: $edt");
-          }
+      for (int i = 0; i < sampleCount; i++) {
+        final start = i * bytesPerSample;
+        final chunk = sampleData.sublist(start, start + bytesPerSample);
+        final bd = ByteData.sublistView(chunk);
+
+        final List<double> numericSample = [
+          bd.getFloat64(0, Endian.little), // ECG
+          bd.getFloat64(8, Endian.little), // O2
+          bd.getFloat64(16, Endian.little), // CO2
+          bd.getFloat64(24, Endian.little), // Vol
+          bd.getFloat64(32, Endian.little), // Flow
+        ];
+
+        // Flip the last two values
+        final temp = numericSample[3];
+        numericSample[3] = numericSample[4];
+        numericSample[4] = temp;
+
+        final edt = myBigGraphKey.currentState?.updateEverythingWithoutGraph(
+          numericSample,
+        );
+        if (edt != null && edt.length >= 5) {
+          _inMemoryData.add([edt[0], edt[1], edt[2], edt[3], edt[4]]);
         }
+        // if (i % 100 == 0 || i == sampleCount - 1) {
+        //   // setState(() {
+        //   // importProgressPercent = (i + 1) / sampleCount;
+        //   // print(importProgressPercent);
+        //   // });
+        // }
       }
 
-      print("Imported ${samples.length} samples.");
+      print("Imported $sampleCount samples.");
+      setState(() {
+        importProgressPercent = 1.0;
+      });
       onExhalationDetected();
     } catch (e) {
       print("❌ Error while importing: $e");
-    } finally {
-      Navigator.of(context, rootNavigator: true).pop(); // Dismiss dialog
+      setState(() {
+        importProgressPercent = 0.0;
+      });
     }
     print("✅ Import completed.");
+  }
+
+  getSamplesFromFile(
+    int index, {
+    int seconds = 10,
+    int samplingRate = 300,
+  }) async {
+    // Each sample is 5 float64 values (8 bytes each)
+    const bytesPerSample = 5 * 8;
+    final file = importedFile!;
+    final bytes = await file.readAsBytes();
+
+    if (bytes.length < 4) return [];
+
+    // Read header length
+    final headerLen = ByteData.sublistView(
+      bytes,
+      0,
+      4,
+    ).getUint32(0, Endian.little);
+    if (headerLen <= 0 || headerLen > 8192) return [];
+
+    final sampleData = bytes.sublist(4 + headerLen);
+    final int sampleCount = sampleData.length ~/ bytesPerSample;
+
+    // Calculate start and end indices
+    int startIndex = index;
+    int count = seconds * samplingRate;
+    int endIndex = (startIndex + count).clamp(0, sampleCount);
+
+    List<List<double>> samples = [];
+    for (int i = startIndex; i < endIndex; i++) {
+      final start = i * bytesPerSample;
+      final chunk = sampleData.sublist(start, start + bytesPerSample);
+      final bd = ByteData.sublistView(chunk);
+
+      final List<double> numericSample = [
+        bd.getFloat64(0, Endian.little), // ECG
+        bd.getFloat64(8, Endian.little), // O2
+        bd.getFloat64(16, Endian.little), // CO2
+        bd.getFloat64(24, Endian.little), // Vol
+        bd.getFloat64(32, Endian.little), // Flow
+      ];
+
+      // Flip the last two values
+      final temp = numericSample[3];
+      numericSample[3] = numericSample[4];
+      numericSample[4] = temp;
+
+      // // Add to graph (without drawing)
+      // myBigGraphKey.currentState?.clean();
+      // wait
+      // await Future.delayed(Duration(milliseconds: 100));
+
+      final edt = myBigGraphKey.currentState?.updateEverything(numericSample);
+
+      // if (edt != null && edt.length >= 5) {
+      //   _inMemoryData.add([edt[0], edt[1], edt[2], edt[3], edt[4]]);
+      // }
+
+      // samples.add(numericSample);
+    }
+    // return samples;
+  }
+
+  _nextPreviousButtons() {
+    if (isImported) {
+      // Show next/previous buttons
+      return Row(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          IconButton(
+            icon: Icon(Icons.arrow_back),
+            onPressed: () async {
+              // Handle previous button
+              setState(() {
+                currentImportDisplayIndex = (currentImportDisplayIndex -
+                        10 * 300)
+                    .clamp(0, double.infinity);
+              });
+              await getSamplesFromFile(currentImportDisplayIndex.toInt());
+              myBigGraphKey.currentState?.cycleMinus();
+              myBigGraphKey.currentState?.cycleMinus();
+            },
+          ),
+          // show the point where we are in time
+          Text(
+            "${((currentImportDisplayIndex / 300).floor() ~/ 60).toString().padLeft(2, '0')}:${((currentImportDisplayIndex / 300).floor() % 60).toString().padLeft(2, '0')} / "
+            "${_inMemoryData.isNotEmpty ? (() {
+                  final totalSeconds = _inMemoryData.length ~/ 300;
+                  final min = (totalSeconds ~/ 60).toString().padLeft(2, '0');
+                  final sec = (totalSeconds % 60).toString().padLeft(2, '0');
+                  return "$min:$sec";
+                })() : "00:00"}",
+            style: TextStyle(fontSize: 16),
+          ),
+          SizedBox(width: 20),
+          IconButton(
+            icon: Icon(Icons.arrow_forward),
+            onPressed: () {
+              setState(() {
+                // Clamp to not go above the available data length
+                final maxIndex = (_inMemoryData.length - 1).clamp(
+                  0,
+                  double.infinity,
+                );
+                currentImportDisplayIndex =
+                    ((currentImportDisplayIndex + 10 * 300).clamp(
+                      0,
+                      maxIndex,
+                    )).toDouble();
+              });
+              getSamplesFromFile(currentImportDisplayIndex.toInt());
+              // Handle next button press
+            },
+          ),
+        ],
+      );
+    }
+    return Container();
   }
 
   void showImportingDialog(BuildContext context) {
@@ -2643,7 +2870,7 @@ class _HomeState extends State<Home> {
                       child: MyBigGraphV2(
                         key: myBigGraphKey,
                         // if(delaySamples == null) {
-                        isImported: isImported,
+                        isImported: false,
                         onCycleComplete: () {
                           // if(delaySamples == null) {
                           //   CPETService cpet = CPETService();
