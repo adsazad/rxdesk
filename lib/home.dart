@@ -717,9 +717,14 @@ class _HomeState extends State<Home> {
           listen: false,
         );
         final patient = defaultProvider.patient;
+        print("VCOTWOKGCALC");
         if (patient != null) {
+          print("VCOTWOKGCALC");
           double weight = double.parse(patient["weight"]);
-          votwokg = votwo / weight;
+          setState(() {
+            votwokg = (votwo * 1000) / weight;
+            print("VOTWOKG: $votwokg");
+          });
         }
       });
       if (cp != null && cp!['breathStats'] != null) {
