@@ -239,6 +239,8 @@ class _HomeState extends State<Home> {
         "meter": {"decimal": 0, "unit": " ", "convert": (double x) => x},
         "yAxisLabelConvert": (double x) => x < 1000 ? x : x / 1000,
         "yAxisLabelUnit": (double x) => x < 1000 ? "ml/s" : "L/s",
+        // moving average
+        "movingAverage": {"enabled": true, "window": 10},
       },
       {
         "name": "Tidal Volume",

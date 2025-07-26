@@ -238,6 +238,22 @@ class MyBigGraphV2State extends State<MyBigGraphV2> {
     for (int i = 0; i < values.length; i++) {
       double value = values[i];
       value = applyMultiFilterToChannel(i, value);
+
+      // --- Moving Average ---
+      final movingAvgConfig = widget.plot[i]["movingAverage"];
+      if (movingAvgConfig != null &&
+          movingAvgConfig["enabled"] == true &&
+          movingAvgConfig["window"] is int &&
+          movingAvgConfig["window"] > 1) {
+        int window = movingAvgConfig["window"];
+        // Maintain a buffer for moving average per channel
+        widget.plot[i]["_maBuffer"] ??= <double>[];
+        List<double> maBuffer = widget.plot[i]["_maBuffer"];
+        maBuffer.add(value);
+        if (maBuffer.length > window) maBuffer.removeAt(0);
+        value = maBuffer.reduce((a, b) => a + b) / maBuffer.length;
+      }
+
       processedValues.add(value);
       final converter = widget.plot[i]["valueConverter"];
       if (converter != null && converter is Function) {
