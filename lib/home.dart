@@ -1689,6 +1689,7 @@ class _HomeState extends State<Home> {
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
+    resetAllData(import: true); // Reset data on every dependency change
     final importProvider = Provider.of<ImportFileProvider>(context);
     if (importProvider.filePath != null) {
       importBinFileFromPath(importProvider.filePath!);
@@ -1831,7 +1832,7 @@ class _HomeState extends State<Home> {
     }
   }
 
-  void resetAllData() {
+  void resetAllData({bool import = false}) {
     setState(() {
       // Reset live metrics
       votwo = 0;
@@ -1870,7 +1871,10 @@ class _HomeState extends State<Home> {
 
       // Reset flags
       wasExhaling = false;
-      isImported = false;
+      isImported = import;
+
+      importProgressPercent = 0.0;
+      currentImportDisplayIndex = 0;
     });
   }
 
