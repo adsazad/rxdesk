@@ -1537,6 +1537,7 @@ class _HomeState extends State<Home> {
         importProgressPercent = 0.0;
       });
     }
+    getSamplesFromFile(currentImportDisplayIndex.toInt());
     print("✅ Import completed.");
   }
 

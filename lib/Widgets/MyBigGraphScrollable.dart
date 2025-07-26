@@ -201,6 +201,22 @@ class MyBigGraphV2State extends State<MyBigGraphV2> {
     for (int i = 0; i < values.length; i++) {
       double value = values[i];
       value = applyMultiFilterToChannel(i, value);
+
+      // --- Moving Average ---
+      final movingAvgConfig = widget.plot[i]["movingAverage"];
+      if (movingAvgConfig != null &&
+          movingAvgConfig["enabled"] == true &&
+          movingAvgConfig["window"] is int &&
+          movingAvgConfig["window"] > 1) {
+        int window = movingAvgConfig["window"];
+        // Maintain a buffer for moving average per channel
+        widget.plot[i]["_maBuffer"] ??= <double>[];
+        List<double> maBuffer = widget.plot[i]["_maBuffer"];
+        maBuffer.add(value);
+        if (maBuffer.length > window) maBuffer.removeAt(0);
+        value = maBuffer.reduce((a, b) => a + b) / maBuffer.length;
+      }
+
       processedValues.add(value);
       final converter = widget.plot[i]["valueConverter"];
       if (converter != null && converter is Function) {
@@ -1162,44 +1178,74 @@ class MyBigGraphV2State extends State<MyBigGraphV2> {
       children: [
         _leftConsole(), // ✅ Left panel with controls
         Expanded(
-          child: Listener(
-            onPointerSignal: (event) {
-              if (event is PointerScrollEvent) {
-                _scrollController.jumpTo(
-                  _scrollController.offset + event.scrollDelta.dy,
-                );
-              }
+          child: ValueListenableBuilder<List<List<FlSpot>>>(
+            valueListenable: plotNotifier,
+            builder: (context, currentData, _) {
+              final bool hasData =
+                  currentData.isNotEmpty && currentData[0].isNotEmpty;
+
+              final double calculatedWidth =
+                  widget.isImported
+                      ? (hasData
+                          ? currentData[0].last.x * 0.4
+                          : widget.windowSize.toDouble())
+                      : widget.windowSize.toDouble() * 0.5;
+
+              return SizedBox(
+                width: calculatedWidth,
+                child: _chart(currentData),
+              );
             },
-            child: Scrollbar(
-              controller: _scrollController,
-              thumbVisibility: true,
-              child: SingleChildScrollView(
-                controller: _scrollController,
-                scrollDirection: Axis.horizontal,
-                child: ValueListenableBuilder<List<List<FlSpot>>>(
-                  valueListenable: plotNotifier,
-                  builder: (context, currentData, _) {
-                    final bool hasData =
-                        currentData.isNotEmpty && currentData[0].isNotEmpty;
-
-                    final double calculatedWidth =
-                        widget.isImported
-                            ? (hasData
-                                ? currentData[0].last.x * 0.4
-                                : widget.windowSize.toDouble())
-                            : widget.windowSize.toDouble() * 0.5;
-
-                    return SizedBox(
-                      width: calculatedWidth,
-                      child: _chart(currentData),
-                    );
-                  },
-                ),
-              ),
-            ),
           ),
         ),
       ],
     );
   }
+
+  // @override
+  // Widget build(BuildContext context) {
+  //   return Row(
+  //     children: [
+  //       _leftConsole(), // ✅ Left panel with controls
+  //       Expanded(
+  //         child: Listener(
+  //           onPointerSignal: (event) {
+  //             if (event is PointerScrollEvent) {
+  //               _scrollController.jumpTo(
+  //                 _scrollController.offset + event.scrollDelta.dy,
+  //               );
+  //             }
+  //           },
+  //           child: Scrollbar(
+  //             controller: _scrollController,
+  //             thumbVisibility: true,
+  //             child: SingleChildScrollView(
+  //               controller: _scrollController,
+  //               scrollDirection: Axis.horizontal,
+  //               child: ValueListenableBuilder<List<List<FlSpot>>>(
+  //                 valueListenable: plotNotifier,
+  //                 builder: (context, currentData, _) {
+  //                   final bool hasData =
+  //                       currentData.isNotEmpty && currentData[0].isNotEmpty;
+
+  //                   final double calculatedWidth =
+  //                       widget.isImported
+  //                           ? (hasData
+  //                               ? currentData[0].last.x * 0.4
+  //                               : widget.windowSize.toDouble())
+  //                           : widget.windowSize.toDouble() * 0.5;
+
+  //                   return SizedBox(
+  //                     width: calculatedWidth,
+  //                     child: _chart(currentData),
+  //                   );
+  //                 },
+  //               ),
+  //             ),
+  //           ),
+  //         ),
+  //       ),
+  //     ],
+  //   );
+  // }
 }
