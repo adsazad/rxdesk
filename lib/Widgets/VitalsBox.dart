@@ -23,11 +23,9 @@ class VitalsBox extends StatelessWidget {
       width: 140,
       height: 130,
       child: Card(
-        elevation: 6,
+        elevation: 1,
         margin: const EdgeInsets.all(8),
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(0),
-        ),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(0)),
         child: Padding(
           padding: const EdgeInsets.all(12),
           child: Column(
@@ -52,7 +50,7 @@ class VitalsBox extends StatelessWidget {
                 value,
                 maxLines: 1,
                 minFontSize: 18,
-                style:  TextStyle(
+                style: TextStyle(
                   fontSize: 32,
                   fontWeight: FontWeight.bold,
                   color: color,

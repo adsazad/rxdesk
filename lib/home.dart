@@ -683,12 +683,16 @@ class _HomeState extends State<Home> {
   List<double> recentVolumes = [];
   bool wasExhaling = false;
 
-  onExhalationDetected() {
+  onExhalationDetected({data = null}) {
     print("Exaust Detected");
     try {
       CPETService cpet = CPETService();
-
-      var stats = ecgBPMCalculator.getStats(_inMemoryData);
+      var stats = {};
+      if (data != null) {
+        stats = ecgBPMCalculator.getStats(data);
+      } else {
+        stats = ecgBPMCalculator.getStats(_inMemoryData);
+      }
       // print(stats);
       final patientProvider = Provider.of<DefaultPatientModal>(
         context,
@@ -702,7 +706,11 @@ class _HomeState extends State<Home> {
         listen: false,
       );
 
-      cp = cpet.init(_inMemoryData, globalSettings);
+      if (data != null) {
+        cp = cpet.init(data, globalSettings);
+      } else {
+        cp = cpet.init(_inMemoryData, globalSettings);
+      }
       print(cp);
       // print(cp);
       setState(() {
@@ -1559,6 +1567,7 @@ class _HomeState extends State<Home> {
     int endIndex = (startIndex + count).clamp(0, sampleCount);
 
     List<List<double>> samples = [];
+    List<List<double>> chunkData = [];
     for (int i = startIndex; i < endIndex; i++) {
       final start = i * bytesPerSample;
       final chunk = sampleData.sublist(start, start + bytesPerSample);
@@ -1583,13 +1592,16 @@ class _HomeState extends State<Home> {
       // await Future.delayed(Duration(milliseconds: 100));
 
       final edt = myBigGraphKey.currentState?.updateEverything(numericSample);
-
+      if (edt != null && edt.length >= 5) {
+        chunkData.add([edt[0], edt[1], edt[2], edt[3], edt[4]]);
+      }
       // if (edt != null && edt.length >= 5) {
       //   _inMemoryData.add([edt[0], edt[1], edt[2], edt[3], edt[4]]);
       // }
 
       // samples.add(numericSample);
     }
+    onExhalationDetected(data: chunkData);
     // return samples;
   }
 
@@ -2488,9 +2500,9 @@ class _HomeState extends State<Home> {
           children: [
             Card(
               margin: const EdgeInsets.symmetric(vertical: 12, horizontal: 16),
-              elevation: 3,
+              elevation: 1,
               shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(12),
+                borderRadius: BorderRadius.circular(0),
               ),
               child: Padding(
                 padding: const EdgeInsets.all(16.0),
