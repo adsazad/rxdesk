@@ -97,6 +97,7 @@ class _HomeState extends State<Home> {
   bool isRecording = false;
 
   Map<String, dynamic>? cp;
+  Map<String, dynamic>? completeCp;
   late List<Map<String, dynamic>> plotConfig; // <-- Move plot config here
 
   StreamSubscription<Uint8List>? mainDataSubscription;
@@ -685,7 +686,7 @@ class _HomeState extends State<Home> {
   List<double> recentVolumes = [];
   bool wasExhaling = false;
 
-  onExhalationDetected({data = null}) {
+  onExhalationDetected({data = null, isComplete = false}) {
     print("Exaust Detected");
     try {
       CPETService cpet = CPETService();
@@ -712,6 +713,9 @@ class _HomeState extends State<Home> {
         cp = cpet.init(data, globalSettings);
       } else {
         cp = cpet.init(_inMemoryData, globalSettings);
+      }
+      if (isComplete == true) {
+        completeCp = cp;
       }
       print(cp);
       // print(cp);
@@ -1440,6 +1444,8 @@ class _HomeState extends State<Home> {
   double importProgressPercent = 0.0;
   double currentImportDisplayIndex = 0;
   File? importedFile;
+  Map<String, dynamic>? importedProtocol;
+  List<Map<String, dynamic>> importedMarkers = [];
 
   Future<void> importBinFileFromPath(String path) async {
     print("Importing file from path: $path");
@@ -1491,7 +1497,21 @@ class _HomeState extends State<Home> {
       final prefs = await SharedPreferences.getInstance();
       prefs.setString('default_patient', jsonEncode(patient));
       defaultProvider.setDefault(patient);
+      // Step 2.5: Store imported protocol and markers for later use
 
+      if (patient.containsKey('protocolDetails')) {
+        importedProtocol = patient['protocolDetails'];
+      }
+      if (patient.containsKey('markers')) {
+        final markersRaw = patient['markers'];
+        if (markersRaw is List) {
+          importedMarkers =
+              markersRaw
+                  .whereType<Map>()
+                  .map((e) => Map<String, dynamic>.from(e))
+                  .toList();
+        }
+      }
       // Step 3: Push all samples to graph and memory (combined loop)
       _inMemoryData.clear();
       for (int i = 0; i < sampleCount; i++) {
@@ -1530,7 +1550,7 @@ class _HomeState extends State<Home> {
       setState(() {
         importProgressPercent = 1.0;
       });
-      onExhalationDetected();
+      onExhalationDetected(isComplete: true);
     } catch (e) {
       print("❌ Error while importing: $e");
       setState(() {
@@ -2484,12 +2504,6 @@ class _HomeState extends State<Home> {
                   "length": sampleCounter,
                   "type": "protocol_phase",
                 });
-              } else {
-                markers[lastIndex] = {
-                  "name": phase["id"],
-                  "length": sampleCounter,
-                  "type": "protocol_phase",
-                };
               }
               break;
             }
@@ -2857,7 +2871,9 @@ class _HomeState extends State<Home> {
                                               listen: false,
                                             ).patient ??
                                             {},
-                                        breathStats: cp!["breathStats"],
+                                        breathStats: completeCp!["breathStats"],
+                                        markers: importedMarkers,
+                                        protocolDetails: importedProtocol,
                                         graphBase64List: graphBase64List,
                                       ),
                                 ),

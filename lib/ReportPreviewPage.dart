@@ -17,6 +17,8 @@ import 'dart:developer' as developer;
 class ReportPreviewPage extends StatefulWidget {
   final Map<String, dynamic> patient;
   final List<Map<String, dynamic>> breathStats;
+  final Map<String, dynamic>? protocolDetails; // Optional: protocol details
+  final List<Map<String, dynamic>>? markers;
   final List<String>?
   graphBase64List; // Optional: List of base64 PNGs for graphs
 
@@ -24,6 +26,8 @@ class ReportPreviewPage extends StatefulWidget {
     Key? key,
     required this.patient,
     required this.breathStats,
+    required this.protocolDetails,
+    required this.markers,
     this.graphBase64List,
   }) : super(key: key);
 
@@ -43,6 +47,102 @@ class _ReportPreviewPageState extends State<ReportPreviewPage> {
       chartImage = await _captureChartImage(_rerChartKey);
       setState(() {}); // Now chartImage is ready for PDF
     });
+  }
+
+  pw.Widget buildPhaseStatsPdfTable({
+    required List<Map<String, dynamic>> markers,
+    required List<Map<String, dynamic>> breathStats,
+    required List phases, // protocol['phases']
+  }) {
+    // Calculate absolute start/end for each phase
+    print(markers);
+    List<Map<String, dynamic>> phaseRanges = [];
+    for (int i = 0; i < markers.length; i++) {
+      final start = i == 0 ? 0 : (markers[i - 1]["length"] ?? 0);
+      final end = markers[i]["length"] ?? 0;
+      phaseRanges.add({"name": markers[i]["name"], "start": start, "end": end});
+    }
+    print(phaseRanges);
+
+    // Helper to get stats for a phase
+    Map<String, dynamic> getPhaseStats(int start, int end) {
+      final statsInPhase =
+          breathStats.where((s) {
+            final idx = s["index"] ?? 0;
+            return idx >= start && idx <= end;
+          }).toList();
+      if (statsInPhase.isEmpty) return {};
+
+      double avgVo2 =
+          statsInPhase.map((s) => s["vo2"] ?? 0.0).reduce((a, b) => a + b) /
+          statsInPhase.length;
+      double avgVco2 =
+          statsInPhase.map((s) => s["vco2"] ?? 0.0).reduce((a, b) => a + b) /
+          statsInPhase.length;
+      double avgRer =
+          statsInPhase.map((s) => s["rer"] ?? 0.0).reduce((a, b) => a + b) /
+          statsInPhase.length;
+      double avgVe =
+          statsInPhase
+              .map((s) => s["minuteVentilation"] ?? 0.0)
+              .reduce((a, b) => a + b) /
+          statsInPhase.length;
+      double avgHr =
+          statsInPhase.map((s) => s["hr"] ?? 0.0).reduce((a, b) => a + b) /
+          statsInPhase.length;
+
+      return {
+        "vo2": avgVo2,
+        "vco2": avgVco2,
+        "rer": avgRer,
+        "ve": avgVe,
+        "hr": avgHr,
+      };
+    }
+
+    final headers = [
+      "Phase",
+      "VO₂ (L/min)",
+      "VCO₂ (L/min)",
+      "RER",
+      "VE (L/min)",
+      "HR",
+    ];
+
+    final rows = [
+      for (int i = 0; i < phaseRanges.length; i++)
+        (() {
+          final phase = phases.firstWhere(
+            (p) => p['id'] == phaseRanges[i]["name"],
+            orElse: () => <String, dynamic>{},
+          );
+          final stats = getPhaseStats(
+            phaseRanges[i]["start"],
+            phaseRanges[i]["end"],
+          );
+          return [
+            phase['name'] ?? phaseRanges[i]["name"],
+            stats["vo2"] != null ? stats["vo2"].toStringAsFixed(2) : "-",
+            stats["vco2"] != null ? stats["vco2"].toStringAsFixed(2) : "-",
+            stats["rer"] != null ? stats["rer"].toStringAsFixed(2) : "-",
+            stats["ve"] != null ? stats["ve"].toStringAsFixed(2) : "-",
+            stats["hr"] != null ? stats["hr"].toStringAsFixed(0) : "-",
+          ];
+        })(),
+    ];
+
+    return pw.Table.fromTextArray(
+      headers: headers,
+      data: rows,
+      cellAlignment: pw.Alignment.center,
+      headerStyle: pw.TextStyle(fontWeight: pw.FontWeight.bold),
+      headerDecoration: pw.BoxDecoration(color: PdfColors.grey300),
+      cellStyle: pw.TextStyle(fontSize: 10),
+      cellHeight: 18,
+      columnWidths: {
+        for (var i = 0; i < headers.length; i++) i: const pw.FlexColumnWidth(),
+      },
+    );
   }
 
   List<String> getBreathStatsHeaders(List<Map<String, dynamic>> breathStats) {
@@ -257,6 +357,11 @@ class _ReportPreviewPageState extends State<ReportPreviewPage> {
               //   'Breath Stats:',
               //   style: pw.TextStyle(fontWeight: pw.FontWeight.bold),
               // ),
+              buildPhaseStatsPdfTable(
+                markers: widget.markers!,
+                breathStats: widget.breathStats,
+                phases: widget.protocolDetails!['phases'] ?? [],
+              ),
               pw.SizedBox(height: 8),
               pw.TableHelper.fromTextArray(
                 headers: headers,
