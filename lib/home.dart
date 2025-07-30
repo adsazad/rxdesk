@@ -719,26 +719,44 @@ class _HomeState extends State<Home> {
       }
       print(cp);
       // print(cp);
+      // Safely extract values with null checks
+      final lastBreathStat = cp != null ? cp!["lastBreathStat"] : null;
       setState(() {
-        votwo = cp!["lastBreathStat"]["vo2"];
-        vco = cp!["lastBreathStat"]["vco2"];
-        rer = cp!["lastBreathStat"]["rer"];
-        vol = cp!["minuteVentilation"];
-        respirationRate = cp!["respirationRate"];
-        bpm = stats["bpm"];
+        votwo =
+            (lastBreathStat != null && lastBreathStat["vo2"] != null)
+                ? lastBreathStat["vo2"]
+                : 0.0;
+        vco =
+            (lastBreathStat != null && lastBreathStat["vco2"] != null)
+                ? lastBreathStat["vco2"]
+                : 0.0;
+        rer =
+            (lastBreathStat != null && lastBreathStat["rer"] != null)
+                ? lastBreathStat["rer"]
+                : 0.0;
+        vol =
+            (cp != null && cp!["minuteVentilation"] != null)
+                ? cp!["minuteVentilation"]
+                : 0.0;
+        respirationRate =
+            (cp != null && cp!["respirationRate"] != null)
+                ? cp!["respirationRate"]
+                : 0.0;
+        bpm = (stats != null && stats["bpm"] != null) ? stats["bpm"] : 0.0;
         final defaultProvider = Provider.of<DefaultPatientModal>(
           context,
           listen: false,
         );
         final patient = defaultProvider.patient;
-        print("VCOTWOKGCALC");
-        if (patient != null) {
-          print("VCOTWOKGCALC");
-          double weight = double.parse(patient["weight"]);
-          setState(() {
+        if (patient != null && patient["weight"] != null && votwo != null) {
+          double? weight = double.tryParse(patient["weight"].toString());
+          if (weight != null && weight > 0) {
             votwokg = (votwo * 1000) / weight;
-            print("VOTWOKG: $votwokg");
-          });
+          } else {
+            votwokg = 0.0;
+          }
+        } else {
+          votwokg = 0.0;
         }
       });
       if (cp != null && cp!['breathStats'] != null) {
@@ -747,8 +765,9 @@ class _HomeState extends State<Home> {
           cp!['breathStats'],
         );
         breathStatsNotifier.value = updatedBreathStats;
-        if (modalSetState != null)
+        if (modalSetState != null) {
           modalSetState!(() {}); // manually update modal table
+        }
       }
 
       print("update");
@@ -1211,9 +1230,11 @@ class _HomeState extends State<Home> {
               : 'No Patient',
           style: TextStyle(fontSize: 18.5, fontWeight: FontWeight.bold),
         ),
-        _nextPreviousButtons(),
+        if(isImported == true) _nextPreviousButtons(),
 
-        protocolDisplay(),
+        recordingIndicator(),
+
+        if (isImported == false) protocolDisplay(),
 
         Row(
           children: [
@@ -1450,7 +1471,6 @@ class _HomeState extends State<Home> {
   Future<void> importBinFileFromPath(String path) async {
     print("Importing file from path: $path");
     setState(() {
-      isImported = true;
       importProgressPercent = 0.0;
     });
 
@@ -1549,6 +1569,7 @@ class _HomeState extends State<Home> {
       print("Imported $sampleCount samples.");
       setState(() {
         importProgressPercent = 1.0;
+        isImported = true;
       });
       onExhalationDetected(isComplete: true);
     } catch (e) {
@@ -1629,7 +1650,11 @@ class _HomeState extends State<Home> {
   }
 
   _nextPreviousButtons() {
-    if (isImported) {
+    print("isImported");
+    print(isImported);
+    if (isImported == true) {
+      print("__inMemoryDataLLL");
+      print(_inMemoryData.length);
       // Show next/previous buttons
       return Row(
         mainAxisAlignment: MainAxisAlignment.center,
@@ -1652,6 +1677,8 @@ class _HomeState extends State<Home> {
           Text(
             "${((currentImportDisplayIndex / 300).floor() ~/ 60).toString().padLeft(2, '0')}:${((currentImportDisplayIndex / 300).floor() % 60).toString().padLeft(2, '0')} / "
             "${_inMemoryData.isNotEmpty ? (() {
+                  print("_inMemoryDataLen");
+                  print(_inMemoryData.length);
                   final totalSeconds = _inMemoryData.length ~/ 300;
                   final min = (totalSeconds ~/ 60).toString().padLeft(2, '0');
                   final sec = (totalSeconds % 60).toString().padLeft(2, '0');
@@ -1675,6 +1702,7 @@ class _HomeState extends State<Home> {
                       maxIndex,
                     )).toDouble();
               });
+              print("Current Import Display Index: $currentImportDisplayIndex");
               getSamplesFromFile(currentImportDisplayIndex.toInt());
               // Handle next button press
             },
@@ -1712,9 +1740,9 @@ class _HomeState extends State<Home> {
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
-    resetAllData(import: true); // Reset data on every dependency change
     final importProvider = Provider.of<ImportFileProvider>(context);
     if (importProvider.filePath != null) {
+          resetAllData(import: true); // Reset data on every dependency change
       importBinFileFromPath(importProvider.filePath!);
       // Schedule clear after build is complete
       WidgetsBinding.instance.addPostFrameCallback((_) {
@@ -2469,6 +2497,9 @@ class _HomeState extends State<Home> {
     resetAllData();
   }
 
+  int? lastPhaseIndex;
+  String? lastPhaseName;
+
   Widget protocolDisplay() {
     return Consumer<GlobalSettingsModal>(
       builder: (context, globalSettings, child) {
@@ -2493,24 +2524,49 @@ class _HomeState extends State<Home> {
               phaseName = phase['name'] ?? "Phase ${i + 1}";
               phaseIndex = i;
 
-              // Find last protocol_phase marker for this phase
-              final lastIndex = markers.lastIndexWhere(
+              // If phase changed, update the previous marker's length
+              if (lastPhaseIndex != null && lastPhaseIndex != phaseIndex) {
+                final lastIndex = markers.lastIndexWhere(
+                  (m) =>
+                      m["type"] == "protocol_phase" &&
+                      m["name"] == lastPhaseName,
+                );
+                if (lastIndex != -1) {
+                  markers[lastIndex]["length"] = sampleCounter;
+                }
+              }
+
+              // If this phase marker doesn't exist, add it
+              final markerIndex = markers.lastIndexWhere(
                 (m) =>
                     m["type"] == "protocol_phase" && m["name"] == phase["id"],
               );
-              if (lastIndex == -1) {
+              if (markerIndex == -1) {
                 markers.add({
                   "name": phase["id"],
-                  "length": sampleCounter,
+                  "length": 0, // Will be updated when phase ends
                   "type": "protocol_phase",
                 });
               }
+
+              lastPhaseIndex = phaseIndex;
+              lastPhaseName = phase["id"];
               break;
             }
             cumulative += phaseDuration;
           }
           if (phaseIndex == -1 && protocol['phases'].isNotEmpty) {
             phaseName = "Completed";
+            // Update the last marker's length to the final sampleCounter
+            if (lastPhaseIndex != null) {
+              final lastIndex = markers.lastIndexWhere(
+                (m) =>
+                    m["type"] == "protocol_phase" && m["name"] == lastPhaseName,
+              );
+              if (lastIndex != -1) {
+                markers[lastIndex]["length"] = sampleCounter;
+              }
+            }
             WidgetsBinding.instance.addPostFrameCallback((_) {
               if (isRecording) _stopRecording();
             });
@@ -2533,7 +2589,6 @@ class _HomeState extends State<Home> {
                     Column(
                       crossAxisAlignment: CrossAxisAlignment.center,
                       children: [
-                        recordingIndicator(),
                         SizedBox(height: 8),
                         Text(
                           "${protocol['name']}",
