@@ -53,16 +53,15 @@ class _ReportPreviewPageState extends State<ReportPreviewPage> {
     required List<Map<String, dynamic>> markers,
     required List<Map<String, dynamic>> breathStats,
     required List phases, // protocol['phases']
+    Map<String, dynamic>? patient, // Pass patient info for predictions
   }) {
     // Calculate absolute start/end for each phase
-    print(markers);
     List<Map<String, dynamic>> phaseRanges = [];
     for (int i = 0; i < markers.length; i++) {
       final start = i == 0 ? 0 : (markers[i - 1]["length"] ?? 0);
       final end = markers[i]["length"] ?? 0;
       phaseRanges.add({"name": markers[i]["name"], "start": start, "end": end});
     }
-    print(phaseRanges);
 
     // Helper to get stats for a phase
     Map<String, dynamic> getPhaseStats(int start, int end) {
@@ -91,8 +90,29 @@ class _ReportPreviewPageState extends State<ReportPreviewPage> {
           statsInPhase.map((s) => s["hr"] ?? 0.0).reduce((a, b) => a + b) /
           statsInPhase.length;
 
+      // Calculate avgVo2kg if possible
+      double? avgVo2kg;
+      double? weight = double.tryParse((patient?['weight'] ?? '').toString());
+      if (weight != null && weight > 0) {
+        avgVo2kg = avgVo2 * 1000 / weight;
+      }
+
+      // Calculate avgTime in mm:ss for the phase
+      String? avgTime;
+      if (statsInPhase.isNotEmpty && statsInPhase.first.containsKey('index')) {
+        int avgIdx =
+            (statsInPhase.map((s) => s["index"] ?? 0).reduce((a, b) => a + b) /
+                    statsInPhase.length)
+                .round();
+        int seconds = (avgIdx / 300).floor(); // assuming 300Hz sampling rate
+        avgTime =
+            "${(seconds ~/ 60).toString().padLeft(2, '0')}:${(seconds % 60).toString().padLeft(2, '0')}";
+      }
+
       return {
+        "time": avgTime,
         "vo2": avgVo2,
+        "vo2kg": avgVo2kg,
         "vco2": avgVco2,
         "rer": avgRer,
         "ve": avgVe,
@@ -100,47 +120,105 @@ class _ReportPreviewPageState extends State<ReportPreviewPage> {
       };
     }
 
-    final headers = [
-      "Phase",
-      "VO₂ (L/min)",
-      "VCO₂ (L/min)",
-      "RER",
-      "VE (L/min)",
-      "HR",
+    // --- Prediction formulas ---
+    double? height = double.tryParse((patient?['height'] ?? '').toString());
+    double? weight = double.tryParse((patient?['weight'] ?? '').toString());
+    int? age = int.tryParse((patient?['age'] ?? '').toString());
+    String gender = (patient?['gender'] ?? '').toString().toLowerCase();
+
+    double? vo2max;
+    if (height != null && weight != null && age != null) {
+      if (gender == 'male' || gender == 'm') {
+        vo2max = (0.023 * height) - (0.021 * age) + (0.0111 * weight) - 1.40;
+      } else if (gender == 'female' || gender == 'f') {
+        vo2max = (0.021 * height) - (0.019 * age) + (0.00737 * weight) - 0.60;
+      }
+    }
+
+    double? vo2kgPred =
+        (vo2max != null && weight != null && weight > 0)
+            ? vo2max * 1000 / weight
+            : null;
+    double? vePred = vo2max != null ? vo2max * 27 : null;
+    double? vco2Pred = vo2max != null ? vo2max * 1.10 : null;
+    double? rerPred = 1.10; // at peak
+    double? reePred =
+        (weight != null && height != null && age != null)
+            ? (10 * weight +
+                6.25 * height -
+                5 * age +
+                5) // +5 for men, -161 for women (Mifflin-St Jeor)
+            : null;
+    if (gender == 'female' || gender == 'f') {
+      if (reePred != null) reePred = reePred - 166;
+    }
+
+    // Stat names and display labels
+    final statKeys = [
+      {"key": "time", "label": "Time (mm:ss)", "pred": "-"},
+      {"key": "vo2", "label": "VO₂max (L/min)", "pred": vo2max},
+      {"key": "vo2kg", "label": "VO₂/kg (mL/min/kg)", "pred": vo2kgPred},
+      {"key": "ve", "label": "VE (L/min)", "pred": vePred},
+      {"key": "vco2", "label": "V'CO₂ (L/min)", "pred": vco2Pred},
+      {"key": "rer", "label": "RER", "pred": rerPred},
+      {"key": "ree", "label": "REE (kcal/day)", "pred": reePred},
+      {"key": "hr", "label": "HR", "pred": "-"},
     ];
 
-    final rows = [
+    // Phase names for columns
+    final phaseNames = [
       for (int i = 0; i < phaseRanges.length; i++)
         (() {
           final phase = phases.firstWhere(
             (p) => p['id'] == phaseRanges[i]["name"],
             orElse: () => <String, dynamic>{},
           );
-          final stats = getPhaseStats(
-            phaseRanges[i]["start"],
-            phaseRanges[i]["end"],
-          );
-          return [
-            phase['name'] ?? phaseRanges[i]["name"],
-            stats["vo2"] != null ? stats["vo2"].toStringAsFixed(2) : "-",
-            stats["vco2"] != null ? stats["vco2"].toStringAsFixed(2) : "-",
-            stats["rer"] != null ? stats["rer"].toStringAsFixed(2) : "-",
-            stats["ve"] != null ? stats["ve"].toStringAsFixed(2) : "-",
-            stats["hr"] != null ? stats["hr"].toStringAsFixed(0) : "-",
-          ];
+          return phase['name'] ?? phaseRanges[i]["name"];
         })(),
     ];
 
+    // Build rows: each stat, with prediction and value for each phase
+    final data = [
+      for (final stat in statKeys)
+        [
+          stat["label"],
+          stat["pred"] is double
+              ? (stat["pred"] as double).toStringAsFixed(2)
+              : (stat["pred"]?.toString() ?? "-"),
+          ...[
+            for (int i = 0; i < phaseRanges.length; i++)
+              (() {
+                final stats = getPhaseStats(
+                  phaseRanges[i]["start"],
+                  phaseRanges[i]["end"],
+                );
+                final val = stats[stat["key"]];
+                if (val == null) return "-";
+                if (stat["key"] == "hr") return val.toStringAsFixed(0);
+                if (stat["key"] == "time") return val.toString();
+                if (val is double) return val.toStringAsFixed(2);
+                return val.toString();
+              })(),
+          ],
+        ],
+    ];
+
     return pw.Table.fromTextArray(
-      headers: headers,
-      data: rows,
+      headers: ["Parameter", "Pred", ...phaseNames],
+      data: data,
       cellAlignment: pw.Alignment.center,
-      headerStyle: pw.TextStyle(fontWeight: pw.FontWeight.bold),
-      headerDecoration: pw.BoxDecoration(color: PdfColors.grey300),
-      cellStyle: pw.TextStyle(fontSize: 10),
-      cellHeight: 18,
+      headerStyle: pw.TextStyle(fontWeight: pw.FontWeight.bold, fontSize: 8),
+      headerDecoration: pw.BoxDecoration(
+        border: pw.Border(
+          bottom: pw.BorderSide(width: 0.5, color: PdfColors.grey600),
+        ),
+      ),
+      cellStyle: pw.TextStyle(fontSize: 7),
+      cellHeight: 16,
+      border: null,
       columnWidths: {
-        for (var i = 0; i < headers.length; i++) i: const pw.FlexColumnWidth(),
+        for (var i = 0; i < phaseNames.length + 2; i++)
+          i: const pw.FlexColumnWidth(),
       },
     );
   }
@@ -361,16 +439,25 @@ class _ReportPreviewPageState extends State<ReportPreviewPage> {
                 markers: widget.markers!,
                 breathStats: widget.breathStats,
                 phases: widget.protocolDetails!['phases'] ?? [],
+                patient: widget.patient,
               ),
               pw.SizedBox(height: 8),
-              pw.TableHelper.fromTextArray(
+              pw.Table.fromTextArray(
                 headers: headers,
                 data: rows,
                 cellAlignment: pw.Alignment.center,
-                headerStyle: pw.TextStyle(fontWeight: pw.FontWeight.bold),
-                headerDecoration: pw.BoxDecoration(color: PdfColors.grey300),
-                cellStyle: pw.TextStyle(fontSize: 8),
-                cellHeight: 18,
+                headerStyle: pw.TextStyle(
+                  fontWeight: pw.FontWeight.bold,
+                  fontSize: 5,
+                ),
+                headerDecoration: pw.BoxDecoration(
+                  border: pw.Border(
+                    bottom: pw.BorderSide(width: 0.5, color: PdfColors.grey600),
+                  ),
+                ),
+                cellStyle: pw.TextStyle(fontSize: 5),
+                cellHeight: 10,
+                border: null,
                 columnWidths: {
                   for (var i = 0; i < headers.length; i++)
                     i: const pw.FlexColumnWidth(),
