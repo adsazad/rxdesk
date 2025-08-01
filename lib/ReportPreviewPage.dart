@@ -263,10 +263,10 @@ class _ReportPreviewPageState extends State<ReportPreviewPage> {
     // Stat names and display labels
     final statKeys = [
       {"key": "time", "label": "Time (mm:ss)", "pred": "-"},
-      {"key": "vo2", "label": "VO₂max (L/min)", "pred": vo2max},
-      {"key": "vo2kg", "label": "VO₂/kg (mL/min/kg)", "pred": vo2kgPred},
+      {"key": "vo2", "label": "VO2max (L/min)", "pred": vo2max},
+      {"key": "vo2kg", "label": "VO2/kg (mL/min/kg)", "pred": vo2kgPred},
       {"key": "ve", "label": "VE (L/min)", "pred": vePred},
-      {"key": "vco2", "label": "V'CO₂ (L/min)", "pred": vco2Pred},
+      {"key": "vco2", "label": "V'CO2 (L/min)", "pred": vco2Pred},
       {"key": "rer", "label": "RER", "pred": rerPred},
       {"key": "ree", "label": "REE (kcal/day)", "pred": reePred},
       {"key": "hr", "label": "HR", "pred": "-"},
@@ -274,17 +274,16 @@ class _ReportPreviewPageState extends State<ReportPreviewPage> {
 
     // Phase names for columns (add AT)
     final phaseNames = [
-      ...[
-        for (int i = 0; i < phaseRanges.length; i++)
-          (() {
-            final phase = phases.firstWhere(
-              (p) => p['id'] == phaseRanges[i]["name"],
-              orElse: () => <String, dynamic>{},
-            );
-            return phase['name'] ?? phaseRanges[i]["name"];
-          })(),
-      ],
+      for (int i = 0; i < phaseRanges.length; i++)
+        (() {
+          final phase = phases.firstWhere(
+            (p) => p['id'] == phaseRanges[i]["name"],
+            orElse: () => <String, dynamic>{},
+          );
+          return phase['name'] ?? phaseRanges[i]["name"];
+        })(),
       "AT",
+      "% Pred",
     ];
 
     // Get AT stats using selected method
@@ -318,7 +317,6 @@ class _ReportPreviewPageState extends State<ReportPreviewPage> {
               })(),
             // AT column
             (() {
-              // Use "at_time" for time row, otherwise use stat key
               final atVal =
                   stat["key"] == "time"
                       ? atStats!["at_time"]
@@ -328,6 +326,17 @@ class _ReportPreviewPageState extends State<ReportPreviewPage> {
               if (stat["key"] == "time") return atVal.toString();
               if (atVal is double) return atVal.toStringAsFixed(2);
               return atVal.toString();
+            })(),
+            // % Pred column (after AT)
+            (() {
+              // Only show % for numeric stats with a prediction
+              final pred = stat["pred"];
+              final atVal =
+                  stat["key"] == "time" ? null : atStats?[stat["key"]];
+              if (pred is double && atVal is double && pred != 0) {
+                return "${((atVal / pred) * 100).toStringAsFixed(0)} %";
+              }
+              return "-";
             })(),
           ],
         ],
@@ -530,6 +539,13 @@ class _ReportPreviewPageState extends State<ReportPreviewPage> {
                       crossAxisAlignment: pw.CrossAxisAlignment.start,
                       children: [
                         pw.Text(
+                          'Height: ${widget.patient['height']?.toString() ?? '-'} cm',
+                          style: pw.TextStyle(
+                            color: PdfColors.grey700,
+                            fontSize: 10,
+                          ),
+                        ),
+                        pw.Text(
                           'Weight: $patientWeight kg',
                           style: pw.TextStyle(
                             color: PdfColors.grey700,
@@ -705,9 +721,9 @@ Future<File> generateBreathStatsPdf({
 
   // Prepare table headers and rows
   final headers = [
-    "V'O₂ [L/min]",
-    "V'O₂/kg [mL/min/kg]",
-    "V'CO₂ [L/min]",
+    "V'O2 [L/min]",
+    "V'O2/kg [mL/min/kg]",
+    "V'CO2 [L/min]",
     "RER []",
     "V'E [L/min]",
     "VT [L]",
