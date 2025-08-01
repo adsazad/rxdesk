@@ -868,9 +868,9 @@ class MyBigGraphV2State extends State<MyBigGraphV2> {
         int numBoxes = 5;
 
         if (increase) {
-          boxValue /= 1.5;
-        } else {
           boxValue *= 1.5;
+        } else {
+          boxValue /= 1.5;
         }
 
         if (boxValue < 0.001) boxValue = 0.001;
