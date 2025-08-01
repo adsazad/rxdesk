@@ -49,11 +49,118 @@ class _ReportPreviewPageState extends State<ReportPreviewPage> {
     });
   }
 
+  // Returns a Map with AT point stats and the index at which AT was detected.
+  // Also calculates vo2kg and ve at that point.
+  Map<String, dynamic>? getATPhaseStats({
+    required List<Map<String, dynamic>> breathStats,
+    required Map<String, dynamic>? patient,
+    required String
+    method, // "VO2 max" or "VE/VO₂ increases while VE/VCO₂ remains stable or decreases"
+  }) {
+    if (breathStats.isEmpty) return null;
+
+    int? atIndex;
+    Map<String, dynamic>? atRow;
+
+    if (method == "VO2 max") {
+      // AT at 60% of VO2max
+      double? weight = double.tryParse((patient?['weight'] ?? '').toString());
+      double? height = double.tryParse((patient?['height'] ?? '').toString());
+      int? age = int.tryParse((patient?['age'] ?? '').toString());
+      String gender = (patient?['gender'] ?? '').toString().toLowerCase();
+
+      double? vo2max;
+      if (height != null && weight != null && age != null) {
+        if (gender == 'male' || gender == 'm') {
+          vo2max = (0.023 * height) - (0.021 * age) + (0.0111 * weight) - 1.40;
+        } else if (gender == 'female' || gender == 'f') {
+          vo2max = (0.021 * height) - (0.019 * age) + (0.00737 * weight) - 0.60;
+        }
+      }
+      if (vo2max == null) return null;
+      double atVo2 = vo2max * 0.6;
+
+      // Find the breathStats entry closest to this VO2
+      int minIdx = 0;
+      double minDiff = double.infinity;
+      for (int i = 0; i < breathStats.length; i++) {
+        double diff = ((breathStats[i]['vo2'] ?? 0.0) - atVo2).abs();
+        if (diff < minDiff) {
+          minDiff = diff;
+          minIdx = i;
+        }
+      }
+      atRow = Map<String, dynamic>.from(breathStats[minIdx]);
+      atIndex = atRow['index'] ?? minIdx;
+    } else if (method ==
+        "VE/VO₂ increases while VE/VCO₂ remains stable or decreases") {
+      // Find the first index where VE/VO2 increases and VE/VCO2 is stable or decreases
+      for (int i = 1; i < breathStats.length; i++) {
+        final prev = breathStats[i - 1];
+        final curr = breathStats[i];
+        final prevVeVo2 =
+            prev['ve'] != null && prev['vo2'] != null && prev['vo2'] != 0
+                ? prev['ve'] / prev['vo2']
+                : null;
+        final currVeVo2 =
+            curr['ve'] != null && curr['vo2'] != null && curr['vo2'] != 0
+                ? curr['ve'] / curr['vo2']
+                : null;
+        final prevVeVco2 =
+            prev['ve'] != null && prev['vco2'] != null && prev['vco2'] != 0
+                ? prev['ve'] / prev['vco2']
+                : null;
+        final currVeVco2 =
+            curr['ve'] != null && curr['vco2'] != null && curr['vco2'] != 0
+                ? curr['ve'] / curr['vco2']
+                : null;
+        if (prevVeVo2 != null &&
+            currVeVo2 != null &&
+            prevVeVco2 != null &&
+            currVeVco2 != null) {
+          if (currVeVo2 > prevVeVo2 && currVeVco2 <= prevVeVco2) {
+            atRow = Map<String, dynamic>.from(curr);
+            atIndex = atRow['index'] ?? i;
+            break;
+          }
+        }
+      }
+    }
+
+    if (atRow == null) return null;
+
+    // Calculate vo2kg and ve at AT point
+    double? weight = double.tryParse((patient?['weight'] ?? '').toString());
+    double? vo2 = atRow['vo2'] is num ? atRow['vo2'].toDouble() : null;
+    double? ve = atRow['ve'] ?? atRow['minuteVentilation'];
+    double? vo2kg;
+    if (vo2 != null && weight != null && weight > 0) {
+      vo2kg = vo2 * 1000 / weight;
+    }
+
+    // Calculate time at AT point (assuming 300Hz sampling rate)
+    int idx = atIndex ?? 0;
+    int seconds = (idx / 300).floor();
+    String atTime =
+        "${(seconds ~/ 60).toString().padLeft(2, '0')}:${(seconds % 60).toString().padLeft(2, '0')}";
+
+    return {
+      ...atRow,
+      "at_index": atIndex,
+      "vo2kg": vo2kg,
+      "ve": ve,
+      "at_time": atTime,
+    };
+  }
+
+  // Replace your buildPhaseStatsPdfTable with this version to add the AT column
   pw.Widget buildPhaseStatsPdfTable({
     required List<Map<String, dynamic>> markers,
     required List<Map<String, dynamic>> breathStats,
     required List phases, // protocol['phases']
     Map<String, dynamic>? patient, // Pass patient info for predictions
+    String atDetectionMethod =
+        "VO2 max", // or "VE/VO₂ increases while VE/VCO₂ remains stable or decreases"
   }) {
     // Calculate absolute start/end for each phase
     List<Map<String, dynamic>> phaseRanges = [];
@@ -165,19 +272,29 @@ class _ReportPreviewPageState extends State<ReportPreviewPage> {
       {"key": "hr", "label": "HR", "pred": "-"},
     ];
 
-    // Phase names for columns
+    // Phase names for columns (add AT)
     final phaseNames = [
-      for (int i = 0; i < phaseRanges.length; i++)
-        (() {
-          final phase = phases.firstWhere(
-            (p) => p['id'] == phaseRanges[i]["name"],
-            orElse: () => <String, dynamic>{},
-          );
-          return phase['name'] ?? phaseRanges[i]["name"];
-        })(),
+      ...[
+        for (int i = 0; i < phaseRanges.length; i++)
+          (() {
+            final phase = phases.firstWhere(
+              (p) => p['id'] == phaseRanges[i]["name"],
+              orElse: () => <String, dynamic>{},
+            );
+            return phase['name'] ?? phaseRanges[i]["name"];
+          })(),
+      ],
+      "AT",
     ];
 
-    // Build rows: each stat, with prediction and value for each phase
+    // Get AT stats using selected method
+    final atStats = getATPhaseStats(
+      breathStats: breathStats,
+      patient: patient,
+      method: atDetectionMethod,
+    );
+
+    // Build rows: each stat, with prediction and value for each phase and AT
     final data = [
       for (final stat in statKeys)
         [
@@ -199,6 +316,19 @@ class _ReportPreviewPageState extends State<ReportPreviewPage> {
                 if (val is double) return val.toStringAsFixed(2);
                 return val.toString();
               })(),
+            // AT column
+            (() {
+              // Use "at_time" for time row, otherwise use stat key
+              final atVal =
+                  stat["key"] == "time"
+                      ? atStats!["at_time"]
+                      : atStats![stat["key"]];
+              if (atVal == null) return "-";
+              if (stat["key"] == "hr") return atVal.toStringAsFixed(0);
+              if (stat["key"] == "time") return atVal.toString();
+              if (atVal is double) return atVal.toStringAsFixed(2);
+              return atVal.toString();
+            })(),
           ],
         ],
     ];
@@ -440,6 +570,9 @@ class _ReportPreviewPageState extends State<ReportPreviewPage> {
                 breathStats: widget.breathStats,
                 phases: widget.protocolDetails!['phases'] ?? [],
                 patient: widget.patient,
+                atDetectionMethod:
+                    globalSettings.atDetectionMethod ??
+                    "VO2 max", // Use global settings for AT detection method
               ),
               pw.SizedBox(height: 8),
               pw.Table.fromTextArray(

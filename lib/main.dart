@@ -58,6 +58,7 @@ void main() async {
       hospitalEmail: '',
       deviceType: "none",
       machineCom: "none",
+      atDetectionMethod: "VO2 max",
     );
     globalSettings.fromJson(settingsJson);
   } else {
@@ -84,6 +85,7 @@ void main() async {
       hospitalEmail: '',
       deviceType: "none",
       machineCom: "none",
+      atDetectionMethod: "VO2 max",
     );
   }
 

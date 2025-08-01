@@ -36,6 +36,8 @@ class GlobalSettingsModal with ChangeNotifier {
   String ergoProtocol = "Ramp Protocol"; // "Ramp Protocol", "Incremental Step Protocol"
   String treadmillProtocol = "Bruce"; // "Bruce", "Modified Bruce"
 
+  String atDetectionMethod = "VO2 max"; // "VO2 max", "VE/VO₂ increases while VE/VCO₂ remains stable or decreases", "Manually mark"
+
   GlobalSettingsModal({
     required this.com,
     required this.autoRecordOnOff,
@@ -62,6 +64,7 @@ class GlobalSettingsModal with ChangeNotifier {
     this.machineCom = "none",
     this.ergoProtocol = "Ramp Protocol",
     this.treadmillProtocol = "Bruce",
+    this.atDetectionMethod = "VO2 max",
   });
 
   void setAutoRecordOnOff(bool value) {
@@ -161,6 +164,11 @@ class GlobalSettingsModal with ChangeNotifier {
     notifyListeners();
   }
 
+  void setAtDetectionMethod(String value) {
+    atDetectionMethod = value;
+    notifyListeners();
+  }
+
   void setAll(
     bool autoRecordOnOff,
     bool filterOnOf,
@@ -224,6 +232,7 @@ class GlobalSettingsModal with ChangeNotifier {
       "machineCom": machineCom,
       "ergoProtocol": ergoProtocol,
       "treadmillProtocol": treadmillProtocol,
+      "atDetectionMethod": atDetectionMethod,
     };
     String jsonString = jsonEncode(json);
     return jsonString;
@@ -258,6 +267,7 @@ class GlobalSettingsModal with ChangeNotifier {
     machineCom = arr["machineCom"] ?? "none";
     ergoProtocol = arr["ergoProtocol"] ?? "Ramp Protocol";
     treadmillProtocol = arr["treadmillProtocol"] ?? "Bruce";
+    atDetectionMethod = arr["atDetectionMethod"] ?? "VO2 max";
 
     notifyListeners();
   }

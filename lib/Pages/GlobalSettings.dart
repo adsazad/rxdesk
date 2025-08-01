@@ -98,6 +98,12 @@ class _GlobalSettingsState extends State<GlobalSettings> {
   String com = "none";
   bool applyConversion = false;
 
+  final List<String> atDetectionOptions = [
+    "VO2 max",
+    // "VE/VO₂ increases while VE/VCO₂ remains stable or decreases",
+    // "Manually mark",
+  ];
+
   @override
   void initState() {
     // TODO: implement initState
@@ -930,6 +936,45 @@ class _GlobalSettingsState extends State<GlobalSettings> {
 
                   Divider(),
                   SizedBox(height: 10),
+                  Container(
+                    margin: EdgeInsets.all(10),
+                    decoration: BoxDecoration(
+                      border: Border.all(color: Colors.blue),
+                      borderRadius: BorderRadius.circular(10),
+                    ),
+                    child: Padding(
+                      padding: const EdgeInsets.all(8.0),
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          Text(
+                            "AT Point Detection Method",
+                            style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                          ),
+                          Consumer<GlobalSettingsModal>(
+                            builder: (context, globalSettings, child) {
+                              return DropdownButton<String>(
+                                value: globalSettings.atDetectionMethod,
+                                items: atDetectionOptions
+                                    .map((e) => DropdownMenuItem<String>(
+                                          value: e,
+                                          child: Text(e),
+                                        ))
+                                    .toList(),
+                                onChanged: (val) {
+                                  if (val != null) {
+                                    globalSettings.setAtDetectionMethod(val);
+                                    setState(() {}); // To update UI if needed
+                                    onChange();
+                                  }
+                                },
+                              );
+                            },
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
                 ],
               ),
             ),
