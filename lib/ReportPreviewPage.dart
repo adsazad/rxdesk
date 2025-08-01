@@ -40,12 +40,30 @@ class _ReportPreviewPageState extends State<ReportPreviewPage> {
 
   Uint8List? chartImage;
 
+  bool _showChart = false;
+  Key pdfPreviewKey = UniqueKey();
+
   @override
   void initState() {
     super.initState();
-    WidgetsBinding.instance.addPostFrameCallback((_) async {
-      chartImage = await _captureChartImage(_rerChartKey);
-      setState(() {}); // Now chartImage is ready for PDF
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      setState(() {
+        _showChart = true;
+      });
+      WidgetsBinding.instance.addPostFrameCallback((_) async {
+        await Future.delayed(const Duration(milliseconds: 100));
+        chartImage = await _captureChartImage(_veTimeChartKey);
+        print("Chart image captured: ${chartImage != null}");
+        if (mounted) {
+          setState(() {
+            // Change the key to force PdfPreview to rebuild with the new image
+            pdfPreviewKey = UniqueKey();
+          });
+        }
+        setState(() {
+          _showChart = false;
+        });
+      });
     });
   }
 
@@ -417,7 +435,7 @@ class _ReportPreviewPageState extends State<ReportPreviewPage> {
     return averagedStats;
   }
 
-  final GlobalKey _rerChartKey = GlobalKey();
+  final GlobalKey _veTimeChartKey = GlobalKey();
 
   Future<Uint8List?> _captureChartImage(GlobalKey key) async {
     RenderRepaintBoundary? boundary =
@@ -502,7 +520,7 @@ class _ReportPreviewPageState extends State<ReportPreviewPage> {
                 ],
               ),
               pw.SizedBox(height: 2),
-              pw.Divider(),
+              pw.Divider(color: PdfColors.blue),
               pw.Row(
                 mainAxisAlignment: pw.MainAxisAlignment.start,
                 children: [
@@ -576,7 +594,7 @@ class _ReportPreviewPageState extends State<ReportPreviewPage> {
                     ),
                   ),
                 ),
-              pw.Divider(),
+              pw.Divider(color: PdfColors.blue),
               // pw.Text(
               //   'Breath Stats:',
               //   style: pw.TextStyle(fontWeight: pw.FontWeight.bold),
@@ -679,6 +697,7 @@ class _ReportPreviewPageState extends State<ReportPreviewPage> {
       body: Stack(
         children: [
           PdfPreview(
+            key: pdfPreviewKey,
             build: _buildPdf,
             canChangePageFormat: false,
             canChangeOrientation: false,
@@ -687,10 +706,10 @@ class _ReportPreviewPageState extends State<ReportPreviewPage> {
             allowSharing: false,
           ),
           Offstage(
-            offstage: true,
+            offstage: !_showChart,
             child: RepaintBoundary(
-              key: _rerChartKey,
-              child: ChartsBuilder.buildTimeVsRERChart(
+              key: _veTimeChartKey,
+              child: ChartsBuilder.buildTimeVsVEChart(
                 context,
                 widget.breathStats,
                 width: 600,
@@ -765,7 +784,7 @@ Future<File> generateBreathStatsPdf({
               pw.Text('Gender: $patientGender'),
               pw.Text('Weight: $patientWeight kg'),
               pw.Text('Date: $reportDate'),
-              pw.Divider(),
+              pw.Divider(color: PdfColors.blue),
               if (chartImages != null && chartImages.isNotEmpty)
                 ...chartImages.map(
                   (imgFile) => pw.Padding(

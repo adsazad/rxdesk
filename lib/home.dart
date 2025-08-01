@@ -1139,7 +1139,7 @@ class _HomeState extends State<Home> {
       builder:
           (context) => Dialog(
             insetPadding: EdgeInsets.zero,
-            child: SavedChartsDialogContent(cp: cp),
+            child: SavedChartsDialogContent(cp: completeCp),
           ),
     );
   }
@@ -1230,7 +1230,7 @@ class _HomeState extends State<Home> {
               : 'No Patient',
           style: TextStyle(fontSize: 18.5, fontWeight: FontWeight.bold),
         ),
-        if(isImported == true) _nextPreviousButtons(),
+        if (isImported == true) _nextPreviousButtons(),
 
         recordingIndicator(),
 
@@ -1742,7 +1742,7 @@ class _HomeState extends State<Home> {
     super.didChangeDependencies();
     final importProvider = Provider.of<ImportFileProvider>(context);
     if (importProvider.filePath != null) {
-          resetAllData(import: true); // Reset data on every dependency change
+      resetAllData(import: true); // Reset data on every dependency change
       importBinFileFromPath(importProvider.filePath!);
       // Schedule clear after build is complete
       WidgetsBinding.instance.addPostFrameCallback((_) {
@@ -2865,19 +2865,19 @@ class _HomeState extends State<Home> {
                             ChartDialog();
                           },
                         ),
-                        IconButtonColumn(
-                          icon: Icons.auto_graph,
-                          label: "Generate",
-                          onPressed: () {
-                            if (cp != null && cp!['breathStats'] is List) {
-                              Navigator.of(context).push(
-                                MaterialPageRoute(
-                                  builder: (context) => ChartGenerator(cp: cp),
-                                ),
-                              );
-                            }
-                          },
-                        ),
+                        // IconButtonColumn(
+                        //   icon: Icons.auto_graph,
+                        //   label: "Generate",
+                        //   onPressed: () {
+                        //     if (cp != null && cp!['breathStats'] is List) {
+                        //       Navigator.of(context).push(
+                        //         MaterialPageRoute(
+                        //           builder: (context) => ChartGenerator(cp: cp),
+                        //         ),
+                        //       );
+                        //     }
+                        //   },
+                        // ),
                         // clabirations
                         IconButtonColumn(
                           icon: Icons.compass_calibration_outlined,
