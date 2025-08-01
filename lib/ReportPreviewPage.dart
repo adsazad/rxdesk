@@ -615,19 +615,24 @@ class _ReportPreviewPageState extends State<ReportPreviewPage> {
                 cellAlignment: pw.Alignment.center,
                 headerStyle: pw.TextStyle(
                   fontWeight: pw.FontWeight.bold,
-                  fontSize: 5,
+                  fontSize: 8,
                 ),
                 headerDecoration: pw.BoxDecoration(
                   border: pw.Border(
                     bottom: pw.BorderSide(width: 0.5, color: PdfColors.grey600),
                   ),
                 ),
-                cellStyle: pw.TextStyle(fontSize: 5),
-                cellHeight: 10,
+                cellStyle: pw.TextStyle(fontSize: 7),
+                cellHeight: 1, // Decreased row height for more compact table
                 border: null,
                 columnWidths: {
                   for (var i = 0; i < headers.length; i++)
                     i: const pw.FlexColumnWidth(),
+                },
+                rowDecoration: pw.BoxDecoration(), // Remove extra padding
+                cellAlignments: {
+                  for (var i = 0; i < headers.length; i++)
+                    i: pw.Alignment.center,
                 },
               ),
               pw.SizedBox(height: 20),
