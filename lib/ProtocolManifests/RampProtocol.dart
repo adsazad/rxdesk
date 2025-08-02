@@ -3,6 +3,7 @@ class RampProtocol {
   static const String protocolDescription =
       "A protocol for ramping up the pressure during a test.";
   static const String protocolVersion = "1.0.0";
+  static const String type = "ergoCycle"; // "ergoCycle", "treadmill"
 
   // Ramp Protocol (Most Common)
   // Increases workload continuously or every 10–20 seconds in small increments.
@@ -79,6 +80,7 @@ class RampProtocol {
       "name": protocolName,
       "description": protocolDescription,
       "version": protocolVersion,
+      "type": type,
       "phases": phases,
     };
   }

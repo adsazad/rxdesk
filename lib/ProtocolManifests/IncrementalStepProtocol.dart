@@ -2,6 +2,7 @@ class IncrementalStepProtocol {
   static const String protocolName = "Incremental Step Protocol";
   static const String protocolDescription =
       "This protocol is designed to assess the incremental step exercise capacity of an individual. It involves a series of steps with increasing intensity, allowing for the evaluation of cardiovascular and muscular endurance.";
+  static const String type = "ergoCycle"; // "ergoCycle", "treadmill"
 
   static const String protocolVersion = "1.0.0";
 
@@ -45,6 +46,7 @@ class IncrementalStepProtocol {
       "name": protocolName,
       "description": protocolDescription,
       "version": protocolVersion,
+      "type": type,
       "phases": phases,
     };
   }

@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:spirobtvo/ProtocolManifests/BruceProtocol.dart';
 import 'package:spirobtvo/ProtocolManifests/IncrementalStepProtocol.dart';
 import 'package:spirobtvo/ProtocolManifests/RampProtocol.dart';
 import 'package:spirobtvo/ProviderModals/GlobalSettingsModal.dart';
@@ -12,7 +13,7 @@ class ProtocolManifest {
   };
 
   static final Map<String, dynamic> _treadmillProtocols = {
-    "Bruce": () => null,
+    "Bruce": () => BruceProtocol().getProtocolDetails(),
     "Modified Bruce": () => null,
   };
 
