@@ -140,7 +140,10 @@ class _HomeState extends State<Home> {
         "scale": 3,
         "boxValue": 5,
         "valueConverter": (double x) {
-          x = x * 0.00072105;
+          // x = x * 0.00072105;
+          // 0.0009
+          x = x * 0.000883;
+
           globalSettings = Provider.of<GlobalSettingsModal>(
             context,
             listen: false,
@@ -176,7 +179,7 @@ class _HomeState extends State<Home> {
                   : " mV",
           "convert": (double x, int index) {
             x = _inMemoryData[index][1];
-            x = x * 0.00072105;
+            x = x * 0.000883;
             globalSettings = Provider.of<GlobalSettingsModal>(
               context,
               listen: false,
@@ -995,6 +998,7 @@ class _HomeState extends State<Home> {
 
               double ecg = (frame[3] * 256 + frame[2]) * 1.0;
               double o2 = (frame[7] * 256 + frame[6]) * 1.0;
+              // print("XORG $o2");
               double flow = (frame[11] * 256 + frame[10]) * 1.0;
               co2 = (frame[15] * 256 + frame[14]) * 1.0;
 
@@ -1006,7 +1010,6 @@ class _HomeState extends State<Home> {
 
               rawDataFull.add(ecg);
               saver(ecg: ecg, o2: o2, flow: flow, vol: vol, co2: co2);
-
               int bufferSizeLimit = ((delaySamples ?? 0) + 1) * 2;
               if (delayBuffer.length > bufferSizeLimit) delayBuffer.removeAt(0);
 
@@ -2022,7 +2025,7 @@ class _HomeState extends State<Home> {
                                           ),
                                         ),
                                         Text(
-                                          "${(value / 100).toStringAsFixed(2)} %",
+                                          "${(value / 100).toStringAsFixed(3)} %",
                                           style: TextStyle(
                                             fontSize: 22,
                                             fontWeight: FontWeight.bold,
@@ -2326,7 +2329,7 @@ class _HomeState extends State<Home> {
                   ValueListenableBuilder<double>(
                     valueListenable: o2Notifier,
                     builder: (context, value, child) {
-                      double voltage = value * 0.00072105;
+                      double voltage = value * 0.000883;
                       final globalSettings = Provider.of<GlobalSettingsModal>(
                         context,
                         listen: false,
@@ -2378,7 +2381,7 @@ class _HomeState extends State<Home> {
                                   ),
                                 ),
                                 Text(
-                                  "${displayValue.toStringAsFixed(2)} $unit",
+                                  "${displayValue.toStringAsFixed(3)} $unit",
                                   style: TextStyle(
                                     fontSize: 22,
                                     fontWeight: FontWeight.bold,
@@ -2397,7 +2400,7 @@ class _HomeState extends State<Home> {
                     label: 'Voltage 1',
                     controller: voltage1Controller,
                     onPick: () {
-                      double currentO2Volts = o2Notifier.value * 0.00072105;
+                      double currentO2Volts = o2Notifier.value * 0.000883;
                       voltage1Controller.text = currentO2Volts.toStringAsFixed(
                         4,
                       );
@@ -2415,7 +2418,7 @@ class _HomeState extends State<Home> {
                     label: 'Voltage 2',
                     controller: voltage2Controller,
                     onPick: () {
-                      double currentO2Volts = o2Notifier.value * 0.00072105;
+                      double currentO2Volts = o2Notifier.value * 0.000883;
                       voltage2Controller.text = currentO2Volts.toStringAsFixed(
                         4,
                       );

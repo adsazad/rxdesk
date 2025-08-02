@@ -146,7 +146,7 @@ class CPETService {
         double co2 = data[i][2]; // CO2 in %
         double vol = data[i][4] / 1000; // vol in liters
 
-        o2 = o2 * 0.00072105;
+        o2 = o2 * 0.000883;
         double o2Percent = o2Calibrate?.call(o2) ?? 0.0;
 
         double vo2 = vol * (20.93 - o2Percent) / 100;

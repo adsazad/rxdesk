@@ -249,6 +249,8 @@ class MyBigGraphV2State extends State<MyBigGraphV2> {
   }
 
   List<double> updateEverything(List<double> values) {
+    // print("v1");
+    // print(values);
     List<double> processedValues = [];
 
     for (int i = 0; i < values.length; i++) {
@@ -269,6 +271,8 @@ class MyBigGraphV2State extends State<MyBigGraphV2> {
         if (maBuffer.length > window) maBuffer.removeAt(0);
         value = maBuffer.reduce((a, b) => a + b) / maBuffer.length;
       }
+      // print("v2");
+      // print(values);
 
       processedValues.add(value);
       final converter = widget.plot[i]["valueConverter"];
