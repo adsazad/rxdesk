@@ -142,7 +142,7 @@ class _HomeState extends State<Home> {
         "valueConverter": (double x) {
           // x = x * 0.00072105;
           // 0.0009
-          x = x * 0.000883;
+          x = x * 0.000917;
 
           globalSettings = Provider.of<GlobalSettingsModal>(
             context,
@@ -179,7 +179,7 @@ class _HomeState extends State<Home> {
                   : " mV",
           "convert": (double x, int index) {
             x = _inMemoryData[index][1];
-            x = x * 0.000883;
+            x = x * 0.000917;
             globalSettings = Provider.of<GlobalSettingsModal>(
               context,
               listen: false,
@@ -2329,7 +2329,9 @@ class _HomeState extends State<Home> {
                   ValueListenableBuilder<double>(
                     valueListenable: o2Notifier,
                     builder: (context, value, child) {
-                      double voltage = value * 0.000883;
+                      // print(value);
+                      double voltage = value * 0.000917;
+
                       final globalSettings = Provider.of<GlobalSettingsModal>(
                         context,
                         listen: false,
@@ -2400,7 +2402,7 @@ class _HomeState extends State<Home> {
                     label: 'Voltage 1',
                     controller: voltage1Controller,
                     onPick: () {
-                      double currentO2Volts = o2Notifier.value * 0.000883;
+                      double currentO2Volts = o2Notifier.value * 0.000917;
                       voltage1Controller.text = currentO2Volts.toStringAsFixed(
                         4,
                       );
@@ -2418,7 +2420,7 @@ class _HomeState extends State<Home> {
                     label: 'Voltage 2',
                     controller: voltage2Controller,
                     onPick: () {
-                      double currentO2Volts = o2Notifier.value * 0.000883;
+                      double currentO2Volts = o2Notifier.value * 0.000917;
                       voltage2Controller.text = currentO2Volts.toStringAsFixed(
                         4,
                       );
@@ -2452,7 +2454,8 @@ class _HomeState extends State<Home> {
                     mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                     children: [
                       ElevatedButton(
-                        onPressed: () {
+                        onPressed: () async {
+                          print("Submitting O2 calibration values...");
                           globalSettings.voltage1 = localVoltage1;
                           globalSettings.value1 = localValue1;
                           globalSettings.voltage2 = localVoltage2;
@@ -2461,6 +2464,18 @@ class _HomeState extends State<Home> {
                             localApplyConversion,
                           );
                           globalSettings.notifyListeners();
+                          o2Calibrate = generateCalibrationFunction(
+                            voltage1: globalSettings.voltage1,
+                            value1: globalSettings.value1,
+                            voltage2: globalSettings.voltage2,
+                            value2: globalSettings.value2,
+                          );
+                          // save json in shared prefs
+                          final prefs = await SharedPreferences.getInstance();
+                          await prefs.setString(
+                            "globalSettings",
+                            globalSettings.toJson(),
+                          );
                           // Navigator.of(context).pop();
                         },
                         child: Text("Submit"),
