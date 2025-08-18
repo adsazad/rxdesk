@@ -47,29 +47,31 @@ class RampProtocol {
     {
       "id": "resting_phase",
       "name": "Resting Phase",
-      // "duration": 180, // seconds
       "duration": 180, // seconds
       "description": "2–3 minutes sitting quietly on the ergometer.",
+      "load": 0, // watts
     },
     {
       "id": "unloaded_pedalling_phase",
       "name": "Unloaded Pedalling Phase",
       "duration": 180, // seconds
       "description": "2–3 minutes at 0 watts (warm-up).",
+      "load": 0, // watts
     },
     {
       "id": "ramp_phase",
       "name": "Ramp Phase",
-      // "duration": 600, // seconds
       "duration": 300, // seconds
       "description":
           "Increase workload by 10–30 watts per minute until exhaustion.",
+      "load": "ramp",
     },
     {
       "id": "recovery_phase",
       "name": "Recovery Phase",
       "duration": 180, // seconds
       "description": "3 minutes of unloaded pedalling and rest.",
+      "load": 0, // watts
     },
   ];
 
