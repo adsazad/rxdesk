@@ -985,10 +985,10 @@ class _HomeState extends State<Home> {
                 // If delayed volume is zero, set O2/CO2 to ambient
                 double delayedO2 = delayed[1];
                 double delayedCO2 = delayed[2];
-                if (vol == 0) {
-                  delayedO2 = 20.0; // ambient O2 %
-                  delayedCO2 = 0.3; // ambient CO2 %
-                }
+                // if (vol == 0) {
+                //   delayedO2 = 20.0; // ambient O2 %
+                //   delayedCO2 = 0.3; // ambient CO2 %
+                // }
                 final correctedSample = [
                   delayed[0], // ECG
                   delayedO2, // O2 (delayed)
