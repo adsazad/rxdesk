@@ -270,7 +270,7 @@ class _HomeState extends State<Home> {
       },
     ];
 
-    startTestLoop(); // Start the test loop
+    // startTestLoop(); // Start the test loop
   }
 
   Future<void> sendSerialCommandSequence({
@@ -914,10 +914,13 @@ class _HomeState extends State<Home> {
   int lastNotifierUpdate = DateTime.now().millisecondsSinceEpoch;
 
   void startMainDataStream(SerialPort port) {
-    // Cancel any previous subscription
     if (mainDataSubscription != null) {
       mainDataSubscription?.cancel();
     }
+
+    final transportDelayMs = globalSettings.transportDelayMs;
+    final delaySamples = (transportDelayMs * 300 / 1000).round();
+    List<List<double>> delayBuffer = [];
 
     SerialPortReader reader = SerialPortReader(port);
     mainDataSubscription = reader.stream.listen(
@@ -929,47 +932,42 @@ class _HomeState extends State<Home> {
             if (i + frameLength <= data.length) {
               final frame = data.sublist(i, i + frameLength);
 
-              double vol = (frame[13] * 256 + frame[12]) * 1.0;
-              recentVolumes.add(vol);
-              if (recentVolumes.length > 10) recentVolumes.removeAt(0);
-
-              int nonZeroCount = recentVolumes.where((v) => v > 50).length;
-              bool currentIsZero = vol <= 5;
-
-              if (nonZeroCount >= 5 && currentIsZero && wasExhaling) {
-                onExhalationDetected();
-                wasExhaling = false;
-              }
-              if (vol > 50) wasExhaling = true;
-
               double ecg = (frame[3] * 256 + frame[2]) * 1.0;
               double o2 = (frame[7] * 256 + frame[6]) * 1.0;
+              double co2 = (frame[15] * 256 + frame[14]) * 1.0;
               double flow = (frame[11] * 256 + frame[10]) * 1.0;
-              co2 = (frame[15] * 256 + frame[14]) * 1.0;
-
+              double vol = (frame[13] * 256 + frame[12]) * 1.0;
               vol = (vol * globalSettings.tidalScalingFactor);
 
-              setState(() {
-                flow = flow;
-              });
+              delayBuffer.add([ecg, o2, co2, flow, vol]);
+              if (delayBuffer.length > delaySamples) {
+                final delayed = delayBuffer.removeAt(0);
+                final correctedSample = [
+                  delayed[0], // ECG
+                  delayed[1], // O2 (delayed)
+                  delayed[2], // CO2 (delayed)
+                  flow, // Flow (current)
+                  vol, // Vol (current)
+                ];
 
-              rawDataFull.add(ecg);
-              saver(ecg: ecg, o2: o2, flow: flow, vol: vol, co2: co2);
+                saver(
+                  ecg: correctedSample[0],
+                  o2: correctedSample[1],
+                  flow: correctedSample[3],
+                  vol: correctedSample[4],
+                  co2: correctedSample[2],
+                );
 
-              List<double>? edt = myBigGraphKey.currentState?.updateEverything([
-                ecg,
-                o2,
-                co2,
-                flow,
-                vol,
-              ]);
-              if (edt != null) {
-                _inMemoryData.add([edt[0], edt[1], edt[2], edt[3], flow]);
-                setState(() {
-                  co2Notifier.value = edt[2];
-                  o2Notifier.value = edt[1];
-                  tidalVolumeNotifier.value = edt[4];
-                });
+                List<double>? edt = myBigGraphKey.currentState
+                    ?.updateEverything(correctedSample);
+                if (edt != null) {
+                  _inMemoryData.add([edt[0], edt[1], edt[2], edt[3], edt[4]]);
+                  setState(() {
+                    co2Notifier.value = edt[2];
+                    o2Notifier.value = edt[1];
+                    tidalVolumeNotifier.value = edt[4];
+                  });
+                }
               }
               i += frameLength;
               continue;
@@ -989,7 +987,6 @@ class _HomeState extends State<Home> {
       },
     );
   }
-
   // void startMainDataStream(SerialPort port) {
   //   // Cancel any previous subscription
   //   if (mainDataSubscription != null) {
