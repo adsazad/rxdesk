@@ -270,7 +270,7 @@ class _HomeState extends State<Home> {
       },
     ];
 
-    // startTestLoop(); // Start the test loop
+    startTestLoop(); // Start the test loop
   }
 
   Future<void> sendSerialCommandSequence({
@@ -780,8 +780,14 @@ class _HomeState extends State<Home> {
   }
 
   void startTestLoop() async {
-    testData = await loadTestData(); // List<double> representing bytes (0-255)
+    testData = await loadTestData();
     dataIndex = 0;
+
+    // Get transport delay from settings
+    final transportDelayMs = globalSettings.transportDelayMs;
+    final delaySamples = (transportDelayMs * 300 / 1000).round();
+    print("Transport delay in samples: $delaySamples");
+    List<List<double>> delayBuffer = [];
 
     Timer.periodic(Duration(milliseconds: 3), (timer) {
       if (!mounted) {
@@ -789,116 +795,56 @@ class _HomeState extends State<Home> {
         return;
       }
 
-      // Continuously look for header 'B' 'T'
       while (dataIndex + 16 < testData.length) {
-        // Interpret values as bytes
         int byte0 = testData[dataIndex].toInt() & 0xFF;
         int byte1 = testData[dataIndex + 1].toInt() & 0xFF;
 
-        // Check header
         if (byte0 == 'B'.codeUnitAt(0) && byte1 == 'T'.codeUnitAt(0)) {
-          // Found packet header, extract next 16 bytes
           List<int> data = List.generate(16, (i) {
             return testData[dataIndex + i].toInt() & 0xFF;
           });
 
-          double vol = (data[13] << 8 | data[12]) * 1.0;
-
-          // Update buffer
-          recentVolumes.add(vol);
-          if (recentVolumes.length > 10) {
-            recentVolumes.removeAt(0);
-          }
-
-          // Check for exhalation pattern
-          int nonZeroCount = recentVolumes.where((v) => v > 50).length;
-          bool currentIsZero = vol <= 5;
-
-          if (nonZeroCount >= 5 && currentIsZero && wasExhaling) {
-            onExhalationDetected(); // ✅ Call your function here
-            wasExhaling = false; // Reset flag
-          }
-
-          if (vol > 50) {
-            wasExhaling = true;
-          }
-
-          // Extract values
           double ecg = (data[3] << 8 | data[2]) * 1.0;
           double o2 = (data[7] << 8 | data[6]) * 1.0;
+          double co2 = (data[15] << 8 | data[14]) * 1.0;
           double flow = (data[11] << 8 | data[10]) * 1.0;
-          // double vol = (data[13] << 8 | data[12]) * 1.0;
-          // Update UI with new values
-          co2 = (data[15] << 8 | data[14]) * 1.0;
+          double vol = (data[13] << 8 | data[12]) * 1.0;
           vol = (vol * globalSettings.tidalScalingFactor);
 
-          saver(ecg: ecg, o2: o2, flow: flow, vol: vol, co2: co2);
-          // Update your graph
-          // ➕ Step 1: Add incoming raw data to buffer
-          delayBuffer.add([ecg, o2, co2, vol, flow]);
+          // Buffer the sample
+          delayBuffer.add([ecg, o2, co2, flow, vol]);
+          if (delayBuffer.length > delaySamples) {
+            // Use delayed O2/CO2, current flow/vol
+            final delayed = delayBuffer.removeAt(0);
+            final correctedSample = [
+              delayed[0], // ECG
+              delayed[1], // O2 (delayed)
+              delayed[2], // CO2 (delayed)
+              flow, // Flow (current)
+              vol, // Vol (current)
+            ];
 
-          // 🧹 Step 2: Prevent memory leak by limiting buffer
-          int bufferSizeLimit = ((delaySamples ?? 0) + 1) * 2;
-          if (delayBuffer.length > bufferSizeLimit) {
-            delayBuffer.removeAt(0);
-          }
+            saver(
+              ecg: correctedSample[0],
+              o2: correctedSample[1],
+              flow: correctedSample[3],
+              vol: correctedSample[4],
+              co2: correctedSample[2],
+            );
 
-          // 🛑 Step 3: If delaySamples not available, plot raw data
-          if (delaySamples == null || delayBuffer.length <= delaySamples!) {
-            // Optional: Plot raw data until delay is known
-            List<double>? edt = myBigGraphKey.currentState?.updateEverything([
-              ecg,
-              o2,
-              co2,
-              flow,
-              vol,
-            ]);
+            List<double>? edt = myBigGraphKey.currentState?.updateEverything(
+              correctedSample,
+            );
             if (edt != null) {
-              _inMemoryData.add([edt[0], edt[1], edt[2], edt[3], flow]);
+              _inMemoryData.add([edt[0], edt[1], edt[2], edt[3], edt[4]]);
             }
-            return;
           }
 
-          // ✅ Step 4: Build delay-corrected values
-          var current = delayBuffer[0]; // time t
-          var future = delayBuffer[delaySamples!]; // time t + delay
-
-          double correctedECG = current[0]; // live
-          double correctedVOL = current[3]; // live
-          double correctedFLOW = current[4]; // live
-          double correctedO2 = future[1]; // future O2
-          double correctedCO2 = future[2]; // future CO2
-          setState(() {
-            co2Notifier.value = correctedCO2;
-            o2Notifier.value = correctedO2;
-            tidalVolumeNotifier.value = correctedVOL;
-          });
-
-          // 🧼 Step 5: Remove used sample
-          delayBuffer.removeAt(0);
-
-          // ✅ Step 6: Plot delay-corrected values
-          List<double>? edt = myBigGraphKey.currentState?.updateEverything([
-            correctedECG,
-            correctedO2,
-            correctedCO2,
-            correctedFLOW,
-            correctedVOL,
-          ]);
-
-          // ✅ Step 7: Store to memory
-          if (edt != null) {
-            _inMemoryData.add([edt[0], edt[1], edt[2], edt[3], correctedFLOW]);
-          }
-
-          dataIndex += 16; // move to next potential packet
+          dataIndex += 16;
           return;
         }
-
-        dataIndex += 1; // shift to search for next header
+        dataIndex += 1;
       }
-
-      // Restart if we reached end
       dataIndex = 0;
     });
   }
@@ -998,7 +944,6 @@ class _HomeState extends State<Home> {
 
               double ecg = (frame[3] * 256 + frame[2]) * 1.0;
               double o2 = (frame[7] * 256 + frame[6]) * 1.0;
-              // print("XORG $o2");
               double flow = (frame[11] * 256 + frame[10]) * 1.0;
               co2 = (frame[15] * 256 + frame[14]) * 1.0;
 
@@ -1010,53 +955,24 @@ class _HomeState extends State<Home> {
 
               rawDataFull.add(ecg);
               saver(ecg: ecg, o2: o2, flow: flow, vol: vol, co2: co2);
-              int bufferSizeLimit = ((delaySamples ?? 0) + 1) * 2;
-              if (delayBuffer.length > bufferSizeLimit) delayBuffer.removeAt(0);
-
-              if (delaySamples == null || delayBuffer.length <= delaySamples!) {
-                List<double>? edt = myBigGraphKey.currentState
-                    ?.updateEverything([ecg, o2, co2, flow, vol]);
-                if (edt != null) {
-                  _inMemoryData.add([edt[0], edt[1], edt[2], edt[3], flow]);
-                  setState(() {
-                    co2Notifier.value = edt[2];
-                    o2Notifier.value = edt[1];
-                    tidalVolumeNotifier.value = edt[4];
-                  });
-                }
-                i += frameLength;
-                continue;
-              }
-
-              var current = delayBuffer[0];
-              var future = delayBuffer[delaySamples!];
-
-              double correctedECG = current[0];
-              double correctedVOL = current[3];
-              double correctedFLOW = current[4];
-              double correctedO2 = future[1];
-              double correctedCO2 = future[2];
-
-              delayBuffer.removeAt(0);
 
               List<double>? edt = myBigGraphKey.currentState?.updateEverything([
-                correctedECG,
-                correctedO2,
-                correctedCO2,
-                correctedFLOW,
-                correctedVOL,
+                ecg,
+                o2,
+                co2,
+                flow,
+                vol,
               ]);
               if (edt != null) {
-                // print(edt[1]);
-                _inMemoryData.add([
-                  edt[0],
-                  edt[1],
-                  edt[2],
-                  edt[3],
-                  correctedFLOW,
-                ]);
+                _inMemoryData.add([edt[0], edt[1], edt[2], edt[3], flow]);
+                setState(() {
+                  co2Notifier.value = edt[2];
+                  o2Notifier.value = edt[1];
+                  tidalVolumeNotifier.value = edt[4];
+                });
               }
               i += frameLength;
+              continue;
             } else {
               break;
             }
@@ -1073,6 +989,113 @@ class _HomeState extends State<Home> {
       },
     );
   }
+
+  // void startMainDataStream(SerialPort port) {
+  //   // Cancel any previous subscription
+  //   if (mainDataSubscription != null) {
+  //     mainDataSubscription?.cancel();
+  //   }
+
+  //   SerialPortReader reader = SerialPortReader(port);
+  //   mainDataSubscription = reader.stream.listen(
+  //     (data) {
+  //       int frameLength = 18;
+  //       for (int i = 0; i <= data.length - frameLength;) {
+  //         if (data[i] == 'B'.codeUnitAt(0) &&
+  //             data[i + 1] == 'T'.codeUnitAt(0)) {
+  //           if (i + frameLength <= data.length) {
+  //             final frame = data.sublist(i, i + frameLength);
+
+  //             double vol = (frame[13] * 256 + frame[12]) * 1.0;
+  //             recentVolumes.add(vol);
+  //             if (recentVolumes.length > 10) recentVolumes.removeAt(0);
+
+  //             int nonZeroCount = recentVolumes.where((v) => v > 50).length;
+  //             bool currentIsZero = vol <= 5;
+
+  //             if (nonZeroCount >= 5 && currentIsZero && wasExhaling) {
+  //               onExhalationDetected();
+  //               wasExhaling = false;
+  //             }
+  //             if (vol > 50) wasExhaling = true;
+
+  //             double ecg = (frame[3] * 256 + frame[2]) * 1.0;
+  //             double o2 = (frame[7] * 256 + frame[6]) * 1.0;
+  //             // print("XORG $o2");
+  //             double flow = (frame[11] * 256 + frame[10]) * 1.0;
+  //             co2 = (frame[15] * 256 + frame[14]) * 1.0;
+
+  //             vol = (vol * globalSettings.tidalScalingFactor);
+
+  //             setState(() {
+  //               flow = flow;
+  //             });
+
+  //             rawDataFull.add(ecg);
+  //             saver(ecg: ecg, o2: o2, flow: flow, vol: vol, co2: co2);
+  //             int bufferSizeLimit = ((delaySamples ?? 0) + 1) * 2;
+  //             if (delayBuffer.length > bufferSizeLimit) delayBuffer.removeAt(0);
+
+  //             if (delaySamples == null || delayBuffer.length <= delaySamples!) {
+  //               List<double>? edt = myBigGraphKey.currentState
+  //                   ?.updateEverything([ecg, o2, co2, flow, vol]);
+  //               if (edt != null) {
+  //                 _inMemoryData.add([edt[0], edt[1], edt[2], edt[3], flow]);
+  //                 setState(() {
+  //                   co2Notifier.value = edt[2];
+  //                   o2Notifier.value = edt[1];
+  //                   tidalVolumeNotifier.value = edt[4];
+  //                 });
+  //               }
+  //               i += frameLength;
+  //               continue;
+  //             }
+
+  //             var current = delayBuffer[0];
+  //             var future = delayBuffer[delaySamples!];
+
+  //             double correctedECG = current[0];
+  //             double correctedVOL = current[3];
+  //             double correctedFLOW = current[4];
+  //             double correctedO2 = future[1];
+  //             double correctedCO2 = future[2];
+
+  //             delayBuffer.removeAt(0);
+
+  //             List<double>? edt = myBigGraphKey.currentState?.updateEverything([
+  //               correctedECG,
+  //               correctedO2,
+  //               correctedCO2,
+  //               correctedFLOW,
+  //               correctedVOL,
+  //             ]);
+  //             if (edt != null) {
+  //               // print(edt[1]);
+  //               _inMemoryData.add([
+  //                 edt[0],
+  //                 edt[1],
+  //                 edt[2],
+  //                 edt[3],
+  //                 correctedFLOW,
+  //               ]);
+  //             }
+  //             i += frameLength;
+  //           } else {
+  //             break;
+  //           }
+  //         } else {
+  //           i++;
+  //         }
+  //       }
+  //     },
+  //     onDone: () {
+  //       print("Serial Done");
+  //     },
+  //     onError: (e) {
+  //       print("❌ Serial port error: $e");
+  //     },
+  //   );
+  // }
 
   @override
   void dispose() {

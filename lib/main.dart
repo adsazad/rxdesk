@@ -59,6 +59,7 @@ void main() async {
       deviceType: "none",
       machineCom: "none",
       atDetectionMethod: "VO2 max",
+      transportDelayMs: 1000,
     );
     globalSettings.fromJson(settingsJson);
   } else {
@@ -86,6 +87,7 @@ void main() async {
       deviceType: "none",
       machineCom: "none",
       atDetectionMethod: "VO2 max",
+      transportDelayMs: 1000,
     );
   }
 

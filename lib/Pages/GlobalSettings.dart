@@ -948,19 +948,74 @@ class _GlobalSettingsState extends State<GlobalSettings> {
                         mainAxisAlignment: MainAxisAlignment.spaceBetween,
                         children: [
                           Text(
+                            "Transport Delay (ms)",
+                            style: TextStyle(
+                              fontSize: 18,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                          Consumer<GlobalSettingsModal>(
+                            builder: (context, globalSettings, child) {
+                              return SizedBox(
+                                width: 100,
+                                child: TextFormField(
+                                  initialValue:
+                                      globalSettings.transportDelayMs
+                                          .toString(),
+                                  keyboardType: TextInputType.number,
+                                  decoration: InputDecoration(
+                                    border: OutlineInputBorder(),
+                                    isDense: true,
+                                    contentPadding: EdgeInsets.symmetric(
+                                      vertical: 8,
+                                      horizontal: 8,
+                                    ),
+                                  ),
+                                  onChanged: (val) {
+                                    int value = int.tryParse(val) ?? 0;
+                                    globalSettings.setTransportDelayMs(value);
+                                    onChange();
+                                  },
+                                ),
+                              );
+                            },
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                  SizedBox(height: 10),
+                  Container(
+                    margin: EdgeInsets.all(10),
+                    decoration: BoxDecoration(
+                      border: Border.all(color: Colors.blue),
+                      borderRadius: BorderRadius.circular(10),
+                    ),
+                    child: Padding(
+                      padding: const EdgeInsets.all(8.0),
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          Text(
                             "AT Point Detection Method",
-                            style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                            style: TextStyle(
+                              fontSize: 18,
+                              fontWeight: FontWeight.bold,
+                            ),
                           ),
                           Consumer<GlobalSettingsModal>(
                             builder: (context, globalSettings, child) {
                               return DropdownButton<String>(
                                 value: globalSettings.atDetectionMethod,
-                                items: atDetectionOptions
-                                    .map((e) => DropdownMenuItem<String>(
-                                          value: e,
-                                          child: Text(e),
-                                        ))
-                                    .toList(),
+                                items:
+                                    atDetectionOptions
+                                        .map(
+                                          (e) => DropdownMenuItem<String>(
+                                            value: e,
+                                            child: Text(e),
+                                          ),
+                                        )
+                                        .toList(),
                                 onChanged: (val) {
                                   if (val != null) {
                                     globalSettings.setAtDetectionMethod(val);
@@ -975,6 +1030,8 @@ class _GlobalSettingsState extends State<GlobalSettings> {
                       ),
                     ),
                   ),
+
+                  // Add this inside the "Other Settings" tab, after the AT Point Detection Method setting:
                 ],
               ),
             ),
