@@ -270,7 +270,7 @@ class _HomeState extends State<Home> {
       },
     ];
 
-    startTestLoop(); // Start the test loop
+    // startTestLoop(); // Start the test loop
   }
 
   Future<void> sendSerialCommandSequence({
@@ -791,7 +791,7 @@ class _HomeState extends State<Home> {
     recentVolumes.clear();
     bool wasExhaling = false;
 
-    Timer.periodic(Duration(milliseconds: 3), (timer) {
+    Timer.periodic(Duration(milliseconds: 1), (timer) {
       if (!mounted) {
         timer.cancel();
         return;
@@ -829,12 +829,21 @@ class _HomeState extends State<Home> {
           // Buffer the sample
           delayBuffer.add([ecg, o2, co2, flow, vol]);
           if (delayBuffer.length > delaySamples) {
-            // Use delayed O2/CO2, current flow/vol
             final delayed = delayBuffer.removeAt(0);
+
+            // If delayed volume is zero, set O2/CO2 to ambient
+            double delayedO2 = delayed[1];
+            double delayedCO2 = delayed[2];
+            if (vol == 0) {
+              delayedO2 = 1212; // ambient O2 %
+              delayedCO2 = 30; // ambient CO2 %
+            }
+            // print("Delayed O2: $delayedO2, Delayed CO2: $delayedCO2");
+
             final correctedSample = [
               delayed[0], // ECG
-              delayed[1], // O2 (delayed)
-              delayed[2], // CO2 (delayed)
+              delayedO2, // O2 (delayed, ambient if vol==0)
+              delayedCO2, // CO2 (delayed, ambient if vol==0)
               flow, // Flow (current)
               vol, // Vol (current)
             ];
@@ -972,10 +981,18 @@ class _HomeState extends State<Home> {
               delayBuffer.add([ecg, o2, co2, flow, vol]);
               if (delayBuffer.length > delaySamples) {
                 final delayed = delayBuffer.removeAt(0);
+
+                // If delayed volume is zero, set O2/CO2 to ambient
+                double delayedO2 = delayed[1];
+                double delayedCO2 = delayed[2];
+                if (vol == 0) {
+                  delayedO2 = 20.0; // ambient O2 %
+                  delayedCO2 = 0.3; // ambient CO2 %
+                }
                 final correctedSample = [
                   delayed[0], // ECG
-                  delayed[1], // O2 (delayed)
-                  delayed[2], // CO2 (delayed)
+                  delayedO2, // O2 (delayed)
+                  delayedCO2, // CO2 (delayed)
                   flow, // Flow (current)
                   vol, // Vol (current)
                 ];
