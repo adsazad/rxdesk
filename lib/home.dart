@@ -270,7 +270,7 @@ class _HomeState extends State<Home> {
       },
     ];
 
-    // startTestLoop(); // Start the test loop
+    startTestLoop(); // Start the test loop
   }
 
   Future<void> sendSerialCommandSequence({
@@ -788,6 +788,8 @@ class _HomeState extends State<Home> {
     final delaySamples = (transportDelayMs * 300 / 1000).round();
     print("Transport delay in samples: $delaySamples");
     List<List<double>> delayBuffer = [];
+    recentVolumes.clear();
+    bool wasExhaling = false;
 
     Timer.periodic(Duration(milliseconds: 3), (timer) {
       if (!mounted) {
@@ -810,6 +812,19 @@ class _HomeState extends State<Home> {
           double flow = (data[11] << 8 | data[10]) * 1.0;
           double vol = (data[13] << 8 | data[12]) * 1.0;
           vol = (vol * globalSettings.tidalScalingFactor);
+
+          // Exhalation detection logic
+          recentVolumes.add(vol);
+          if (recentVolumes.length > 10) recentVolumes.removeAt(0);
+
+          int nonZeroCount = recentVolumes.where((v) => v > 50).length;
+          bool currentIsZero = vol <= 5;
+
+          if (nonZeroCount >= 5 && currentIsZero && wasExhaling) {
+            onExhalationDetected();
+            wasExhaling = false;
+          }
+          if (vol > 50) wasExhaling = true;
 
           // Buffer the sample
           delayBuffer.add([ecg, o2, co2, flow, vol]);
@@ -921,6 +936,8 @@ class _HomeState extends State<Home> {
     final transportDelayMs = globalSettings.transportDelayMs;
     final delaySamples = (transportDelayMs * 300 / 1000).round();
     List<List<double>> delayBuffer = [];
+    recentVolumes.clear();
+    bool wasExhaling = false;
 
     SerialPortReader reader = SerialPortReader(port);
     mainDataSubscription = reader.stream.listen(
@@ -938,6 +955,19 @@ class _HomeState extends State<Home> {
               double flow = (frame[11] * 256 + frame[10]) * 1.0;
               double vol = (frame[13] * 256 + frame[12]) * 1.0;
               vol = (vol * globalSettings.tidalScalingFactor);
+
+              // Exhalation detection logic
+              recentVolumes.add(vol);
+              if (recentVolumes.length > 10) recentVolumes.removeAt(0);
+
+              int nonZeroCount = recentVolumes.where((v) => v > 50).length;
+              bool currentIsZero = vol <= 5;
+
+              if (nonZeroCount >= 5 && currentIsZero && wasExhaling) {
+                onExhalationDetected();
+                wasExhaling = false;
+              }
+              if (vol > 50) wasExhaling = true;
 
               delayBuffer.add([ecg, o2, co2, flow, vol]);
               if (delayBuffer.length > delaySamples) {
@@ -987,6 +1017,7 @@ class _HomeState extends State<Home> {
       },
     );
   }
+
   // void startMainDataStream(SerialPort port) {
   //   // Cancel any previous subscription
   //   if (mainDataSubscription != null) {
