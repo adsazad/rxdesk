@@ -834,10 +834,10 @@ class _HomeState extends State<Home> {
             // If delayed volume is zero, set O2/CO2 to ambient
             double delayedO2 = delayed[1];
             double delayedCO2 = delayed[2];
-            if (vol == 0) {
-              delayedO2 = 1212; // ambient O2 %
-              delayedCO2 = 30; // ambient CO2 %
-            }
+            // if (vol == 0) {
+            //   delayedO2 = 1212; // ambient O2 %
+            //   delayedCO2 = 30; // ambient CO2 %
+            // }
             // print("Delayed O2: $delayedO2, Delayed CO2: $delayedCO2");
 
             final correctedSample = [
