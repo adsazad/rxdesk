@@ -995,10 +995,10 @@ class _HomeState extends State<Home> {
                 double correctedO2 = delayed[1];
                 double correctedCO2 = delayed[2];
 
-                if (correctedVOL == 0) {
-                  correctedO2 = 20.0;
-                  correctedCO2 = 0.3;
-                }
+                // if (correctedVOL == 0) {
+                //   correctedO2 = 20.0;
+                //   correctedCO2 = 0.3;
+                // }
 
                 final correctedSample = [
                   correctedECG,
