@@ -663,7 +663,7 @@ class _HomeState extends State<Home> {
   }
 
   Future<List<double>> loadTestData() async {
-    final byteData = await rootBundle.load('assets/capturen.txt');
+    final byteData = await rootBundle.load('assets/capture1br.txt');
     final rawBytes = byteData.buffer.asUint8List();
     String rawData = String.fromCharCodes(rawBytes);
 
@@ -783,7 +783,6 @@ class _HomeState extends State<Home> {
     testData = await loadTestData();
     dataIndex = 0;
 
-    // Get transport delay from settings
     final transportDelayMs = globalSettings.transportDelayMs;
     final delaySamples = (transportDelayMs * 300 / 1000).round();
     print("Transport delay in samples: $delaySamples");
@@ -791,7 +790,7 @@ class _HomeState extends State<Home> {
     recentVolumes.clear();
     bool wasExhaling = false;
 
-    Timer.periodic(Duration(milliseconds: 1), (timer) {
+    Timer.periodic(Duration(milliseconds: 3), (timer) {
       if (!mounted) {
         timer.cancel();
         return;
@@ -829,23 +828,28 @@ class _HomeState extends State<Home> {
           // Buffer the sample
           delayBuffer.add([ecg, o2, co2, flow, vol]);
           if (delayBuffer.length > delaySamples) {
-            final delayed = delayBuffer.removeAt(0);
+            // Use current flow/vol, delayed O2/CO2
+            final current = delayBuffer[0];
+            final delayed = delayBuffer[delaySamples];
 
-            // If delayed volume is zero, set O2/CO2 to ambient
-            double delayedO2 = delayed[1];
-            double delayedCO2 = delayed[2];
-            // if (vol == 0) {
-            //   delayedO2 = 1212; // ambient O2 %
-            //   delayedCO2 = 30; // ambient CO2 %
+            double correctedECG = current[0];
+            double correctedFLOW = current[3];
+            double correctedVOL = current[4];
+            double correctedO2 = delayed[1];
+            double correctedCO2 = delayed[2];
+
+            // If current volume is zero, set O2/CO2 to ambient
+            // if (correctedVOL == 0) {
+            //   correctedO2 = 20.0;
+            //   correctedCO2 = 0.3;
             // }
-            // print("Delayed O2: $delayedO2, Delayed CO2: $delayedCO2");
 
             final correctedSample = [
-              delayed[0], // ECG
-              delayedO2, // O2 (delayed, ambient if vol==0)
-              delayedCO2, // CO2 (delayed, ambient if vol==0)
-              flow, // Flow (current)
-              vol, // Vol (current)
+              correctedECG,
+              correctedO2,
+              correctedCO2,
+              correctedFLOW,
+              correctedVOL,
             ];
 
             saver(
@@ -862,6 +866,8 @@ class _HomeState extends State<Home> {
             if (edt != null) {
               _inMemoryData.add([edt[0], edt[1], edt[2], edt[3], edt[4]]);
             }
+
+            delayBuffer.removeAt(0); // Move buffer forward
           }
 
           dataIndex += 16;
@@ -980,21 +986,26 @@ class _HomeState extends State<Home> {
 
               delayBuffer.add([ecg, o2, co2, flow, vol]);
               if (delayBuffer.length > delaySamples) {
-                final delayed = delayBuffer.removeAt(0);
+                final current = delayBuffer[0];
+                final delayed = delayBuffer[delaySamples];
 
-                // If delayed volume is zero, set O2/CO2 to ambient
-                double delayedO2 = delayed[1];
-                double delayedCO2 = delayed[2];
-                // if (vol == 0) {
-                //   delayedO2 = 20.0; // ambient O2 %
-                //   delayedCO2 = 0.3; // ambient CO2 %
-                // }
+                double correctedECG = current[0];
+                double correctedFLOW = current[3];
+                double correctedVOL = current[4];
+                double correctedO2 = delayed[1];
+                double correctedCO2 = delayed[2];
+
+                if (correctedVOL == 0) {
+                  correctedO2 = 20.0;
+                  correctedCO2 = 0.3;
+                }
+
                 final correctedSample = [
-                  delayed[0], // ECG
-                  delayedO2, // O2 (delayed)
-                  delayedCO2, // CO2 (delayed)
-                  flow, // Flow (current)
-                  vol, // Vol (current)
+                  correctedECG,
+                  correctedO2,
+                  correctedCO2,
+                  correctedFLOW,
+                  correctedVOL,
                 ];
 
                 saver(
@@ -1015,6 +1026,8 @@ class _HomeState extends State<Home> {
                     tidalVolumeNotifier.value = edt[4];
                   });
                 }
+
+                delayBuffer.removeAt(0);
               }
               i += frameLength;
               continue;

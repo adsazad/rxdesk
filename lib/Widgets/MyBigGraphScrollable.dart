@@ -87,6 +87,10 @@ class MyBigGraphV2State extends State<MyBigGraphV2> {
       widget.plot.length,
       (_) => List<double>.filled(FILT_BUF_SIZE, 0.0),
     );
+    filterPositions = List.generate(
+      widget.plot.length,
+      (_) => 0,
+    ); // <-- Add this
     allPlotData = List.generate(widget.plot.length, (_) => []);
     plotNotifier = ValueNotifier(allPlotData);
     allCurrentIndexes = List.generate(widget.plot.length, (_) => 0);
@@ -144,6 +148,8 @@ class MyBigGraphV2State extends State<MyBigGraphV2> {
     multiFilter.init(config);
   }
 
+  late List<int> filterPositions;
+
   double applyMultiFilterToChannel(int channelIndex, double val) {
     final filterSettings = widget.plot[channelIndex]["filterConfig"];
     if (filterSettings == null || filterSettings["filterOn"] != true) {
@@ -153,20 +159,24 @@ class MyBigGraphV2State extends State<MyBigGraphV2> {
     const int StartStageCNo = 0;
     const int MAX_STAGES_MINUS_ONE = FilterClass.MAX_STAGES - 1;
 
-    // Init filter buffers if needed
+    // Init filter buffers and positions if needed
     if (filterBuffs.isEmpty ||
         filterBuffs.length != multiFilter.filters.length) {
       filterBuffs = List.generate(
         multiFilter.filters.length,
         (_) => List<double>.filled(FILT_BUF_SIZE, 0.0),
       );
+      filterPositions = List.generate(
+        multiFilter.filters.length,
+        (_) => 0,
+      ); // <-- Add this
     }
 
     FilterClass currentFilter = multiFilter.getFilter(channelIndex);
     List<double> currentBuffer = filterBuffs[channelIndex];
+    int localPos = filterPositions[channelIndex];
 
     double localSum = 0;
-    int localPos = Pos;
 
     currentBuffer[localPos] = val;
 
