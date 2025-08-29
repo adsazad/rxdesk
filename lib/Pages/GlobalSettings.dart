@@ -944,41 +944,88 @@ class _GlobalSettingsState extends State<GlobalSettings> {
                     ),
                     child: Padding(
                       padding: const EdgeInsets.all(8.0),
-                      child: Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      child: Column(
                         children: [
-                          Text(
-                            "Transport Delay (ms)",
-                            style: TextStyle(
-                              fontSize: 18,
-                              fontWeight: FontWeight.bold,
-                            ),
-                          ),
-                          Consumer<GlobalSettingsModal>(
-                            builder: (context, globalSettings, child) {
-                              return SizedBox(
-                                width: 100,
-                                child: TextFormField(
-                                  initialValue:
-                                      globalSettings.transportDelayMs
-                                          .toString(),
-                                  keyboardType: TextInputType.number,
-                                  decoration: InputDecoration(
-                                    border: OutlineInputBorder(),
-                                    isDense: true,
-                                    contentPadding: EdgeInsets.symmetric(
-                                      vertical: 8,
-                                      horizontal: 8,
-                                    ),
-                                  ),
-                                  onChanged: (val) {
-                                    int value = int.tryParse(val) ?? 0;
-                                    globalSettings.setTransportDelayMs(value);
-                                    onChange();
-                                  },
+                          Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                            children: [
+                              Text(
+                                "Transport Delay O₂ (ms)",
+                                style: TextStyle(
+                                  fontSize: 18,
+                                  fontWeight: FontWeight.bold,
                                 ),
-                              );
-                            },
+                              ),
+                              Consumer<GlobalSettingsModal>(
+                                builder: (context, globalSettings, child) {
+                                  return SizedBox(
+                                    width: 100,
+                                    child: TextFormField(
+                                      initialValue:
+                                          globalSettings.transportDelayO2Ms
+                                              .toString(),
+                                      keyboardType: TextInputType.number,
+                                      decoration: InputDecoration(
+                                        border: OutlineInputBorder(),
+                                        isDense: true,
+                                        contentPadding: EdgeInsets.symmetric(
+                                          vertical: 8,
+                                          horizontal: 8,
+                                        ),
+                                      ),
+                                      onChanged: (val) {
+                                        int value = int.tryParse(val) ?? 0;
+                                        globalSettings.setTransportDelayO2Ms(
+                                          value,
+                                        );
+                                        onChange();
+                                      },
+                                    ),
+                                  );
+                                },
+                              ),
+                            ],
+                          ),
+                          SizedBox(height: 10),
+                          Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                            children: [
+                              Text(
+                                "Transport Delay CO₂ (ms)",
+                                style: TextStyle(
+                                  fontSize: 18,
+                                  fontWeight: FontWeight.bold,
+                                ),
+                              ),
+                              Consumer<GlobalSettingsModal>(
+                                builder: (context, globalSettings, child) {
+                                  return SizedBox(
+                                    width: 100,
+                                    child: TextFormField(
+                                      initialValue:
+                                          globalSettings.transportDelayCO2Ms
+                                              .toString(),
+                                      keyboardType: TextInputType.number,
+                                      decoration: InputDecoration(
+                                        border: OutlineInputBorder(),
+                                        isDense: true,
+                                        contentPadding: EdgeInsets.symmetric(
+                                          vertical: 8,
+                                          horizontal: 8,
+                                        ),
+                                      ),
+                                      onChanged: (val) {
+                                        int value = int.tryParse(val) ?? 0;
+                                        globalSettings.setTransportDelayCO2Ms(
+                                          value,
+                                        );
+                                        onChange();
+                                      },
+                                    ),
+                                  );
+                                },
+                              ),
+                            ],
                           ),
                         ],
                       ),

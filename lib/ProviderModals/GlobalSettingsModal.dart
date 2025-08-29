@@ -41,6 +41,8 @@ class GlobalSettingsModal with ChangeNotifier {
       "VO2 max"; // "VO2 max", "VE/VO₂ increases while VE/VCO₂ remains stable or decreases", "Manually mark"
 
   int transportDelayMs = 0; // Transport delay in milliseconds
+  int transportDelayO2Ms = 0; // Transport delay for O2 in milliseconds
+  int transportDelayCO2Ms = 0; // Transport delay for CO2 in milliseconds
 
   GlobalSettingsModal({
     required this.com,
@@ -70,6 +72,8 @@ class GlobalSettingsModal with ChangeNotifier {
     this.treadmillProtocol = "Bruce",
     this.atDetectionMethod = "VO2 max",
     this.transportDelayMs = 0,
+    this.transportDelayO2Ms = 0,
+    this.transportDelayCO2Ms = 0,
   });
 
   void setAutoRecordOnOff(bool value) {
@@ -179,6 +183,16 @@ class GlobalSettingsModal with ChangeNotifier {
     notifyListeners();
   }
 
+  void setTransportDelayO2Ms(int value) {
+    transportDelayO2Ms = value;
+    notifyListeners();
+  }
+
+  void setTransportDelayCO2Ms(int value) {
+    transportDelayCO2Ms = value;
+    notifyListeners();
+  }
+
   void setAll(
     bool autoRecordOnOff,
     bool filterOnOf,
@@ -244,6 +258,8 @@ class GlobalSettingsModal with ChangeNotifier {
       "treadmillProtocol": treadmillProtocol,
       "atDetectionMethod": atDetectionMethod,
       "transportDelayMs": transportDelayMs,
+      "transportDelayO2Ms": transportDelayO2Ms,
+      "transportDelayCO2Ms": transportDelayCO2Ms,
     };
     String jsonString = jsonEncode(json);
     return jsonString;
@@ -280,6 +296,8 @@ class GlobalSettingsModal with ChangeNotifier {
     treadmillProtocol = arr["treadmillProtocol"] ?? "Bruce";
     atDetectionMethod = arr["atDetectionMethod"] ?? "VO2 max";
     transportDelayMs = arr["transportDelayMs"] ?? 0;
+    transportDelayO2Ms = arr["transportDelayO2Ms"] ?? 0;
+    transportDelayCO2Ms = arr["transportDelayCO2Ms"] ?? 0;
 
     notifyListeners();
   }

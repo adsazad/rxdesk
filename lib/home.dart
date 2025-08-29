@@ -783,9 +783,11 @@ class _HomeState extends State<Home> {
     testData = await loadTestData();
     dataIndex = 0;
 
-    final transportDelayMs = globalSettings.transportDelayMs;
-    final delaySamples = (transportDelayMs * 300 / 1000).round();
-    print("Transport delay in samples: $delaySamples");
+    final o2DelayMs = globalSettings.transportDelayO2Ms;
+    final co2DelayMs = globalSettings.transportDelayCO2Ms;
+    final o2DelaySamples = (o2DelayMs * 300 / 1000).round();
+    final co2DelaySamples = (co2DelayMs * 300 / 1000).round();
+
     List<List<double>> delayBuffer = [];
     recentVolumes.clear();
     bool wasExhaling = false;
@@ -812,7 +814,6 @@ class _HomeState extends State<Home> {
           double vol = (data[13] << 8 | data[12]) * 1.0;
           vol = (vol * globalSettings.tidalScalingFactor);
 
-          // Exhalation detection logic
           recentVolumes.add(vol);
           if (recentVolumes.length > 10) recentVolumes.removeAt(0);
 
@@ -825,31 +826,24 @@ class _HomeState extends State<Home> {
           }
           if (vol > 50) wasExhaling = true;
 
-          // Buffer the sample
           delayBuffer.add([ecg, o2, co2, flow, vol]);
-          if (delayBuffer.length > delaySamples) {
-            // Use current flow/vol, delayed O2/CO2
+          if (delayBuffer.length > max(o2DelaySamples, co2DelaySamples)) {
             final current = delayBuffer[0];
-            final delayed = delayBuffer[delaySamples];
-
-            double correctedECG = current[0];
-            double correctedFLOW = current[3];
-            double correctedVOL = current[4];
-            double correctedO2 = delayed[1];
-            double correctedCO2 = delayed[2];
-
-            // If current volume is zero, set O2/CO2 to ambient
-            // if (correctedVOL == 0) {
-            //   correctedO2 = 20.0;
-            //   correctedCO2 = 0.3;
-            // }
+            final delayedO2 =
+                delayBuffer.length > o2DelaySamples
+                    ? delayBuffer[o2DelaySamples][1]
+                    : current[1];
+            final delayedCO2 =
+                delayBuffer.length > co2DelaySamples
+                    ? delayBuffer[co2DelaySamples][2]
+                    : current[2];
 
             final correctedSample = [
-              correctedECG,
-              correctedO2,
-              correctedCO2,
-              correctedFLOW,
-              correctedVOL,
+              current[0], // ECG
+              delayedO2, // O2 (delayed)
+              delayedCO2, // CO2 (delayed)
+              current[3], // Flow
+              current[4], // Vol
             ];
 
             saver(
@@ -867,7 +861,7 @@ class _HomeState extends State<Home> {
               _inMemoryData.add([edt[0], edt[1], edt[2], edt[3], edt[4]]);
             }
 
-            delayBuffer.removeAt(0); // Move buffer forward
+            delayBuffer.removeAt(0);
           }
 
           dataIndex += 16;
@@ -948,8 +942,11 @@ class _HomeState extends State<Home> {
       mainDataSubscription?.cancel();
     }
 
-    final transportDelayMs = globalSettings.transportDelayMs;
-    final delaySamples = (transportDelayMs * 300 / 1000).round();
+    final o2DelayMs = globalSettings.transportDelayO2Ms;
+    final co2DelayMs = globalSettings.transportDelayCO2Ms;
+    final o2DelaySamples = (o2DelayMs * 300 / 1000).round();
+    final co2DelaySamples = (co2DelayMs * 300 / 1000).round();
+
     List<List<double>> delayBuffer = [];
     recentVolumes.clear();
     bool wasExhaling = false;
@@ -971,7 +968,6 @@ class _HomeState extends State<Home> {
               double vol = (frame[13] * 256 + frame[12]) * 1.0;
               vol = (vol * globalSettings.tidalScalingFactor);
 
-              // Exhalation detection logic
               recentVolumes.add(vol);
               if (recentVolumes.length > 10) recentVolumes.removeAt(0);
 
@@ -985,27 +981,23 @@ class _HomeState extends State<Home> {
               if (vol > 50) wasExhaling = true;
 
               delayBuffer.add([ecg, o2, co2, flow, vol]);
-              if (delayBuffer.length > delaySamples) {
+              if (delayBuffer.length > max(o2DelaySamples, co2DelaySamples)) {
                 final current = delayBuffer[0];
-                final delayed = delayBuffer[delaySamples];
-
-                double correctedECG = current[0];
-                double correctedFLOW = current[3];
-                double correctedVOL = current[4];
-                double correctedO2 = delayed[1];
-                double correctedCO2 = delayed[2];
-
-                // if (correctedVOL == 0) {
-                //   correctedO2 = 20.0;
-                //   correctedCO2 = 0.3;
-                // }
+                final delayedO2 =
+                    delayBuffer.length > o2DelaySamples
+                        ? delayBuffer[o2DelaySamples][1]
+                        : current[1];
+                final delayedCO2 =
+                    delayBuffer.length > co2DelaySamples
+                        ? delayBuffer[co2DelaySamples][2]
+                        : current[2];
 
                 final correctedSample = [
-                  correctedECG,
-                  correctedO2,
-                  correctedCO2,
-                  correctedFLOW,
-                  correctedVOL,
+                  current[0], // ECG
+                  delayedO2, // O2 (delayed)
+                  delayedCO2, // CO2 (delayed)
+                  current[3], // Flow
+                  current[4], // Vol
                 ];
 
                 saver(
