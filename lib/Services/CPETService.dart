@@ -45,47 +45,52 @@ class CPETService {
     };
   }
 
-  // Step 1: Find volume peaks (max point per breath)
+  // Step 1: Find exhalation ramps (start and end indices)
   List<Map<String, dynamic>> getBreathVolumePeaks(List<List<double>> data) {
-    List<Map<String, dynamic>> peaks = [];
+    List<Map<String, dynamic>> ramps = [];
+    if (data.isEmpty || data[0].length <= 3) return ramps;
 
-    if (data.isEmpty || data[0].length <= 3) return peaks;
+    double volThreshold = 0.05; // adjust as needed
+    int minSamplesBetweenPeaks = 240;
+    int i = 0;
+    int lastEnd = -minSamplesBetweenPeaks;
 
-    bool rising = false;
-    double maxVal = -double.infinity;
-    int maxIndex = -1;
-    const int minSamplesBetweenPeaks = 240;
-
-    for (int i = 1; i < data.length; i++) {
-      if (data[i].length <= 3 || data[i - 1].length <= 3) continue;
-
-      double prev = data[i - 1][4];
-      double current = data[i][4];
-
-      if (current > prev) {
-        if (!rising) {
-          rising = true;
-          maxVal = current;
-          maxIndex = i;
-        } else if (current > maxVal) {
-          maxVal = current;
-          maxIndex = i;
-        }
-      } else if (rising && current < prev) {
-        if (maxVal > 0.1) {
-          // Only add peak if far enough from previous one
-          if (peaks.isEmpty ||
-              (maxIndex - peaks.last['index'] > minSamplesBetweenPeaks)) {
-            peaks.add({'index': maxIndex, 'value': maxVal});
-          }
-        }
-        rising = false;
-        maxVal = -double.infinity;
-        maxIndex = -1;
+    while (i < data.length) {
+      // Find start: volume rises above threshold
+      while (i < data.length &&
+          (data[i].length < 5 || data[i][4] <= volThreshold)) {
+        i++;
       }
-    }
+      int start = i;
 
-    return peaks;
+      // Find end: volume drops to threshold or below after rising
+      double maxVal = -double.infinity;
+      int maxIndex = start;
+      while (i < data.length && data[i][4] > volThreshold) {
+        if (data[i][4] > maxVal) {
+          maxVal = data[i][4];
+          maxIndex = i;
+        }
+        i++;
+      }
+      int end = i - 1;
+
+      if (end > start && start < data.length && end < data.length) {
+        // Only add ramp if far enough from previous one
+        if (ramps.isEmpty || (start - lastEnd > minSamplesBetweenPeaks)) {
+          ramps.add({
+            'start': start,
+            'end': end,
+            'peak': maxIndex,
+            'value': maxVal,
+          });
+          lastEnd = end;
+        }
+      }
+      // Move to next ramp
+      i = end + 1;
+    }
+    return ramps;
   }
 
   int detectO2Co2DelayFromVolumePeaks(
@@ -131,50 +136,70 @@ class CPETService {
     return avgDelay;
   }
 
-  // Step 2: Calculate VO2, VCO2, RER at peak index
+  // Step 2: Calculate VO2, VCO2, RER using average O2/CO2 over ramp
   List<Map<String, dynamic>> calculateStatsAtPeaks(
     List<List<double>> data,
-    List<Map<String, dynamic>> peaks,
+    List<Map<String, dynamic>> ramps,
   ) {
     List<Map<String, dynamic>> stats = [];
+    int samplingRate = 300;
 
-    for (int j = 0; j < peaks.length; j++) {
-      int i = peaks[j]['index'];
+    for (int j = 0; j < ramps.length; j++) {
+      int start = ramps[j]['start'];
+      int end = ramps[j]['end'];
+      int peak = ramps[j]['peak'];
 
-      if (i < data.length && data[i].length >= 5) {
-        double o2 = data[i][1]; // O2 in %
-        double co2 = data[i][2]; // CO2 in %
-        double vol = data[i][4] / 1000; // vol in liters
+      if (start < data.length &&
+          end < data.length &&
+          data[start].length >= 5 &&
+          data[end].length >= 5) {
+        // Average O2 and CO2 over ramp
+        double sumO2 = 0.0;
+        double sumCO2 = 0.0;
+        double sumVol = 0.0;
+        int count = 0;
+        for (int k = start; k <= end; k++) {
+          sumO2 += data[k][1];
+          sumCO2 += data[k][2];
+          sumVol += data[k][4] / 1000;
+          count++;
+        }
+        double avgO2 = count > 0 ? sumO2 / count : 0.0;
+        double avgCO2 = count > 0 ? sumCO2 / count : 0.0;
+        double avgVol = count > 0 ? sumVol / count : 0.0;
 
-        o2 = o2 * 0.000917;
-        double o2Percent = o2Calibrate?.call(o2) ?? 0.0;
+        avgO2 = avgO2 * 0.000917;
+        double o2Percent = o2Calibrate?.call(avgO2) ?? 0.0;
 
-        double vo2 = vol * (20.93 - o2Percent) / 100;
-        double co2Fraction = co2 / 100;
-        double vco2 = vol * co2Fraction;
+        double vo2 = avgVol * (20.93 - o2Percent) / 100;
+        double co2Fraction = avgCO2 / 100;
+        double vco2 = avgVol * co2Fraction;
         double rer = vo2 > 0 ? vco2 / vo2 : 0;
 
         double? respirationRate;
         double? minuteVentilation;
 
         if (j >= 1) {
-          int prevIndex = peaks[j - 1]['index'];
-          int intervalSamples = i - prevIndex;
+          int prevPeak = ramps[j - 1]['peak'];
+          int intervalSamples = peak - prevPeak;
           if (intervalSamples > 0) {
-            respirationRate =
-                60 * (300 / intervalSamples); // assuming 300 Hz sampling
-            minuteVentilation = respirationRate * vol;
+            respirationRate = 60 * (samplingRate / intervalSamples);
+            minuteVentilation = respirationRate * avgVol;
           }
         }
 
         stats.add({
-          'index': i,
+          'index': peak,
+          'start': start,
+          'end': end,
           'vo2': vo2,
           'vco2': vco2,
           'rer': rer,
-          "vol": vol,
+          "vol": avgVol,
           "respirationRate": respirationRate,
           "minuteVentilation": minuteVentilation,
+          "avgO2": avgO2,
+          "avgCO2": avgCO2,
         });
       }
     }
