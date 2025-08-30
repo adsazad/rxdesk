@@ -222,7 +222,7 @@ class CPETService {
           'vo2': vo2,
           'vco2': vco2,
           'rer': rer,
-          'peakVol': peakVol,
+          'vol': peakVol,
           'respirationRate': respirationRate,
           'minuteVentilation': minuteVentilation,
           'avgO2': avgO2,
