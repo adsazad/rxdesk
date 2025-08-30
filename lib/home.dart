@@ -134,6 +134,13 @@ class _HomeState extends State<Home> {
         "maxDisplay": (4096 / 12) * 3,
         "scale": 3,
         "gain": 0.4,
+        "filterConfig": {
+          "filterOn": true,
+          "gain": 4,
+          "lpf": 3,
+          "hpf": 5,
+          "notch": 1,
+        },
       },
       {
         "name": "O2",
@@ -167,7 +174,7 @@ class _HomeState extends State<Home> {
           {"minDisplay": 0.0, "maxDisplay": 50.0, "boxValue": 10.0},
         ],
         "scalePresetIndex": 3,
-        "filterConfig": {"filterOn": false, "lpf": 3, "hpf": 5, "notch": 1},
+        "filterConfig": {"filterOn": true, "lpf": 3, "hpf": 5, "notch": 1},
         "meter": {
           "decimal": 1,
           "unit":
@@ -245,6 +252,7 @@ class _HomeState extends State<Home> {
         "yAxisLabelUnit": (double x) => x < 1000 ? "ml/s" : "L/s",
         // moving average
         "movingAverage": {"enabled": true, "window": 10},
+        "filterConfig": {"filterOn": true, "lpf": 3, "hpf": 5, "notch": 1},
       },
       {
         "name": "Tidal Volume",

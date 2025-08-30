@@ -36,25 +36,38 @@ class MultiFilter {
   }
 
   /// STATIC: Creates a FilterClass with minimal config
-  static FilterClass _generateFilterFromMinimalConfig(Map<String, dynamic> config) {
+  static FilterClass _generateFilterFromMinimalConfig(
+    Map<String, dynamic> config,
+  ) {
     final int lpf = config["lpf"] ?? 3;
     final int hpf = config["hpf"] ?? 5;
     final int notch = config["notch"] ?? 1;
 
+    // Allow overriding defaults via config, else use static defaults
+    final int sr = config["sr"] ?? _staticSr;
+    final int gain = config["gain"] ?? _staticGain;
+    final int speed = config["speed"] ?? _staticSpeed;
+    final double countPerMV = config["countPerMV"] ?? _staticCountPerMV;
+    final double pixels1mmY = config["pixels1mmY"] ?? _staticPixels1mmY;
+    final int lineFreq = config["lineFreq"] ?? _staticLineFreq;
+    final int range = config["range"] ?? _staticRange;
+    final int sRateInd = config["sRateInd"] ?? _staticSRateInd;
+    final bool useOldSpeeds = config["useOldSpeeds"] ?? _staticUseOldSpeeds;
+
     FilterClass filter = FilterClass();
     filter.init(
-      _staticSr,
+      sr,
       lpf,
       hpf,
       notch,
-      _staticGain,
-      _staticSpeed,
-      _staticCountPerMV,
-      _staticPixels1mmY,
-      _staticLineFreq,
-      _staticRange,
-      _staticSRateInd,
-      _staticUseOldSpeeds,
+      gain,
+      speed,
+      countPerMV,
+      pixels1mmY,
+      lineFreq,
+      range,
+      sRateInd,
+      useOldSpeeds,
     );
 
     return filter;

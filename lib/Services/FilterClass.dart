@@ -1,17 +1,17 @@
 import 'dart:math';
 
-
 class FilterClass {
   static const double PIE = 3.14159;
 
-  static const int MAX_GAIN_INDEX = 6; //0.25,0.5,1.0,2.0,4.0,8.0 cm/mV
+  static const int MAX_GAIN_INDEX = 8; //0.25,0.5,1.0,2.0,4.0,8.0 cm/mV
   static const int MAX_OLD_SPEED_INDEX = 12; //5,6.25,12.5,25,50,100 mm/sec
   static const int MAX_SPEED_INDEX = 9; //1,2,5,10,20,30,50,75,100
   static const int MAX_LPF_INDEX = 13; //10,15,20,35,70,100,150 Hz
   static const int MAX_HPF_INDEX = 9; //0.05,0.1,0.2,0.3,0.6,0.8,1.0 Hz
   static const int MAX_NOTCH_INDEX = 2; //NotchOFF, NotchON
   static const int MAX_SRATE_INDEX = 10; //64,128,256,1K,2K,4K,8K,10K,20K,400K
-  static const int MAX_RANGE_INDEX = 10; //10V ,5V, 2V, 1V, 500mv, 100 mv,50mv,10mv,5mv, 1mv
+  static const int MAX_RANGE_INDEX =
+      10; //10V ,5V, 2V, 1V, 500mv, 100 mv,50mv,10mv,5mv, 1mv
 
   static const int MAX_STAGES = 3;
   static const int HPF_STAGE = 0;
@@ -19,10 +19,11 @@ class FilterClass {
   static const int NOTCH_STAGE = 2;
   // static const int LPF_STAGE2 = 3;
 
-
   List<double> CF = List<double>.filled(5, 0, growable: false);
   List<List<double>> Coeff = List.generate(
-      MAX_STAGES, (i) => List.generate(5, (j) => 0));
+    MAX_STAGES,
+    (i) => List.generate(5, (j) => 0),
+  );
   int SpeedSkips = 0;
   double GainFactor = 0;
   double RangeValue = 0;
@@ -68,9 +69,20 @@ class FilterClass {
 
   double mConverionOut = 0;
 
-  init(int pSR, int pLPFInd, int pHPFInd, int pNotchInd, int pGainInd,
-      int pSpeedInd, double pCountPermV, double pPixels1mmY, int pLineFreqInd,
-      int pRangeInd, [int pSRInd = -1, bool pUseOldSpeeds = false]) {
+  init(
+    int pSR,
+    int pLPFInd,
+    int pHPFInd,
+    int pNotchInd,
+    int pGainInd,
+    int pSpeedInd,
+    double pCountPermV,
+    double pPixels1mmY,
+    int pLineFreqInd,
+    int pRangeInd, [
+    int pSRInd = -1,
+    bool pUseOldSpeeds = false,
+  ]) {
     // print("INIT FILTER A");
     InitCaptionsAndValue();
     mSR = pSR;
@@ -168,13 +180,14 @@ class FilterClass {
     mSpeedCaptions[7] = "1:75";
     mSpeedCaptions[8] = "1:100";
 
-
     mGainVal[0] = 0.25;
     mGainVal[1] = 0.5;
     mGainVal[2] = 1;
     mGainVal[3] = 2;
     mGainVal[4] = 4;
     mGainVal[5] = 8;
+    mGainVal[6] = 10;
+    mGainVal[7] = 20;
 
     mGainCaptions[0] = "2.5 mm/mV";
     mGainCaptions[1] = "5 mm/mV";
@@ -182,6 +195,8 @@ class FilterClass {
     mGainCaptions[3] = "20 mm/mV";
     mGainCaptions[4] = "40 mm/mV";
     mGainCaptions[5] = "80 mm/mV";
+    mGainCaptions[6] = "100 mm/mV";
+    mGainCaptions[7] = "200 mm/mV";
 
     mLPFVal[0] = 10;
     mLPFVal[1] = 15;
@@ -258,7 +273,6 @@ class FilterClass {
     mSRateCaptions[7] = "10K";
     mSRateCaptions[8] = "20K";
     mSRateCaptions[9] = "400K";
-
 
     mRangeVal[0] = 10;
     mRangeVal[1] = 5;
@@ -356,8 +370,7 @@ class FilterClass {
   int get SpeedMaxInd {
     if (mUseOldSpeeds == false) {
       return MAX_SPEED_INDEX;
-    }
-    else {
+    } else {
       return MAX_OLD_SPEED_INDEX;
     }
   }
@@ -402,8 +415,7 @@ class FilterClass {
       for (int i = 1; i < 5; i++) {
         Coeff[NOTCH_STAGE][i] = 0;
       }
-    }
-    else {
+    } else {
       // if(mLineFreqInd == 0) //50 Hz
       //     {
       BS2(50, mSR.toDouble(), 15);
@@ -468,8 +480,7 @@ class FilterClass {
   set LineFrequencyInd(int value) {
     if (value == 0 || value == 1) {
       mLineFreqInd = value;
-    }
-    else {
+    } else {
       mLineFreqInd = 0;
     }
   }
@@ -533,8 +544,7 @@ class FilterClass {
         Ind = 0;
       }
       return mSpeedCaptions[Ind];
-    }
-    else {
+    } else {
       if (Ind > MAX_OLD_SPEED_INDEX - 1) {
         Ind = MAX_OLD_SPEED_INDEX - 1;
       }
@@ -560,15 +570,14 @@ class FilterClass {
       if (mLPFInd < (MAX_LPF_INDEX - 1)) {
         mLPFInd = (mLPFInd + 1);
       }
-    }
-    else {
+    } else {
       if (mLPFInd > 0) {
         mLPFInd = (mLPFInd - 1);
       }
     }
     // LP2(mLPFVal[mLPFInd], mSR.toDouble(),0.6);
     LP1(mLPFVal[mLPFInd], mSR.toDouble());
-    for (int i = 0; i < 5; i ++) {
+    for (int i = 0; i < 5; i++) {
       Coeff[LPF_STAGE][i] = CF[i];
     }
   }
@@ -587,14 +596,12 @@ class FilterClass {
     }
   }
 
-
   void AdjustHPF([bool UP = true]) {
     if (UP) {
       if (mHPFInd < (MAX_HPF_INDEX - 1)) {
         mHPFInd = (mHPFInd + 1);
       }
-    }
-    else {
+    } else {
       if (mHPFInd > 0) {
         mHPFInd = (mHPFInd - 1);
       }
@@ -641,8 +648,7 @@ class FilterClass {
       for (int i = 1; i < 5; i++) {
         Coeff[NOTCH_STAGE][i] = 0;
       }
-    }
-    else {
+    } else {
       // if (mLineFreqInd == 0) //50 Hz
       //     {
       // print("Notch 50");
@@ -674,14 +680,12 @@ class FilterClass {
       for (int i = 1; i < 5; i++) {
         Coeff[NOTCH_STAGE][i] = 0;
       }
-    }
-    else {
+    } else {
       if (mLineFreqInd == 0) //50 Hz
-          {
+      {
         BS2(50, mSR.toDouble(), 10);
-      }
-      else //60 Hz
-          {
+      } else //60 Hz
+      {
         BS2(60, mSR.toDouble(), 10);
       }
       for (int i = 0; i < 5; i++) {
@@ -696,21 +700,18 @@ class FilterClass {
         if (mSpeedInd < (MAX_SPEED_INDEX - 1)) {
           mSpeedInd = (mSpeedInd + 1);
         }
-      }
-      else {
+      } else {
         if (mSpeedInd > 0) {
           mSpeedInd = (mSpeedInd - 1);
         }
       }
       SpeedSkips = mSpeedVal[mSpeedInd].toInt();
-    }
-    else {
+    } else {
       if (UP) {
         if (mSpeedInd < (MAX_OLD_SPEED_INDEX - 1)) {
           mSpeedInd = (mSpeedInd + 1);
         }
-      }
-      else {
+      } else {
         if (mSpeedInd > 0) {
           mSpeedInd = (mSpeedInd - 1);
         }
@@ -731,8 +732,7 @@ class FilterClass {
 
       mSpeedInd = SpeedInd;
       SpeedSkips = mSpeedVal[mSpeedInd].toInt();
-    }
-    else {
+    } else {
       if (SpeedInd > (MAX_OLD_SPEED_INDEX - 1)) {
         SpeedInd = MAX_OLD_SPEED_INDEX - 1;
       }
@@ -749,8 +749,7 @@ class FilterClass {
       if (mRangeInd < (MAX_RANGE_INDEX - 1)) {
         mRangeInd = (mRangeInd + 1);
       }
-    }
-    else {
+    } else {
       if (mRangeInd > 0) {
         mRangeInd = (mRangeInd - 1);
       }
@@ -774,8 +773,7 @@ class FilterClass {
       if (mGainInd < (MAX_GAIN_INDEX - 1)) {
         mGainInd = (mGainInd + 1);
       }
-    }
-    else {
+    } else {
       if (mGainInd > 0) {
         mGainInd = (mGainInd - 1);
       }
@@ -794,9 +792,15 @@ class FilterClass {
     GainFactor = mGainVal[mGainInd] * mPixels1mmY / mCountPermV;
   }
 
-  double GetConversionOutput(double V1, double V2, double C1, double C2,
-      double NewVolt) {
-    mConverionOut = (((C2 - C1) / (V2 - V1)) * NewVolt) +
+  double GetConversionOutput(
+    double V1,
+    double V2,
+    double C1,
+    double C2,
+    double NewVolt,
+  ) {
+    mConverionOut =
+        (((C2 - C1) / (V2 - V1)) * NewVolt) +
         (C1 - (((C2 - C1) / (V2 - V1)) * V1));
     return mConverionOut;
   }
@@ -885,6 +889,5 @@ class FilterClass {
     CF[2] = -2 * alpha * cos(theta);
     CF[3] = -beta;
     CF[4] = CF[0];
-
   }
 }
