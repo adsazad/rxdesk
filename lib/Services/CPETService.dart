@@ -143,6 +143,9 @@ class CPETService {
   ) {
     List<Map<String, dynamic>> stats = [];
     int samplingRate = 300;
+    const int slabMs = 10; // size of each averaging slab in milliseconds
+    int samplesPerSlab = ((samplingRate * slabMs) / 1000).round();
+    if (samplesPerSlab < 1) samplesPerSlab = 1;
 
     for (int j = 0; j < ramps.length; j++) {
       int start = ramps[j]['start'];
@@ -153,20 +156,45 @@ class CPETService {
           end < data.length &&
           data[start].length >= 5 &&
           data[end].length >= 5) {
-        // Average O2 and CO2 over ramp
+        // --- Average over 10 ms slabs instead of every sample ---
         double sumO2 = 0.0;
         double sumCO2 = 0.0;
         double sumVol = 0.0;
-        int count = 0;
-        for (int k = start; k <= end; k++) {
-          sumO2 += data[k][1];
-          sumCO2 += data[k][2];
-          sumVol += data[k][4] / 1000;
-          count++;
+        int slabCount = 0;
+
+        for (
+          int slabStart = start;
+          slabStart <= end;
+          slabStart += samplesPerSlab
+        ) {
+          int slabEnd = slabStart + samplesPerSlab - 1;
+          if (slabEnd > end) slabEnd = end;
+
+          double slabO2 = 0.0;
+          double slabCO2 = 0.0;
+          double slabVol = 0.0;
+          int slabSamples = 0;
+
+          for (int s = slabStart; s <= slabEnd; s++) {
+            if (data[s].length < 5) continue;
+            slabO2 += data[s][1];
+            slabCO2 += data[s][2];
+            slabVol += data[s][4] / 1000;
+            slabSamples++;
+          }
+
+          if (slabSamples > 0) {
+            // Mean of this slab
+            sumO2 += slabO2 / slabSamples;
+            sumCO2 += slabCO2 / slabSamples;
+            sumVol += slabVol / slabSamples;
+            slabCount++;
+          }
         }
-        double avgO2 = count > 0 ? sumO2 / count : 0.0;
-        double avgCO2 = count > 0 ? sumCO2 / count : 0.0;
-        double avgVol = count > 0 ? sumVol / count : 0.0;
+
+        double avgO2 = slabCount > 0 ? sumO2 / slabCount : 0.0;
+        double avgCO2 = slabCount > 0 ? sumCO2 / slabCount : 0.0;
+        double avgVol = slabCount > 0 ? sumVol / slabCount : 0.0;
 
         avgO2 = avgO2 * 0.000917;
         double o2Percent = o2Calibrate?.call(avgO2) ?? 0.0;
@@ -200,6 +228,8 @@ class CPETService {
           "minuteVentilation": minuteVentilation,
           "avgO2": avgO2,
           "avgCO2": avgCO2,
+          "slabCount": slabCount,
+          "samplesPerSlab": samplesPerSlab,
         });
       }
     }
