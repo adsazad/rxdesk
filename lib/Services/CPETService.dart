@@ -4,6 +4,14 @@ class CPETService {
   CalibrationFunction? o2Calibrate;
 
   Map<String, dynamic> init(List<List<double>> data, dynamic globalSettings) {
+    // MOVE calibration before using it
+    o2Calibrate = generateCalibrationFunction(
+      voltage1: globalSettings.voltage1,
+      value1: globalSettings.value1,
+      voltage2: globalSettings.voltage2,
+      value2: globalSettings.value2,
+    );
+
     List<Map<String, dynamic>> volPeaks = getBreathVolumePeaks(data);
     List<Map<String, dynamic>> breathStats = calculateStatsAtPeaks(
       data,
@@ -14,12 +22,6 @@ class CPETService {
     Map<String, dynamic>? lastBreathStat =
         breathStats.isNotEmpty ? breathStats.last : null;
 
-    o2Calibrate = generateCalibrationFunction(
-      voltage1: globalSettings.voltage1,
-      value1: globalSettings.value1,
-      voltage2: globalSettings.voltage2,
-      value2: globalSettings.value2,
-    );
     double? respirationRate;
     double? minuteVentilation;
 
@@ -50,23 +52,24 @@ class CPETService {
     List<Map<String, dynamic>> ramps = [];
     if (data.isEmpty || data[0].length <= 3) return ramps;
 
-    double volThreshold = 0.05; // adjust as needed
+    double detectionThreshold = 0.1; // keep small threshold just to detect rising
+    double minPeakVolume = 100;      // NEW: ignore peaks below 100 (raw units)
     int minSamplesBetweenPeaks = 240;
     int i = 0;
     int lastEnd = -minSamplesBetweenPeaks;
 
     while (i < data.length) {
-      // Find start: volume rises above threshold
+      // Find start: volume rises above detection threshold
       while (i < data.length &&
-          (data[i].length < 5 || data[i][4] <= volThreshold)) {
+          (data[i].length < 5 || data[i][4] <= detectionThreshold)) {
         i++;
       }
       int start = i;
 
-      // Find end: volume drops to threshold or below after rising
+      // Find end: volume drops to detection threshold or below after rising
       double maxVal = -double.infinity;
       int maxIndex = start;
-      while (i < data.length && data[i][4] > volThreshold) {
+      while (i < data.length && data[i][4] > detectionThreshold) {
         if (data[i][4] > maxVal) {
           maxVal = data[i][4];
           maxIndex = i;
@@ -76,8 +79,9 @@ class CPETService {
       int end = i - 1;
 
       if (end > start && start < data.length && end < data.length) {
-        // Only add ramp if far enough from previous one
-        if (ramps.isEmpty || (start - lastEnd > minSamplesBetweenPeaks)) {
+        // Only add ramp if far enough from previous one AND peak meets minimum volume
+        if ((ramps.isEmpty || (start - lastEnd > minSamplesBetweenPeaks)) &&
+            maxVal >= minPeakVolume) { // NEW filter
           ramps.add({
             'start': start,
             'end': end,
@@ -135,7 +139,6 @@ class CPETService {
     );
     return avgDelay;
   }
-  // ...existing code...
 
   // Step 2: Calculate VO2, VCO2, RER using average O2/CO2 over ramp BUT peak volume only
   List<Map<String, dynamic>> calculateStatsAtPeaks(
@@ -152,24 +155,19 @@ class CPETService {
       int start = ramps[j]['start'];
       int end = ramps[j]['end'];
       int peak = ramps[j]['peak'];
-      double rawPeakVol = ramps[j]['value']; // same units as data[s][4]
-      double peakVol =
-          rawPeakVol /
-          1000.0; // convert to L (keep consistent with previous logic)
+      double rawPeakVol = ramps[j]['value'];
+      double peakVol = rawPeakVol / 1000.0; // remove /1000 if already L
 
       if (start < data.length &&
           end < data.length &&
           data[start].length >= 5 &&
           data[end].length >= 5) {
+
         double sumO2 = 0.0;
         double sumCO2 = 0.0;
         int slabCount = 0;
 
-        for (
-          int slabStart = start;
-          slabStart <= end;
-          slabStart += samplesPerSlab
-        ) {
+        for (int slabStart = start; slabStart <= end; slabStart += samplesPerSlab) {
           int slabEnd = slabStart + samplesPerSlab - 1;
           if (slabEnd > end) slabEnd = end;
 
@@ -191,28 +189,35 @@ class CPETService {
           }
         }
 
-        double avgO2 = slabCount > 0 ? sumO2 / slabCount : 0.0;
-        double avgCO2 = slabCount > 0 ? sumCO2 / slabCount : 0.0;
+        double avgO2Raw = slabCount > 0 ? sumO2 / slabCount : 0.0;
+        double avgCO2Raw = slabCount > 0 ? sumCO2 / slabCount : 0.0; // raw scaled
 
-        // Convert O2 raw average to volts then calibrated percent
-        avgO2 = avgO2 * 0.000917;
-        double o2Percent = o2Calibrate?.call(avgO2) ?? 0.0;
+        // CO2 scaling auto-detect: if >20, assume 100×
+        double feCO2Percent = avgCO2Raw > 20 ? avgCO2Raw / 100.0 : avgCO2Raw;
 
-        double vo2 = peakVol * (20.93 - o2Percent) / 100.0;
-        double co2Fraction = avgCO2 / 100.0;
-        double vco2 = peakVol * co2Fraction;
-        double rer = vo2 > 0 ? vco2 / vo2 : 0;
+        // O2: convert raw -> volts (keep factor if correct) then calibrate
+        double o2Volts = avgO2Raw * 0.000917; // remove if already volts
+        double feO2Percent = o2Calibrate?.call(o2Volts) ?? 0.0;
+
+        // VO2 per breath (L): VT * (FiO2 - FeO2)/100 (FiO2 fixed 20.93)
+        double deltaO2 = 20.93 - feO2Percent;
+        if (deltaO2 < 0) deltaO2 = 0;
+        double vo2 = peakVol * (deltaO2 / 100.0);
+
+        // VCO2 per breath (L): VT * FeCO2/100
+        double vco2 = peakVol * (feCO2Percent / 100.0);
+
+        double rer = vo2 > 1e-6 ? vco2 / vo2 : 0.0;
 
         double? respirationRate;
         double? minuteVentilation;
         if (j >= 1) {
-          int prevPeak = ramps[j - 1]['peak'];
-          int intervalSamples = peak - prevPeak;
-          if (intervalSamples > 0) {
-            respirationRate = 60 * (samplingRate / intervalSamples);
-            // Minute ventilation using peak volume (your requested change)
-            minuteVentilation = respirationRate * peakVol;
-          }
+            int prevPeak = ramps[j - 1]['peak'];
+            int intervalSamples = peak - prevPeak;
+            if (intervalSamples > 0) {
+              respirationRate = 60 * (samplingRate / intervalSamples);
+              minuteVentilation = respirationRate * peakVol;
+            }
         }
 
         stats.add({
@@ -224,9 +229,11 @@ class CPETService {
           'rer': rer,
           'vol': peakVol,
           'respirationRate': respirationRate,
-          'minuteVentilation': minuteVentilation,
-          'avgO2': avgO2,
-          'avgCO2': avgCO2,
+            'minuteVentilation': minuteVentilation,
+          'feO2Percent': feO2Percent,
+          'feCO2Percent': feCO2Percent,
+          'avgCO2Raw': avgCO2Raw,
+          'avgO2Raw': avgO2Raw,
           'slabCount': slabCount,
           'samplesPerSlab': samplesPerSlab,
         });

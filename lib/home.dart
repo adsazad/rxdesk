@@ -1673,7 +1673,7 @@ class _HomeState extends State<Home> {
 
   getSamplesFromFile(
     int index, {
-    int seconds = 10,
+    int seconds = 20,
     int samplingRate = 300,
   }) async {
     // Each sample is 5 float64 values (8 bytes each)
