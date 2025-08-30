@@ -946,16 +946,15 @@ class _HomeState extends State<Home> {
   int lastNotifierUpdate = DateTime.now().millisecondsSinceEpoch;
 
   void startMainDataStream(SerialPort port) {
-    // Cancel any existing stream
-    mainDataSubscription?.cancel();
+    if (mainDataSubscription != null) {
+      mainDataSubscription?.cancel();
+    }
 
     final o2DelayMs = globalSettings.transportDelayO2Ms;
     final co2DelayMs = globalSettings.transportDelayCO2Ms;
-    final int o2DelaySamples = (o2DelayMs * 300 / 1000).round();
-    final int co2DelaySamples = (co2DelayMs * 300 / 1000).round();
-    final int maxDelay = max(o2DelaySamples, co2DelaySamples);
+    final o2DelaySamples = (o2DelayMs * 300 / 1000).round();
+    final co2DelaySamples = (co2DelayMs * 300 / 1000).round();
 
-    // Local delay buffer: each entry = [ecg, o2, co2, flow, vol]
     List<List<double>> delayBuffer = [];
     recentVolumes.clear();
     bool wasExhaling = false;
@@ -963,104 +962,94 @@ class _HomeState extends State<Home> {
     SerialPortReader reader = SerialPortReader(port);
     mainDataSubscription = reader.stream.listen(
       (data) {
-        const int frameLength = 18;
+        int frameLength = 18;
         for (int i = 0; i <= data.length - frameLength;) {
           if (data[i] == 'B'.codeUnitAt(0) &&
               data[i + 1] == 'T'.codeUnitAt(0)) {
-            if (i + frameLength > data.length) break;
+            if (i + frameLength <= data.length) {
+              final frame = data.sublist(i, i + frameLength);
 
-            final frame = data.sublist(i, i + frameLength);
+              double ecg = (frame[3] * 256 + frame[2]) * 1.0;
+              double o2 = (frame[7] * 256 + frame[6]) * 1.0;
+              double co2 = (frame[15] * 256 + frame[14]) * 1.0;
+              double flow = (frame[11] * 256 + frame[10]) * 1.0;
+              double vol = (frame[13] * 256 + frame[12]) * 1.0;
+              vol = (vol * globalSettings.tidalScalingFactor);
 
-            double ecg = (frame[3] * 256 + frame[2]) * 1.0;
-            double o2 = (frame[7] * 256 + frame[6]) * 1.0;
-            double co2 = (frame[15] * 256 + frame[14]) * 1.0;
-            double flow = (frame[11] * 256 + frame[10]) * 1.0;
-            double vol = (frame[13] * 256 + frame[12]) * 1.0;
-            vol = vol * globalSettings.tidalScalingFactor;
+              recentVolumes.add(vol);
+              if (recentVolumes.length > 10) recentVolumes.removeAt(0);
 
-            // Exhalation detection uses instantaneous volume
-            recentVolumes.add(vol);
-            if (recentVolumes.length > 10) recentVolumes.removeAt(0);
-            int nonZeroCount = recentVolumes.where((v) => v > 50).length;
-            bool currentIsZero = vol <= 5;
-            if (nonZeroCount >= 5 && currentIsZero && wasExhaling) {
-              onExhalationDetected();
-              wasExhaling = false;
-            }
-            if (vol > 50) wasExhaling = true;
+              int nonZeroCount = recentVolumes.where((v) => v > 50).length;
+              bool currentIsZero = vol <= 5;
 
-            // Push raw sample into delay buffer
-            delayBuffer.add([ecg, o2, co2, flow, vol]);
-
-            // Only emit when we have enough future samples to satisfy BOTH delays
-            if (delayBuffer.length > maxDelay) {
-              // Base (time reference) sample = earliest (index 0)
-              final base = delayBuffer[0];
-
-              // Aligned gas samples at their respective delay offsets (fallback to base if insufficient)
-              final alignedO2 =
-                  o2DelaySamples < delayBuffer.length
-                      ? delayBuffer[o2DelaySamples][1]
-                      : base[1];
-              final alignedCO2 =
-                  co2DelaySamples < delayBuffer.length
-                      ? delayBuffer[co2DelaySamples][2]
-                      : base[2];
-
-              final baseECG = base[0];
-              final baseFlow = base[3];
-              final baseVol = base[4];
-
-              double finalO2 = alignedO2;
-              double finalCO2 = alignedCO2;
-
-              // Ambient substitution decision should use base volume (time-aligned with flow/vol)
-              if (baseVol == 0) {
-                finalO2 = 1212;
-                finalCO2 = 30;
+              if (nonZeroCount >= 5 && currentIsZero && wasExhaling) {
+                onExhalationDetected();
+                wasExhaling = false;
               }
+              if (vol > 50) wasExhaling = true;
 
-              final correctedSample = [
-                baseECG, // ECG (base time)
-                finalO2, // O2 delayed
-                finalCO2, // CO2 delayed
-                baseFlow, // Flow at base time
-                baseVol, // Volume at base time
-              ];
+              delayBuffer.add([ecg, o2, co2, flow, vol]);
+              if (delayBuffer.length > max(o2DelaySamples, co2DelaySamples)) {
+                final current = delayBuffer[0];
+                var delayedO2 =
+                    delayBuffer.length > o2DelaySamples
+                        ? delayBuffer[o2DelaySamples][1]
+                        : current[1];
+                var delayedCO2 =
+                    delayBuffer.length > co2DelaySamples
+                        ? delayBuffer[co2DelaySamples][2]
+                        : current[2];
 
-              saver(
-                ecg: correctedSample[0],
-                o2: correctedSample[1],
-                flow: correctedSample[3],
-                vol: correctedSample[4],
-                co2: correctedSample[2],
-              );
+                // if (vol == 0) {
+                //   delayedO2 = 1212; // ambient O2 %
+                //   delayedCO2 = 30; // ambient CO2 %
+                // }
 
-              final edt = myBigGraphKey.currentState?.updateEverything(
-                correctedSample,
-              );
-              if (edt != null) {
-                _inMemoryData.add([edt[0], edt[1], edt[2], edt[3], edt[4]]);
-                setState(() {
-                  co2Notifier.value = edt[2];
-                  o2Notifier.value = edt[1];
-                  tidalVolumeNotifier.value = edt[4];
-                });
+                var correctedSample = [
+                  current[0], // ECG
+                  delayedO2, // O2 (delayed)
+                  delayedCO2, // CO2 (delayed)
+                  current[3], // Flow
+                  current[4], // Vol
+                ];
+
+                saver(
+                  ecg: correctedSample[0],
+                  o2: correctedSample[1],
+                  flow: correctedSample[3],
+                  vol: correctedSample[4],
+                  co2: correctedSample[2],
+                );
+
+                List<double>? edt = myBigGraphKey.currentState
+                    ?.updateEverything(correctedSample);
+                if (edt != null) {
+                  _inMemoryData.add([edt[0], edt[1], edt[2], edt[3], edt[4]]);
+                  setState(() {
+                    co2Notifier.value = edt[2];
+                    o2Notifier.value = edt[1];
+                    tidalVolumeNotifier.value = edt[4];
+                  });
+                }
+
+                delayBuffer.removeAt(0);
               }
-
-              // Remove only the base sample (advance time)
-              delayBuffer.removeAt(0);
+              i += frameLength;
+              continue;
+            } else {
+              break;
             }
-
-            i += frameLength;
-            continue;
           } else {
             i++;
           }
         }
       },
-      onDone: () => print("Serial Done"),
-      onError: (e) => print("❌ Serial port error: $e"),
+      onDone: () {
+        print("Serial Done");
+      },
+      onError: (e) {
+        print("❌ Serial port error: $e");
+      },
     );
   }
 
@@ -3144,11 +3133,10 @@ class _HomeState extends State<Home> {
                         windowSize: 6000,
                         verticalLineConfigs: [
                           {
-                            'seconds': 0.5,
+                            'seconds': 0.4,
                             'stroke': 0.5,
-                            'color': Colors.blue.shade200,
+                            'color': Colors.blue.shade100,
                           },
-                          // {'seconds': 0.4, 'stroke': 0.5, 'color': Colors.blue},
                           {
                             'seconds': 1.0,
                             'stroke': 0.8,
