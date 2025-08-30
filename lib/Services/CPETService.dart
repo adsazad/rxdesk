@@ -135,15 +135,16 @@ class CPETService {
     );
     return avgDelay;
   }
+  // ...existing code...
 
-  // Step 2: Calculate VO2, VCO2, RER using average O2/CO2 over ramp
+  // Step 2: Calculate VO2, VCO2, RER using average O2/CO2 over ramp BUT peak volume only
   List<Map<String, dynamic>> calculateStatsAtPeaks(
     List<List<double>> data,
     List<Map<String, dynamic>> ramps,
   ) {
     List<Map<String, dynamic>> stats = [];
     int samplingRate = 300;
-    const int slabMs = 10; // size of each averaging slab in milliseconds
+    const int slabMs = 10;
     int samplesPerSlab = ((samplingRate * slabMs) / 1000).round();
     if (samplesPerSlab < 1) samplesPerSlab = 1;
 
@@ -151,15 +152,17 @@ class CPETService {
       int start = ramps[j]['start'];
       int end = ramps[j]['end'];
       int peak = ramps[j]['peak'];
+      double rawPeakVol = ramps[j]['value']; // same units as data[s][4]
+      double peakVol =
+          rawPeakVol /
+          1000.0; // convert to L (keep consistent with previous logic)
 
       if (start < data.length &&
           end < data.length &&
           data[start].length >= 5 &&
           data[end].length >= 5) {
-        // --- Average over 10 ms slabs instead of every sample ---
         double sumO2 = 0.0;
         double sumCO2 = 0.0;
-        double sumVol = 0.0;
         int slabCount = 0;
 
         for (
@@ -172,47 +175,43 @@ class CPETService {
 
           double slabO2 = 0.0;
           double slabCO2 = 0.0;
-          double slabVol = 0.0;
           int slabSamples = 0;
 
           for (int s = slabStart; s <= slabEnd; s++) {
             if (data[s].length < 5) continue;
             slabO2 += data[s][1];
             slabCO2 += data[s][2];
-            slabVol += data[s][4] / 1000;
             slabSamples++;
           }
 
           if (slabSamples > 0) {
-            // Mean of this slab
             sumO2 += slabO2 / slabSamples;
             sumCO2 += slabCO2 / slabSamples;
-            sumVol += slabVol / slabSamples;
             slabCount++;
           }
         }
 
         double avgO2 = slabCount > 0 ? sumO2 / slabCount : 0.0;
         double avgCO2 = slabCount > 0 ? sumCO2 / slabCount : 0.0;
-        double avgVol = slabCount > 0 ? sumVol / slabCount : 0.0;
 
+        // Convert O2 raw average to volts then calibrated percent
         avgO2 = avgO2 * 0.000917;
         double o2Percent = o2Calibrate?.call(avgO2) ?? 0.0;
 
-        double vo2 = avgVol * (20.93 - o2Percent) / 100;
-        double co2Fraction = avgCO2 / 100;
-        double vco2 = avgVol * co2Fraction;
+        double vo2 = peakVol * (20.93 - o2Percent) / 100.0;
+        double co2Fraction = avgCO2 / 100.0;
+        double vco2 = peakVol * co2Fraction;
         double rer = vo2 > 0 ? vco2 / vo2 : 0;
 
         double? respirationRate;
         double? minuteVentilation;
-
         if (j >= 1) {
           int prevPeak = ramps[j - 1]['peak'];
           int intervalSamples = peak - prevPeak;
           if (intervalSamples > 0) {
             respirationRate = 60 * (samplingRate / intervalSamples);
-            minuteVentilation = respirationRate * avgVol;
+            // Minute ventilation using peak volume (your requested change)
+            minuteVentilation = respirationRate * peakVol;
           }
         }
 
@@ -223,43 +222,39 @@ class CPETService {
           'vo2': vo2,
           'vco2': vco2,
           'rer': rer,
-          "vol": avgVol,
-          "respirationRate": respirationRate,
-          "minuteVentilation": minuteVentilation,
-          "avgO2": avgO2,
-          "avgCO2": avgCO2,
-          "slabCount": slabCount,
-          "samplesPerSlab": samplesPerSlab,
+          'peakVol': peakVol,
+          'respirationRate': respirationRate,
+          'minuteVentilation': minuteVentilation,
+          'avgO2': avgO2,
+          'avgCO2': avgCO2,
+          'slabCount': slabCount,
+          'samplesPerSlab': samplesPerSlab,
         });
       }
     }
-
     return stats;
   }
 
-  // ✅ New Step 3: Calculate average VO2, VCO2, RER
+  // Averages (no average volume needed now; still average VO2/VCO2/RER)
   Map<String, dynamic> calculateAverages(List<Map<String, dynamic>> stats) {
-    if (stats.isEmpty) return {'vo2': 0.0, 'vco2': 0.0, 'rer': 0.0, "vol": 0.0};
-
+    if (stats.isEmpty) {
+      return {'vo2': 0.0, 'vco2': 0.0, 'rer': 0.0};
+    }
     double totalVo2 = 0;
     double totalVco2 = 0;
     double totalRer = 0;
-    double totalVol = 0;
-
     for (final stat in stats) {
       totalVo2 += stat['vo2'];
       totalVco2 += stat['vco2'];
       totalRer += stat['rer'];
-      totalVol += stat["vol"];
     }
-
     int count = stats.length;
-
     return {
       'vo2': totalVo2 / count,
       'vco2': totalVco2 / count,
       'rer': totalRer / count,
-      'totalVol': totalVol / count,
     };
   }
+
+  // ...existing code...
 }
