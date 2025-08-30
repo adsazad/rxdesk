@@ -1116,7 +1116,7 @@ class MyBigGraphV2State extends State<MyBigGraphV2> {
                       spots: segment1,
                       isCurved: false,
                       color: Colors.black,
-                      barWidth: 1.5,
+                      barWidth: 1.2,
                       dotData: FlDotData(show: false),
                     ),
                   );
@@ -1127,7 +1127,7 @@ class MyBigGraphV2State extends State<MyBigGraphV2> {
                       spots: segment2,
                       isCurved: false,
                       color: Colors.black,
-                      barWidth: 1.5,
+                      barWidth: 1.2,
                       dotData: FlDotData(show: false),
                     ),
                   );

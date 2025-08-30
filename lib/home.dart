@@ -3133,7 +3133,7 @@ class _HomeState extends State<Home> {
                         windowSize: 6000,
                         verticalLineConfigs: [
                           {
-                            'seconds': 0.4,
+                            'seconds': 0.5,
                             'stroke': 0.5,
                             'color': Colors.blue.shade100,
                           },
