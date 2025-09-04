@@ -284,7 +284,7 @@ class _HomeState extends State<Home> {
       },
     ];
 
-    // startTestLoop(); // Start the test loop
+    // startTestLoop(); // Start t he test loop
   }
 
   Future<void> sendSerialCommandSequence({
