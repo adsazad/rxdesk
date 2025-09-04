@@ -17,31 +17,40 @@ class CPETService {
       data,
       volPeaks,
     );
-    Map<String, dynamic> averageStats = calculateAverages(breathStats);
 
-    Map<String, dynamic>? lastBreathStat =
-        breathStats.isNotEmpty ? breathStats.last : null;
-
+    // Calculate averages for last 8 entries only
+    Map<String, dynamic> last8AverageStats = {
+      'vo2': 0.0,
+      'vco2': 0.0,
+      'rer': 0.0,
+    };
     double? respirationRate;
     double? minuteVentilation;
 
-    if (breathStats.length >= 2) {
-      int index1 = breathStats[breathStats.length - 2]['index'];
-      int index2 = breathStats[breathStats.length - 1]['index'];
+    if (breathStats.length >= 8) {
+      final last8 = breathStats.sublist(breathStats.length - 8);
+      last8AverageStats = calculateAverages(last8);
+
+      // Respiration rate and minute ventilation from last two of last 8
+      int index1 = last8[last8.length - 2]['index'];
+      int index2 = last8[last8.length - 1]['index'];
       int breathIntervalSamples = index2 - index1;
 
       respirationRate = 60 * (300 / breathIntervalSamples);
 
-      double vol = lastBreathStat?['vol'] ?? 0;
-      // vol = vol 0;
+      double vol = last8[last8.length - 1]['vol'] ?? 0;
       minuteVentilation = respirationRate * vol;
+    } else {
+      // Not enough data, return zeros
+      last8AverageStats = {'vo2': 0.0, 'vco2': 0.0, 'rer': 0.0};
+      respirationRate = null;
+      minuteVentilation = null;
     }
 
     return {
       "volumePeaks": volPeaks,
       "breathStats": breathStats,
-      "averageStats": averageStats,
-      "lastBreathStat": lastBreathStat,
+      "averageStats": last8AverageStats,
       "respirationRate": respirationRate,
       "minuteVentilation": minuteVentilation,
     };

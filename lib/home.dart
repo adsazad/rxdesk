@@ -752,7 +752,7 @@ class _HomeState extends State<Home> {
       }
       // print(cp);
       // Safely extract values with null checks
-      final lastBreathStat = cp != null ? cp!["lastBreathStat"] : null;
+      final lastBreathStat = cp != null ? cp!["averageStats"] : null;
       setState(() {
         final respirationPerMin =
             (lastBreathStat != null &&
@@ -847,7 +847,7 @@ class _HomeState extends State<Home> {
     recentVolumes.clear();
     bool wasExhaling = false;
 
-    Timer.periodic(Duration(milliseconds: 3), (timer) {
+    Timer.periodic(Duration(milliseconds: 1), (timer) {
       if (!mounted) {
         timer.cancel();
         return;
