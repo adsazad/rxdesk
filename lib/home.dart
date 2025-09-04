@@ -116,12 +116,16 @@ class _HomeState extends State<Home> {
   List<Map<String, dynamic>> markers =
       []; // [{name: "Phase", length: 123}, ...]
 
+  late ValueNotifier<List<int>> breathPeakIndicesNotifier =
+      ValueNotifier<List<int>>([]);
+
   @override
   void initState() {
     super.initState();
     co2Notifier = ValueNotifier<double>(0.0);
     o2Notifier = ValueNotifier<double>(0.0);
     tidalVolumeNotifier = ValueNotifier<double>(0.0);
+    breathPeakIndicesNotifier = ValueNotifier<List<int>>([]);
 
     initFunc();
 
@@ -673,7 +677,7 @@ class _HomeState extends State<Home> {
   }
 
   Future<List<double>> loadTestData() async {
-    final byteData = await rootBundle.load('assets/capture1br.txt');
+    final byteData = await rootBundle.load('assets/capturen.txt');
     final rawBytes = byteData.buffer.asUint8List();
     String rawData = String.fromCharCodes(rawBytes);
 
@@ -731,6 +735,21 @@ class _HomeState extends State<Home> {
         completeCp = cp;
       }
       print(cp);
+
+      // markerlines
+      if (cp != null && cp!['breathStats'] is List) {
+        final peaks =
+            (cp!['breathStats'] as List)
+                .whereType<Map>()
+                .expand<int>((e) sync* {
+                  if (e['start'] is num) yield (e['start'] as num).toInt();
+                  if (e['end'] is num) yield (e['end'] as num).toInt();
+                })
+                .toSet() // ensure uniqueness
+                .toList()
+              ..sort();
+        breathPeakIndicesNotifier.value = peaks;
+      }
       // print(cp);
       // Safely extract values with null checks
       final lastBreathStat = cp != null ? cp!["lastBreathStat"] : null;
@@ -1081,113 +1100,6 @@ class _HomeState extends State<Home> {
     );
   }
 
-  // void startMainDataStream(SerialPort port) {
-  //   // Cancel any previous subscription
-  //   if (mainDataSubscription != null) {
-  //     mainDataSubscription?.cancel();
-  //   }
-
-  //   SerialPortReader reader = SerialPortReader(port);
-  //   mainDataSubscription = reader.stream.listen(
-  //     (data) {
-  //       int frameLength = 18;
-  //       for (int i = 0; i <= data.length - frameLength;) {
-  //         if (data[i] == 'B'.codeUnitAt(0) &&
-  //             data[i + 1] == 'T'.codeUnitAt(0)) {
-  //           if (i + frameLength <= data.length) {
-  //             final frame = data.sublist(i, i + frameLength);
-
-  //             double vol = (frame[13] * 256 + frame[12]) * 1.0;
-  //             recentVolumes.add(vol);
-  //             if (recentVolumes.length > 10) recentVolumes.removeAt(0);
-
-  //             int nonZeroCount = recentVolumes.where((v) => v > 50).length;
-  //             bool currentIsZero = vol <= 5;
-
-  //             if (nonZeroCount >= 5 && currentIsZero && wasExhaling) {
-  //               onExhalationDetected();
-  //               wasExhaling = false;
-  //             }
-  //             if (vol > 50) wasExhaling = true;
-
-  //             double ecg = (frame[3] * 256 + frame[2]) * 1.0;
-  //             double o2 = (frame[7] * 256 + frame[6]) * 1.0;
-  //             // print("XORG $o2");
-  //             double flow = (frame[11] * 256 + frame[10]) * 1.0;
-  //             co2 = (frame[15] * 256 + frame[14]) * 1.0;
-
-  //             vol = (vol * globalSettings.tidalScalingFactor);
-
-  //             setState(() {
-  //               flow = flow;
-  //             });
-
-  //             rawDataFull.add(ecg);
-  //             saver(ecg: ecg, o2: o2, flow: flow, vol: vol, co2: co2);
-  //             int bufferSizeLimit = ((delaySamples ?? 0) + 1) * 2;
-  //             if (delayBuffer.length > bufferSizeLimit) delayBuffer.removeAt(0);
-
-  //             if (delaySamples == null || delayBuffer.length <= delaySamples!) {
-  //               List<double>? edt = myBigGraphKey.currentState
-  //                   ?.updateEverything([ecg, o2, co2, flow, vol]);
-  //               if (edt != null) {
-  //                 _inMemoryData.add([edt[0], edt[1], edt[2], edt[3], flow]);
-  //                 setState(() {
-  //                   co2Notifier.value = edt[2];
-  //                   o2Notifier.value = edt[1];
-  //                   tidalVolumeNotifier.value = edt[4];
-  //                 });
-  //               }
-  //               i += frameLength;
-  //               continue;
-  //             }
-
-  //             var current = delayBuffer[0];
-  //             var future = delayBuffer[delaySamples!];
-
-  //             double correctedECG = current[0];
-  //             double correctedVOL = current[3];
-  //             double correctedFLOW = current[4];
-  //             double correctedO2 = future[1];
-  //             double correctedCO2 = future[2];
-
-  //             delayBuffer.removeAt(0);
-
-  //             List<double>? edt = myBigGraphKey.currentState?.updateEverything([
-  //               correctedECG,
-  //               correctedO2,
-  //               correctedCO2,
-  //               correctedFLOW,
-  //               correctedVOL,
-  //             ]);
-  //             if (edt != null) {
-  //               // print(edt[1]);
-  //               _inMemoryData.add([
-  //                 edt[0],
-  //                 edt[1],
-  //                 edt[2],
-  //                 edt[3],
-  //                 correctedFLOW,
-  //               ]);
-  //             }
-  //             i += frameLength;
-  //           } else {
-  //             break;
-  //           }
-  //         } else {
-  //           i++;
-  //         }
-  //       }
-  //     },
-  //     onDone: () {
-  //       print("Serial Done");
-  //     },
-  //     onError: (e) {
-  //       print("❌ Serial port error: $e");
-  //     },
-  //   );
-  // }
-
   @override
   void dispose() {
     recordingTimer?.cancel();
@@ -1486,99 +1398,6 @@ class _HomeState extends State<Home> {
     return {"patient": patientInfo, "samples": samples};
   }
 
-  // Future<void> importBinFileFromPath(String path) async {
-  //   print("Importing file from path: $path");
-  //   setState(() {
-  //     isImported = true;
-  //   });
-
-  //   try {
-  //     // Step 1: Import file
-  //     final file = File(path);
-  //     final bytes = await file.readAsBytes();
-
-  //     if (bytes.length < 4) {
-  //       print("❌ File  too short to contain header.");
-  //       return;
-  //     }
-
-  //     final headerLen = ByteData.sublistView(
-  //       bytes,
-  //       0,
-  //       4,
-  //     ).getUint32(0, Endian.little);
-  //     if (headerLen <= 0 || headerLen > 8192) {
-  //       print("❌ Invalid header length: $headerLen");
-  //       return;
-  //     }
-
-  //     if (bytes.length < 4 + headerLen) {
-  //       print("❌ File doesn't contain full header.");
-  //       return;
-  //     }
-  //     // showImportingDialog(context); // Show dialog
-
-  //     final jsonBytes = bytes.sublist(4, 4 + headerLen);
-  //     final String jsonText = utf8.decode(jsonBytes);
-  //     final Map<String, dynamic> patient = jsonDecode(jsonText);
-
-  //     const bytesPerSample = 5 * 8;
-  //     final sampleData = bytes.sublist(4 + headerLen);
-  //     final int sampleCount = sampleData.length ~/ bytesPerSample;
-  //     print(patient);
-
-  //     List<List<double>> samples = [];
-  //     for (int i = 0; i < sampleCount; i++) {
-  //       final start = i * bytesPerSample;
-  //       final chunk = sampleData.sublist(start, start + bytesPerSample);
-  //       final bd = ByteData.sublistView(chunk);
-
-  //       samples.add([
-  //         bd.getFloat64(0, Endian.little), // ECG
-  //         bd.getFloat64(8, Endian.little), // O2
-  //         bd.getFloat64(16, Endian.little), // CO2
-  //         bd.getFloat64(24, Endian.little), // Vol
-  //         bd.getFloat64(32, Endian.little), // Flow
-  //       ]);
-  //     }
-
-  //     // Step 2: Set patient info
-  //     final defaultProvider = Provider.of<DefaultPatientModal>(
-  //       context,
-  //       listen: false,
-  //     );
-  //     final prefs = await SharedPreferences.getInstance();
-  //     prefs.setString('default_patient', jsonEncode(patient));
-  //     defaultProvider.setDefault(patient);
-
-  //     // Step 3: Push all samples to graph and memory
-  //     _inMemoryData.clear();
-  //     for (final sample in samples) {
-  //       if (sample.length >= 5) {
-  //         final List<double> numericSample =
-  //             sample.map((e) => (e as num).toDouble()).toList();
-  //         if (numericSample.length >= 5) {
-  //           // Flip the last two values
-  //           final temp = numericSample[3];
-  //           numericSample[3] = numericSample[4];
-  //           numericSample[4] = temp;
-  //         }
-  //         final edt = myBigGraphKey.currentState?.updateEverything(
-  //           numericSample,
-  //         );
-  //         if (edt != null && edt.length >= 5) {
-  //           _inMemoryData.add([edt[0], edt[1], edt[2], edt[3], edt[4]]);
-  //         }
-  //       }
-  //     }
-
-  //     print("Imported ${samples.length} samples.");
-  //     onExhalationDetected();
-  //   } catch (e) {
-  //     print("❌ Error while importing: $e");
-  //   }
-  //   print("✅ Import completed.");
-  // }
   double importProgressPercent = 0.0;
   double currentImportDisplayIndex = 0;
   File? importedFile;
@@ -1675,12 +1494,6 @@ class _HomeState extends State<Home> {
         if (edt != null && edt.length >= 5) {
           _inMemoryData.add([edt[0], edt[1], edt[2], edt[3], edt[4]]);
         }
-        // if (i % 100 == 0 || i == sampleCount - 1) {
-        //   // setState(() {
-        //   // importProgressPercent = (i + 1) / sampleCount;
-        //   // print(importProgressPercent);
-        //   // });
-        // }
       }
 
       print("Imported $sampleCount samples.");
@@ -2412,8 +2225,10 @@ class _HomeState extends State<Home> {
         value1Controller.text = globalSettings.value1.toString();
         voltage2Controller.text = globalSettings.voltage2.toString();
         value2Controller.text = globalSettings.value2.toString();
-        transportDelayO2Controller.text =
-            globalSettings.transportDelayO2Ms.toString(); // NEW
+        if (transportDelayO2Controller.text.isEmpty) {
+          transportDelayO2Controller.text =
+              globalSettings.transportDelayO2Ms.toString();
+        } // NEW
 
         double localVoltage1 = globalSettings.voltage1;
         double localValue1 = globalSettings.value1;
@@ -2523,21 +2338,12 @@ class _HomeState extends State<Home> {
                                 vertical: 4,
                               ),
                             ),
-                            onChanged: (val) async {
-                              final parsed = int.tryParse(val);
-                              if (parsed != null && parsed >= 0) {
-                                setState(() {
-                                  localTransportDelay = parsed;
-                                });
-                                globalSettings.setTransportDelayO2Ms(parsed);
-                                globalSettings.notifyListeners();
-                                final prefs =
-                                    await SharedPreferences.getInstance();
-                                await prefs.setString(
-                                  "globalSettings",
-                                  globalSettings.toJson(),
-                                );
-                              }
+                            onChanged: (val) {
+                              int value = int.tryParse(val) ?? 0;
+                              globalSettings.setTransportDelayO2Ms(value);
+                              setState(() {
+                                localTransportDelay = value;
+                              });
                             },
                           ),
                         ),
@@ -2921,82 +2727,7 @@ class _HomeState extends State<Home> {
                             );
                           },
                         ),
-                        // IconButtonColumn(
-                        //   icon: Icons.save_alt,
-                        //   label: "Load Data",
-                        //   onPressed: () async {
-                        //     setState(() {
-                        //       isImported = true;
-                        //     });
 
-                        //     try {
-                        //       // Step 1: Import file
-                        //       final result = await importBinFile();
-
-                        //       if (result == null ||
-                        //           !result.containsKey('samples') ||
-                        //           !result.containsKey('patient')) {
-                        //         print("Invalid file structure");
-                        //         return;
-                        //       }
-
-                        //       // Step 2: Set patient info
-                        //       // setState(() {
-                        //       //   defaultPatient = result['patient'];
-                        //       // });
-                        //       final patient = result['patient'];
-                        //       final defaultProvider =
-                        //           Provider.of<DefaultPatientModal>(
-                        //             context,
-                        //             listen: false,
-                        //           );
-                        //       final prefs =
-                        //           await SharedPreferences.getInstance();
-                        //       prefs.setString(
-                        //         'default_patient',
-                        //         jsonEncode(patient),
-                        //       );
-                        //       defaultProvider.setDefault(patient);
-
-                        //       final samples =
-                        //           result['samples'] as List<dynamic>;
-
-                        //       // Step 3: Push all samples to graph and memory
-                        //       for (final sample in samples) {
-                        //         if (sample is List && sample.length >= 5) {
-                        //           final List<double> numericSample =
-                        //               sample
-                        //                   .map((e) => (e as num).toDouble())
-                        //                   .toList();
-
-                        //           if (numericSample.length >= 5) {
-                        //             // Flip the last two values
-                        //             final temp = numericSample[3];
-                        //             numericSample[3] = numericSample[4];
-                        //             numericSample[4] = temp;
-                        //           }
-
-                        //           final edt = myBigGraphKey.currentState
-                        //               ?.updateEverything(numericSample);
-                        //           if (edt != null && edt.length >= 5) {
-                        //             _inMemoryData.add([
-                        //               edt[0],
-                        //               edt[1],
-                        //               edt[2],
-                        //               edt[3],
-                        //               edt[4],
-                        //             ]);
-                        //           }
-                        //         }
-                        //       }
-
-                        //       print("Imported ${samples.length} samples.");
-                        //       onExhalationDetected();
-                        //     } catch (e) {
-                        //       print("❌ Error while importing: $e");
-                        //     }
-                        //   },
-                        // ),
                         IconButtonColumn(
                           icon: Icons.person,
                           label: "Patients",
@@ -3134,6 +2865,7 @@ class _HomeState extends State<Home> {
                     Expanded(
                       child: MyBigGraphV2(
                         key: myBigGraphKey,
+                        markerIndices: breathPeakIndicesNotifier, // <-- NEW
                         // if(delaySamples == null) {
                         isImported: false,
                         onCycleComplete: () {

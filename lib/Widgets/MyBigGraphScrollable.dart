@@ -1,6 +1,7 @@
 import 'package:auto_size_text/auto_size_text.dart';
 import 'package:fl_chart/fl_chart.dart';
 import 'package:flutter/cupertino.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:spirobtvo/Services/FilterClass.dart';
@@ -13,12 +14,14 @@ class MyBigGraphV2 extends StatefulWidget {
   final double horizontalInterval;
   final double verticalInterval;
   final double samplingRate;
-  final double minY; // NEW ✅
-  final double maxY; // NEW ✅
+  final double minY;
+  final double maxY;
   final List<Map<String, dynamic>> streamConfig;
   final void Function(Map<String, dynamic>)? onStreamResult;
   final void Function()? onCycleComplete;
-  final bool isImported; // ✅ new
+  final bool isImported;
+  final ValueListenable<List<int>>?
+  markerIndices; // NEW (global indices of peaks)
 
   const MyBigGraphV2({
     super.key,
@@ -28,12 +31,13 @@ class MyBigGraphV2 extends StatefulWidget {
     required this.horizontalInterval,
     required this.verticalInterval,
     required this.samplingRate,
-    required this.minY, // NEW ✅
-    required this.maxY, // NEW ✅
+    required this.minY,
+    required this.maxY,
     required this.streamConfig,
-    this.onStreamResult, // ✅ new
+    required this.isImported,
+    this.onStreamResult,
     this.onCycleComplete,
-    required this.isImported, // ✅ new
+    this.markerIndices, // NEW
   });
 
   @override
@@ -43,9 +47,9 @@ class MyBigGraphV2 extends StatefulWidget {
 class MyBigGraphV2State extends State<MyBigGraphV2> {
   late List<List<FlSpot>> allPlotData;
   late List<int> allCurrentIndexes;
-  late List<dynamic> plotScales; // ✅ This line
+  late List<dynamic> plotScales;
   late List<dynamic> plotThresholds;
-  late List<double> plotOffsets; // ✅ New
+  late List<double> plotOffsets;
   late List<dynamic> plotGains;
   late MultiFilter multiFilter = MultiFilter();
   int FILT_BUF_SIZE = 3 * 6 + 7;
@@ -127,6 +131,10 @@ class MyBigGraphV2State extends State<MyBigGraphV2> {
       );
     }
     _refreshMultiFilter();
+
+    if (widget.markerIndices != null) {
+      widget.markerIndices!.addListener(_onMarkerUpdate);
+    }
   }
 
   void _refreshMultiFilter() {
@@ -147,6 +155,84 @@ class MyBigGraphV2State extends State<MyBigGraphV2> {
 
     multiFilter.init(config);
   }
+
+  @override
+  void didUpdateWidget(covariant MyBigGraphV2 oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.markerIndices != widget.markerIndices) {
+      oldWidget.markerIndices?.removeListener(_onMarkerUpdate);
+      widget.markerIndices?.addListener(_onMarkerUpdate);
+    }
+  }
+
+  @override
+  void dispose() {
+    widget.markerIndices?.removeListener(_onMarkerUpdate);
+    super.dispose();
+  }
+
+  void _onMarkerUpdate() {
+    setState(() {}); // trigger rebuild to show new marker lines
+  }
+
+  List<VerticalLine> _generateMarkerLines() {
+    if (widget.markerIndices == null) return [];
+    final markers = widget.markerIndices!.value;
+    if (markers.isEmpty) return [];
+
+    // Imported mode: keep existing direct mapping (full timeline)
+    if (widget.isImported) {
+      return markers.map((g) {
+        return VerticalLine(
+          x: g.toDouble(),
+          color: Colors.orange.withOpacity(0.9),
+          strokeWidth: 1.2,
+          dashArray: [4, 3],
+        );
+      }).toList();
+    }
+
+    // Cyclic mode:
+    // Show only markers belonging to the current cycle.
+    // A cycle spans windowSize samples: cycle = globalIndex ~/ windowSize
+    // Fixed local X inside cycle = globalIndex % windowSize
+    final int currentCycle = _cycleCount;
+    final int win = widget.windowSize;
+
+    return markers.where((g) => (g ~/ win) == currentCycle).map((g) {
+      final localX = (g % win).toDouble();
+      return VerticalLine(
+        x: localX,
+        color: Colors.orange.withOpacity(0.9),
+        strokeWidth: 1.2,
+        dashArray: [4, 3],
+      );
+    }).toList();
+  }
+
+  // Modify _generateVerticalLines() call site inside LineChartData -> extraLinesData:
+  // Replace:
+  // verticalLines: _generateVerticalLines(),
+  // With combined:
+  // verticalLines: [
+  //   ..._generateVerticalLines(),
+  //   ..._generateMarkerLines(),
+  // ],
+
+  // Find in _chart() method:
+  // extraLinesData: ExtraLinesData(
+  //   verticalLines: _generateVerticalLines(),
+  //   horizontalLines: _generateSeparationLines(),
+  // ),
+
+  // Replace that block with:
+  // extraLinesData: ExtraLinesData(
+  //   verticalLines: [
+  //     ..._generateVerticalLines(),
+  //     ..._generateMarkerLines(),
+  //   ],
+  //   horizontalLines: _generateSeparationLines(),
+  // ),
 
   late List<int> filterPositions;
 
@@ -1044,7 +1130,10 @@ class MyBigGraphV2State extends State<MyBigGraphV2> {
             },
           ),
           extraLinesData: ExtraLinesData(
-            verticalLines: _generateVerticalLines(),
+            verticalLines: [
+              ..._generateVerticalLines(),
+              ..._generateMarkerLines(),
+            ],
             horizontalLines: _generateSeparationLines(),
           ),
           minX: 0,
