@@ -52,8 +52,9 @@ class CPETService {
     List<Map<String, dynamic>> ramps = [];
     if (data.isEmpty || data[0].length <= 3) return ramps;
 
-    double detectionThreshold = 0.1; // keep small threshold just to detect rising
-    double minPeakVolume = 100;      // NEW: ignore peaks below 100 (raw units)
+    double detectionThreshold =
+        0.1; // keep small threshold just to detect rising
+    double minPeakVolume = 100; // NEW: ignore peaks below 100 (raw units)
     int minSamplesBetweenPeaks = 240;
     int i = 0;
     int lastEnd = -minSamplesBetweenPeaks;
@@ -81,7 +82,8 @@ class CPETService {
       if (end > start && start < data.length && end < data.length) {
         // Only add ramp if far enough from previous one AND peak meets minimum volume
         if ((ramps.isEmpty || (start - lastEnd > minSamplesBetweenPeaks)) &&
-            maxVal >= minPeakVolume) { // NEW filter
+            maxVal >= minPeakVolume) {
+          // NEW filter
           ramps.add({
             'start': start,
             'end': end,
@@ -162,12 +164,15 @@ class CPETService {
           end < data.length &&
           data[start].length >= 5 &&
           data[end].length >= 5) {
-
         double sumO2 = 0.0;
         double sumCO2 = 0.0;
         int slabCount = 0;
 
-        for (int slabStart = start; slabStart <= end; slabStart += samplesPerSlab) {
+        for (
+          int slabStart = start;
+          slabStart <= end;
+          slabStart += samplesPerSlab
+        ) {
           int slabEnd = slabStart + samplesPerSlab - 1;
           if (slabEnd > end) slabEnd = end;
 
@@ -190,7 +195,8 @@ class CPETService {
         }
 
         double avgO2Raw = slabCount > 0 ? sumO2 / slabCount : 0.0;
-        double avgCO2Raw = slabCount > 0 ? sumCO2 / slabCount : 0.0; // raw scaled
+        double avgCO2Raw =
+            slabCount > 0 ? sumCO2 / slabCount : 0.0; // raw scaled
 
         // CO2 scaling auto-detect: if >20, assume 100×
         double feCO2Percent = avgCO2Raw > 20 ? avgCO2Raw / 100.0 : avgCO2Raw;
@@ -212,12 +218,12 @@ class CPETService {
         double? respirationRate;
         double? minuteVentilation;
         if (j >= 1) {
-            int prevPeak = ramps[j - 1]['peak'];
-            int intervalSamples = peak - prevPeak;
-            if (intervalSamples > 0) {
-              respirationRate = 60 * (samplingRate / intervalSamples);
-              minuteVentilation = respirationRate * peakVol;
-            }
+          int prevPeak = ramps[j - 1]['peak'];
+          int intervalSamples = peak - prevPeak;
+          if (intervalSamples > 0) {
+            respirationRate = 60 * (samplingRate / intervalSamples);
+            minuteVentilation = respirationRate * peakVol;
+          }
         }
 
         stats.add({
@@ -229,7 +235,7 @@ class CPETService {
           'rer': rer,
           'vol': peakVol,
           'respirationRate': respirationRate,
-            'minuteVentilation': minuteVentilation,
+          'minuteVentilation': minuteVentilation,
           'feO2Percent': feO2Percent,
           'feCO2Percent': feCO2Percent,
           'avgCO2Raw': avgCO2Raw,

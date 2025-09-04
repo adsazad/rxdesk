@@ -13,6 +13,8 @@ import 'package:spirobtvo/Services/MachineControllers/LodeErgometerController.da
 import 'package:spirobtvo/Services/Utility.dart';
 import 'package:spirobtvo/Widgets/BreathStatsTableModal.dart';
 import 'package:spirobtvo/Widgets/MyBigGraphScrollable.dart';
+import 'package:spirobtvo/Widgets/current_co2_display.dart';
+import 'package:spirobtvo/Widgets/current_o2_display.dart';
 import 'package:spirobtvo/data/local/database.dart';
 
 import 'package:flutter/material.dart';
@@ -702,11 +704,11 @@ class _HomeState extends State<Home> {
     try {
       CPETService cpet = CPETService();
       var stats = {};
-      if (data != null) {
-        stats = ecgBPMCalculator.getStats(data);
-      } else {
-        stats = ecgBPMCalculator.getStats(_inMemoryData);
-      }
+      // if (data != null) {
+      //   stats = ecgBPMCalculator.getStats(data);
+      // } else {
+      //   stats = ecgBPMCalculator.getStats(_inMemoryData);
+      // }
       // print(stats);
       final patientProvider = Provider.of<DefaultPatientModal>(
         context,
@@ -733,14 +735,40 @@ class _HomeState extends State<Home> {
       // Safely extract values with null checks
       final lastBreathStat = cp != null ? cp!["lastBreathStat"] : null;
       setState(() {
-        votwo =
+        final respirationPerMin =
+            (lastBreathStat != null &&
+                    lastBreathStat["respirationRate"] != null)
+                ? (lastBreathStat["respirationRate"] as num).toDouble()
+                : (cp != null && cp!["respirationRate"] != null)
+                ? (cp!["respirationRate"] as num).toDouble()
+                : 0.0;
+
+        // VO2 per minute (prefer precomputed field if present)
+        double vo2PerBreath =
             (lastBreathStat != null && lastBreathStat["vo2"] != null)
-                ? lastBreathStat["vo2"]
+                ? (lastBreathStat["vo2"] as num).toDouble()
                 : 0.0;
-        vco =
+        double vo2MinuteStat =
+            (lastBreathStat != null && lastBreathStat["vo2Minute"] != null)
+                ? (lastBreathStat["vo2Minute"] as num).toDouble()
+                : (respirationPerMin > 0
+                    ? vo2PerBreath * respirationPerMin
+                    : 0.0);
+
+        double vco2PerBreath =
             (lastBreathStat != null && lastBreathStat["vco2"] != null)
-                ? lastBreathStat["vco2"]
+                ? (lastBreathStat["vco2"] as num).toDouble()
                 : 0.0;
+        double vco2MinuteStat =
+            (lastBreathStat != null && lastBreathStat["vco2Minute"] != null)
+                ? (lastBreathStat["vco2Minute"] as num).toDouble()
+                : (respirationPerMin > 0
+                    ? vco2PerBreath * respirationPerMin
+                    : 0.0);
+
+        votwo = vo2MinuteStat; // store as L/min
+        vco = vco2MinuteStat; // NOW VCO2 per minute (L/min)
+
         rer =
             (lastBreathStat != null && lastBreathStat["rer"] != null)
                 ? lastBreathStat["rer"]
@@ -2044,133 +2072,7 @@ class _HomeState extends State<Home> {
               child: TabBarView(
                 children: [
                   // Tab 1: CO2 Calibration (your existing logic)
-                  StatefulBuilder(
-                    builder: (context, setState) {
-                      return Column(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          SizedBox(height: 20),
-
-                          // here i want to show a box with current co2 percentage.
-                          Text(
-                            "CO2 Calibration",
-                            style: TextStyle(
-                              fontWeight: FontWeight.bold,
-                              fontSize: 16,
-                            ),
-                          ),
-                          if (status == "running") LinearProgressIndicator(),
-                          if (status == "completed")
-                            Icon(Icons.check, color: Colors.green),
-                          // Show current CO2 value in a medical professional-looking box
-                          ValueListenableBuilder<double>(
-                            valueListenable: co2Notifier,
-                            builder: (context, value, child) {
-                              return Container(
-                                margin: EdgeInsets.symmetric(vertical: 8),
-                                padding: EdgeInsets.symmetric(
-                                  horizontal: 24,
-                                  vertical: 18,
-                                ),
-                                decoration: BoxDecoration(
-                                  color: Colors.white,
-                                  borderRadius: BorderRadius.circular(12),
-                                  border: Border.all(
-                                    color: Colors.red.shade700,
-                                    width: 2,
-                                  ),
-                                  boxShadow: [
-                                    BoxShadow(
-                                      color: Colors.red.shade100.withOpacity(
-                                        0.2,
-                                      ),
-                                      blurRadius: 8,
-                                      offset: Offset(0, 2),
-                                    ),
-                                  ],
-                                ),
-                                child: Row(
-                                  mainAxisSize: MainAxisSize.min,
-                                  children: [
-                                    Icon(
-                                      Icons.bubble_chart,
-                                      color: Colors.red.shade700,
-                                      size: 28,
-                                    ),
-                                    SizedBox(width: 12),
-                                    Column(
-                                      crossAxisAlignment:
-                                          CrossAxisAlignment.start,
-                                      children: [
-                                        Text(
-                                          "Current CO₂",
-                                          style: TextStyle(
-                                            fontWeight: FontWeight.bold,
-                                            fontSize: 15,
-                                            color: Colors.red.shade700,
-                                          ),
-                                        ),
-                                        Text(
-                                          "${(value / 100).toStringAsFixed(3)} %",
-                                          style: TextStyle(
-                                            fontSize: 22,
-                                            fontWeight: FontWeight.bold,
-                                            color: Colors.black,
-                                          ),
-                                        ),
-                                      ],
-                                    ),
-                                  ],
-                                ),
-                              );
-                            },
-                          ),
-
-                          Text(
-                            "Please keep the gas pipe in ambient air for calibration.",
-                          ),
-                          SizedBox(height: 16),
-                          Row(
-                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                            children: [
-                              ElevatedButton(
-                                child: Text("Calibrate"),
-                                onPressed:
-                                    isSending
-                                        ? null
-                                        : () async {
-                                          setState(() {
-                                            status = "running";
-                                            isSending = true;
-                                          });
-                                          await sendSerialCommandSequence(
-                                            port: port,
-                                            updateResponse: (resp) {
-                                              setState(() {
-                                                responseText += resp + "\n";
-                                              });
-                                            },
-                                            onComplete: () {
-                                              setState(() {
-                                                isSending = false;
-                                                status = "completed";
-                                              });
-                                              startMainDataStream(port);
-                                            },
-                                          );
-                                        },
-                              ),
-                              TextButton(
-                                child: Text("Exit"),
-                                onPressed: () => Navigator.of(context).pop(),
-                              ),
-                            ],
-                          ),
-                          SizedBox(height: 8),
-                        ],
-                      );
-                    },
-                  ),
+                  _co2CalibratorTab(), // <-- replaced inline CO2 tab
                   // Tab 2: O2 Calibration (placeholder)
                   _o2CalibratorTab(),
                   // Tab 3: Tidal Flow Calibration (placeholder)
@@ -2179,6 +2081,173 @@ class _HomeState extends State<Home> {
               ),
             ),
           ),
+        );
+      },
+    );
+  }
+
+  Widget _co2CalibratorTab() {
+    final transportDelayCO2Controller = TextEditingController();
+
+    return Consumer<GlobalSettingsModal>(
+      builder: (context, globalSettings, child) {
+        transportDelayCO2Controller.text =
+            globalSettings.transportDelayCO2Ms.toString();
+
+        String status = "p";
+        bool isSending = false;
+        String responseText = "";
+
+        return StatefulBuilder(
+          builder: (context, setState) {
+            Future<void> _saveDelay() async {
+              final parsed = int.tryParse(transportDelayCO2Controller.text);
+              if (parsed != null && parsed >= 0) {
+                globalSettings.setTransportDelayCO2Ms(parsed);
+                globalSettings.notifyListeners();
+                final prefs = await SharedPreferences.getInstance();
+                await prefs.setString(
+                  "globalSettings",
+                  globalSettings.toJson(),
+                );
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(
+                    content: Text("CO₂ transport delay saved"),
+                    duration: Duration(seconds: 1),
+                  ),
+                );
+              } else {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(
+                    content: Text("Invalid delay value"),
+                    duration: Duration(seconds: 1),
+                  ),
+                );
+              }
+            }
+
+            Future<void> _runCalibration() async {
+              setState(() {
+                status = "running";
+                isSending = true;
+              });
+              await sendSerialCommandSequence(
+                port: port,
+                updateResponse: (resp) {
+                  setState(() {
+                    responseText += resp + "\n";
+                  });
+                },
+                onComplete: () {
+                  setState(() {
+                    isSending = false;
+                    status = "completed";
+                  });
+                  startMainDataStream(port);
+                },
+              );
+            }
+
+            return Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                const SizedBox(height: 20),
+                const Text(
+                  "CO2 Calibration",
+                  style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+                ),
+                if (status == "running") const LinearProgressIndicator(),
+                if (status == "completed")
+                  const Icon(Icons.check, color: Colors.green),
+
+                // Smoothed current CO₂ display
+                CurrentCo2Display(
+                  notifier: co2Notifier,
+                  windowSize: 20,
+                  divisor: 100, // raw /100 => %
+                ),
+
+                const SizedBox(height: 8),
+                const Text(
+                  "Please keep the gas pipe in ambient air for calibration.",
+                  textAlign: TextAlign.center,
+                ),
+                const SizedBox(height: 16),
+
+                // CO₂ Transport Delay Input
+                Row(
+                  children: [
+                    const SizedBox(
+                      width: 140,
+                      child: Text(
+                        "CO₂ Transport Delay (ms)",
+                        style: TextStyle(
+                          fontSize: 14,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                    ),
+                    const SizedBox(width: 8),
+                    Expanded(
+                      child: TextFormField(
+                        controller: transportDelayCO2Controller,
+                        keyboardType: TextInputType.number,
+                        decoration: const InputDecoration(
+                          border: OutlineInputBorder(),
+                          contentPadding: EdgeInsets.symmetric(
+                            horizontal: 8,
+                            vertical: 6,
+                          ),
+                        ),
+                        // Only edit local text; saving happens via button
+                        onChanged: (_) {},
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 12),
+
+                // Row with independent buttons
+                Row(
+                  children: [
+                    ElevatedButton(
+                      onPressed: _saveDelay,
+                      child: const Text("Save Delay"),
+                    ),
+                    const SizedBox(width: 12),
+                    ElevatedButton(
+                      onPressed: isSending ? null : _runCalibration,
+                      child: const Text("Calibrate Sensor"),
+                    ),
+                    const SizedBox(width: 12),
+                    TextButton(
+                      onPressed: () => Navigator.of(context).pop(),
+                      child: const Text("Exit"),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 8),
+                // (Optional) response log (hidden if empty)
+                if (responseText.isNotEmpty)
+                  Container(
+                    margin: const EdgeInsets.only(top: 8),
+                    padding: const EdgeInsets.all(8),
+                    height: 90,
+                    decoration: BoxDecoration(
+                      color: Colors.grey.shade100,
+                      border: Border.all(color: Colors.grey.shade300),
+                      borderRadius: BorderRadius.circular(6),
+                    ),
+                    child: SingleChildScrollView(
+                      child: Text(
+                        responseText,
+                        style: const TextStyle(fontSize: 11),
+                      ),
+                    ),
+                  ),
+              ],
+            );
+          },
         );
       },
     );
@@ -2334,19 +2403,24 @@ class _HomeState extends State<Home> {
     final value1Controller = TextEditingController();
     final voltage2Controller = TextEditingController();
     final value2Controller = TextEditingController();
+    final transportDelayO2Controller = TextEditingController(); // NEW
 
     return Consumer<GlobalSettingsModal>(
       builder: (context, globalSettings, child) {
+        // Prefill controllers from settings
         voltage1Controller.text = globalSettings.voltage1.toString();
         value1Controller.text = globalSettings.value1.toString();
         voltage2Controller.text = globalSettings.voltage2.toString();
         value2Controller.text = globalSettings.value2.toString();
+        transportDelayO2Controller.text =
+            globalSettings.transportDelayO2Ms.toString(); // NEW
 
         double localVoltage1 = globalSettings.voltage1;
         double localValue1 = globalSettings.value1;
         double localVoltage2 = globalSettings.voltage2;
         double localValue2 = globalSettings.value2;
         bool localApplyConversion = globalSettings.applyConversion;
+        int localTransportDelay = globalSettings.transportDelayO2Ms; // NEW
 
         return StatefulBuilder(
           builder: (context, setState) {
@@ -2361,16 +2435,16 @@ class _HomeState extends State<Home> {
                   children: [
                     SizedBox(
                       width: 90,
-                      child: Text(label, style: TextStyle(fontSize: 16)),
+                      child: Text(label, style: const TextStyle(fontSize: 16)),
                     ),
-                    SizedBox(width: 8),
+                    const SizedBox(width: 8),
                     Expanded(
                       child: TextFormField(
                         controller: controller,
-                        keyboardType: TextInputType.numberWithOptions(
+                        keyboardType: const TextInputType.numberWithOptions(
                           decimal: true,
                         ),
-                        decoration: InputDecoration(
+                        decoration: const InputDecoration(
                           border: OutlineInputBorder(),
                           contentPadding: EdgeInsets.symmetric(
                             horizontal: 8,
@@ -2392,7 +2466,7 @@ class _HomeState extends State<Home> {
                     ),
                     if (onPick != null)
                       IconButton(
-                        icon: Icon(Icons.input, color: Colors.blue),
+                        icon: const Icon(Icons.input, color: Colors.blue),
                         tooltip: "Pick current O₂",
                         onPressed: onPick,
                       ),
@@ -2403,178 +2477,170 @@ class _HomeState extends State<Home> {
 
             return Padding(
               padding: const EdgeInsets.all(8.0),
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  SizedBox(height: 20),
-                  Text(
-                    "O2 Sensor Calibration",
-                    style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
-                  ),
-                  SizedBox(height: 12),
-                  ValueListenableBuilder<double>(
-                    valueListenable: o2Notifier,
-                    builder: (context, value, child) {
-                      // print(value);
-                      double voltage = value * 0.000917;
+              child: SingleChildScrollView(
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    const SizedBox(height: 20),
+                    const Text(
+                      "O2 Sensor Calibration",
+                      style: TextStyle(
+                        fontWeight: FontWeight.bold,
+                        fontSize: 16,
+                      ),
+                    ),
+                    const SizedBox(height: 12),
+                    CurrentO2Display(
+                      notifier: o2Notifier,
+                      windowSize: 20,
+                      calibrate: o2Calibrate,
+                      applyConversionOverride: globalSettings.applyConversion,
+                    ),
+                    const SizedBox(height: 12),
 
-                      final globalSettings = Provider.of<GlobalSettingsModal>(
-                        context,
-                        listen: false,
-                      );
-                      double displayValue =
-                          globalSettings.applyConversion
-                              ? o2Calibrate(voltage)
-                              : voltage;
-                      String unit = globalSettings.applyConversion ? "%" : "V";
-                      return Container(
-                        margin: EdgeInsets.symmetric(vertical: 8),
-                        padding: EdgeInsets.symmetric(
-                          horizontal: 24,
-                          vertical: 18,
-                        ),
-                        decoration: BoxDecoration(
-                          color: Colors.white,
-                          borderRadius: BorderRadius.circular(12),
-                          border: Border.all(
-                            color: Colors.blue.shade700,
-                            width: 2,
+                    // NEW: Transport Delay Input
+                    Row(
+                      children: [
+                        const SizedBox(
+                          width: 90,
+                          child: Text(
+                            "O₂ Transport Delay(ms)",
+                            style: TextStyle(
+                              fontSize: 14,
+                              fontWeight: FontWeight.w600,
+                            ),
                           ),
-                          boxShadow: [
-                            BoxShadow(
-                              color: Colors.blue.shade100.withOpacity(0.2),
-                              blurRadius: 8,
-                              offset: Offset(0, 2),
-                            ),
-                          ],
                         ),
-                        child: Row(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            Icon(
-                              Icons.bubble_chart,
-                              color: Colors.blue.shade700,
-                              size: 28,
+                        const SizedBox(width: 8),
+                        Expanded(
+                          child: TextFormField(
+                            controller: transportDelayO2Controller,
+                            keyboardType: TextInputType.number,
+                            decoration: const InputDecoration(
+                              border: OutlineInputBorder(),
+                              contentPadding: EdgeInsets.symmetric(
+                                horizontal: 8,
+                                vertical: 4,
+                              ),
                             ),
-                            SizedBox(width: 12),
-                            Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Text(
-                                  "Current O₂",
-                                  style: TextStyle(
-                                    fontWeight: FontWeight.bold,
-                                    fontSize: 15,
-                                    color: Colors.blue.shade700,
-                                  ),
-                                ),
-                                Text(
-                                  "${displayValue.toStringAsFixed(3)} $unit",
-                                  style: TextStyle(
-                                    fontSize: 22,
-                                    fontWeight: FontWeight.bold,
-                                    color: Colors.black,
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ],
+                            onChanged: (val) async {
+                              final parsed = int.tryParse(val);
+                              if (parsed != null && parsed >= 0) {
+                                setState(() {
+                                  localTransportDelay = parsed;
+                                });
+                                globalSettings.setTransportDelayO2Ms(parsed);
+                                globalSettings.notifyListeners();
+                                final prefs =
+                                    await SharedPreferences.getInstance();
+                                await prefs.setString(
+                                  "globalSettings",
+                                  globalSettings.toJson(),
+                                );
+                              }
+                            },
+                          ),
                         ),
-                      );
-                    },
-                  ),
-                  SizedBox(height: 8),
-                  fieldRow(
-                    label: 'Voltage 1',
-                    controller: voltage1Controller,
-                    onPick: () {
-                      double currentO2Volts = o2Notifier.value * 0.000917;
-                      voltage1Controller.text = currentO2Volts.toStringAsFixed(
-                        4,
-                      );
-                      setState(() {
-                        localVoltage1 = currentO2Volts;
-                      });
-                    },
-                  ),
-                  fieldRow(
-                    label: 'Value 1',
-                    controller: value1Controller,
-                    onPick: null,
-                  ),
-                  fieldRow(
-                    label: 'Voltage 2',
-                    controller: voltage2Controller,
-                    onPick: () {
-                      double currentO2Volts = o2Notifier.value * 0.000917;
-                      voltage2Controller.text = currentO2Volts.toStringAsFixed(
-                        4,
-                      );
-                      setState(() {
-                        localVoltage2 = currentO2Volts;
-                      });
-                    },
-                  ),
-                  fieldRow(
-                    label: 'Value 2',
-                    controller: value2Controller,
-                    onPick: null,
-                  ),
-                  SizedBox(height: 12),
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                    children: [
-                      Text("Apply Conversion", style: TextStyle(fontSize: 16)),
-                      Switch(
-                        value: localApplyConversion,
-                        onChanged: (val) {
-                          setState(() {
-                            localApplyConversion = val;
-                          });
-                        },
-                      ),
-                    ],
-                  ),
-                  SizedBox(height: 20),
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                    children: [
-                      ElevatedButton(
-                        onPressed: () async {
-                          print("Submitting O2 calibration values...");
-                          globalSettings.voltage1 = localVoltage1;
-                          globalSettings.value1 = localValue1;
-                          globalSettings.voltage2 = localVoltage2;
-                          globalSettings.value2 = localValue2;
-                          globalSettings.setapplyConversion(
-                            localApplyConversion,
-                          );
-                          globalSettings.notifyListeners();
-                          o2Calibrate = generateCalibrationFunction(
-                            voltage1: globalSettings.voltage1,
-                            value1: globalSettings.value1,
-                            voltage2: globalSettings.voltage2,
-                            value2: globalSettings.value2,
-                          );
-                          // save json in shared prefs
-                          final prefs = await SharedPreferences.getInstance();
-                          await prefs.setString(
-                            "globalSettings",
-                            globalSettings.toJson(),
-                          );
-                          // Navigator.of(context).pop();
-                        },
-                        child: Text("Submit"),
-                      ),
-                      TextButton(
-                        onPressed: () {
-                          Navigator.of(context).pop();
-                        },
-                        child: Text("Exit"),
-                      ),
-                    ],
-                  ),
-                ],
+                      ],
+                    ),
+                    const SizedBox(height: 12),
+
+                    fieldRow(
+                      label: 'Voltage 1',
+                      controller: voltage1Controller,
+                      onPick: () {
+                        double currentO2Volts = o2Notifier.value * 0.000917;
+                        voltage1Controller.text = currentO2Volts
+                            .toStringAsFixed(4);
+                        setState(() {
+                          localVoltage1 = currentO2Volts;
+                        });
+                      },
+                    ),
+                    fieldRow(
+                      label: 'Value 1',
+                      controller: value1Controller,
+                      onPick: null,
+                    ),
+                    fieldRow(
+                      label: 'Voltage 2',
+                      controller: voltage2Controller,
+                      onPick: () {
+                        double currentO2Volts = o2Notifier.value * 0.000917;
+                        voltage2Controller.text = currentO2Volts
+                            .toStringAsFixed(4);
+                        setState(() {
+                          localVoltage2 = currentO2Volts;
+                        });
+                      },
+                    ),
+                    fieldRow(
+                      label: 'Value 2',
+                      controller: value2Controller,
+                      onPick: null,
+                    ),
+                    const SizedBox(height: 12),
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                      children: [
+                        const Text(
+                          "Apply Conversion",
+                          style: TextStyle(fontSize: 16),
+                        ),
+                        Switch(
+                          value: localApplyConversion,
+                          onChanged: (val) {
+                            setState(() {
+                              localApplyConversion = val;
+                            });
+                          },
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 20),
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                      children: [
+                        ElevatedButton(
+                          onPressed: () async {
+                            globalSettings.voltage1 = localVoltage1;
+                            globalSettings.value1 = localValue1;
+                            globalSettings.voltage2 = localVoltage2;
+                            globalSettings.value2 = localValue2;
+                            globalSettings.setapplyConversion(
+                              localApplyConversion,
+                            );
+                            // Ensure transport delay persisted (in case user didn't trigger onChanged)
+                            globalSettings.setTransportDelayO2Ms(
+                              localTransportDelay,
+                            );
+                            globalSettings.notifyListeners();
+
+                            o2Calibrate = generateCalibrationFunction(
+                              voltage1: globalSettings.voltage1,
+                              value1: globalSettings.value1,
+                              voltage2: globalSettings.voltage2,
+                              value2: globalSettings.value2,
+                            );
+
+                            final prefs = await SharedPreferences.getInstance();
+                            await prefs.setString(
+                              "globalSettings",
+                              globalSettings.toJson(),
+                            );
+                          },
+                          child: const Text("Submit"),
+                        ),
+                        TextButton(
+                          onPressed: () {
+                            Navigator.of(context).pop();
+                          },
+                          child: const Text("Exit"),
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
               ),
             );
           },
