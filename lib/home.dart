@@ -1496,6 +1496,20 @@ class _HomeState extends State<Home> {
         }
       }
 
+      // Pad data so it's always a multiple of 20 seconds (6000 samples)
+      // int windowSize = 20 * 300; // 20 seconds × 300Hz
+      // int remainder = _inMemoryData.length % windowSize;
+      // if (remainder != 0 && _inMemoryData.isNotEmpty) {
+      //   int padCount = windowSize - remainder;
+      //   List<double> lastSample = _inMemoryData.last;
+      //   for (int i = 0; i < padCount; i++) {
+      //     _inMemoryData.add(List<double>.from(lastSample));
+      //   }
+      //   print(
+      //     "Padded $_inMemoryData with $padCount samples for window compatibility.",
+      //   );
+      // }
+
       print("Imported $sampleCount samples.");
       setState(() {
         importProgressPercent = 1.0;
@@ -1575,6 +1589,16 @@ class _HomeState extends State<Home> {
 
       // samples.add(numericSample);
     }
+    if (chunkData.length < count && chunkData.isNotEmpty) {
+      final lastSample = chunkData.last;
+      final padCount = count - chunkData.length;
+      for (int i = 0; i < padCount; i++) {
+        // final edt = myBigGraphKey.currentState?.updateEverything(numericSample);
+        chunkData.add(List<double>.from(lastSample));
+        // graph
+        myBigGraphKey.currentState?.updateEverything(lastSample);
+      }
+    }
     onExhalationDetected(data: chunkData);
     // return samples;
   }
@@ -1592,10 +1616,9 @@ class _HomeState extends State<Home> {
           IconButton(
             icon: Icon(Icons.arrow_back),
             onPressed: () async {
-              // Handle previous button
+              // Handle previous button (move back by one 20s window)
               setState(() {
-                currentImportDisplayIndex = (currentImportDisplayIndex -
-                        10 * 300)
+                currentImportDisplayIndex = (currentImportDisplayIndex - 6000)
                     .clamp(0, double.infinity);
               });
               await getSamplesFromFile(currentImportDisplayIndex.toInt());
@@ -1605,11 +1628,10 @@ class _HomeState extends State<Home> {
           ),
           // show the point where we are in time
           Text(
-            "${((currentImportDisplayIndex / 300).floor() ~/ 60).toString().padLeft(2, '0')}:${((currentImportDisplayIndex / 300).floor() % 60).toString().padLeft(2, '0')} / "
+            "${((currentImportDisplayIndex ~/ 6000) ~/ 3).toString().padLeft(2, '0')}:${((currentImportDisplayIndex ~/ 6000) * 20 % 60).toString().padLeft(2, '0')} / "
             "${_inMemoryData.isNotEmpty ? (() {
-                  print("_inMemoryDataLen");
-                  print(_inMemoryData.length);
-                  final totalSeconds = _inMemoryData.length ~/ 300;
+                  final totalWindows = (_inMemoryData.length / 6000).ceil();
+                  final totalSeconds = totalWindows * 20;
                   final min = (totalSeconds ~/ 60).toString().padLeft(2, '0');
                   final sec = (totalSeconds % 60).toString().padLeft(2, '0');
                   return "$min:$sec";
@@ -1622,12 +1644,9 @@ class _HomeState extends State<Home> {
             onPressed: () {
               setState(() {
                 // Clamp to not go above the available data length
-                final maxIndex = (_inMemoryData.length - 1).clamp(
-                  0,
-                  double.infinity,
-                );
+                final maxIndex = ((_inMemoryData.length - 1) ~/ 6000) * 6000;
                 currentImportDisplayIndex =
-                    ((currentImportDisplayIndex + 10 * 300).clamp(
+                    ((currentImportDisplayIndex + 6000).clamp(
                       0,
                       maxIndex,
                     )).toDouble();
