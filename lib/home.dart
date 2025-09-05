@@ -258,7 +258,13 @@ class _HomeState extends State<Home> {
         "yAxisLabelUnit": (double x) => x < 1000 ? "ml/s" : "L/s",
         // moving average
         "movingAverage": {"enabled": true, "window": 10},
-        "filterConfig": {"filterOn": false, "lpf": 3, "hpf": 5, "notch": 1},
+        "filterConfig": {
+          "filterOn": true,
+          "lpf": 2,
+          "hpf": 7,
+          "notch": 1,
+          "additionalGainCal": 3.14,
+        },
       },
       {
         "name": "Tidal Volume",

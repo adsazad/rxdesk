@@ -265,6 +265,10 @@ class MyBigGraphV2State extends State<MyBigGraphV2> {
     double localSum = 0;
 
     currentBuffer[localPos] = val;
+    if (channelIndex == 3) {
+      print("FL1");
+      print(val);
+    }
 
     for (int stage = StartStageCNo; stage <= MAX_STAGES_MINUS_ONE; stage++) {
       localSum = 0;
@@ -273,11 +277,25 @@ class MyBigGraphV2State extends State<MyBigGraphV2> {
         localSum += currentBuffer[index] * currentFilter.Coeff[stage][c];
       }
 
-      localSum *= 2;
+      localSum *= 2; // default gain
+
       currentBuffer[(localPos + 1) % FILT_BUF_SIZE] = localSum;
       currentBuffer[(localPos + 6) % FILT_BUF_SIZE] = localSum;
 
       localPos = (localPos + 6) % FILT_BUF_SIZE;
+    }
+    // if (channelIndex == 3) {
+    //   print("FL2");
+    //   print(localSum);
+    // }
+    if (filterSettings['additionalGainCal'] != null) {
+      double addGain =
+          filterSettings['additionalGainCal'] is int
+              ? (filterSettings['additionalGainCal'] as int).toDouble()
+              : (filterSettings['additionalGainCal'] is double
+                  ? filterSettings['additionalGainCal'] as double
+                  : 1.0);
+      localSum *= addGain;
     }
 
     Pos = (Pos + 2) % FILT_BUF_SIZE;
