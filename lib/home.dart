@@ -216,12 +216,42 @@ class _HomeState extends State<Home> {
         "minDisplay": 0,
         "maxDisplay": 30,
         "scalePresets": [
-          {"minDisplay": 0.0, "maxDisplay": 5.0, "boxValue": 1.0},
-          {"minDisplay": 0.0, "maxDisplay": 10.0, "boxValue": 2.0},
-          {"minDisplay": 0.0, "maxDisplay": 20.0, "boxValue": 4.0},
-          {"minDisplay": 0.0, "maxDisplay": 30.0, "boxValue": 6.0},
-          {"minDisplay": 0.0, "maxDisplay": 40.0, "boxValue": 8.0},
-          {"minDisplay": 0.0, "maxDisplay": 50.0, "boxValue": 10.0},
+          {
+            "minDisplay": 0.0,
+            "maxDisplay": 0.5,
+            "boxValue": 0.1,
+            "rangeTrigger": 0,
+          }, // default
+          {
+            "minDisplay": 0.0,
+            "maxDisplay": 5.0,
+            "boxValue": 1.0,
+            "rangeTrigger": 2,
+          },
+          {
+            "minDisplay": 0.0,
+            "maxDisplay": 10.0,
+            "boxValue": 2.0,
+            "rangeTrigger": 4,
+          },
+          {
+            "minDisplay": 0.0,
+            "maxDisplay": 20.0,
+            "boxValue": 4.0,
+            "rangeTrigger": 9,
+          },
+          {
+            "minDisplay": 0.0,
+            "maxDisplay": 30.0,
+            "boxValue": 6.0,
+            "rangeTrigger": 18,
+          },
+          {
+            "minDisplay": 0.0,
+            "maxDisplay": 40.0,
+            "boxValue": 8.0,
+            "rangeTrigger": 28,
+          },
         ],
         "scalePresetIndex": 3,
         "filterConfig": {"filterOn": false, "lpf": 3, "hpf": 5, "notch": 1},
@@ -269,14 +299,50 @@ class _HomeState extends State<Home> {
       {
         "name": "Tidal Volume",
         "scale": 3,
+        "autoScale": true,
         "scalePresets": [
-          {"minDisplay": 0.0, "maxDisplay": 125.0, "boxValue": 25.0},
-          {"minDisplay": 0.0, "maxDisplay": 240.0, "boxValue": 50.0},
-          {"minDisplay": 0.0, "maxDisplay": 500.0, "boxValue": 100.0},
-          {"minDisplay": 0.0, "maxDisplay": 1000.0, "boxValue": 200.0},
-          {"minDisplay": 0.0, "maxDisplay": 2000.0, "boxValue": 400.0},
-          {"minDisplay": 0.0, "maxDisplay": 4000.0, "boxValue": 800.0},
-          {"minDisplay": 0.0, "maxDisplay": 8000.0, "boxValue": 1600.0},
+          {
+            "minDisplay": 0.0,
+            "maxDisplay": 125.0,
+            "boxValue": 25.0,
+            "rangeTrigger": 0,
+          },
+          {
+            "minDisplay": 0.0,
+            "maxDisplay": 240.0,
+            "boxValue": 50.0,
+            "rangeTrigger": 220,
+          },
+          {
+            "minDisplay": 0.0,
+            "maxDisplay": 500.0,
+            "boxValue": 100.0,
+            "rangeTrigger": 450,
+          },
+          {
+            "minDisplay": 0.0,
+            "maxDisplay": 1000.0,
+            "boxValue": 200.0,
+            "rangeTrigger": 950,
+          },
+          {
+            "minDisplay": 0.0,
+            "maxDisplay": 2000.0,
+            "boxValue": 400.0,
+            "rangeTrigger": 1900,
+          },
+          {
+            "minDisplay": 0.0,
+            "maxDisplay": 4000.0,
+            "boxValue": 800.0,
+            "rangeTrigger": 3800,
+          },
+          {
+            "minDisplay": 0.0,
+            "maxDisplay": 8000.0,
+            "boxValue": 1600.0,
+            "rangeTrigger": 7600,
+          },
         ],
         "scalePresetIndex": 4,
         "boxValue": 400.0,
@@ -290,7 +356,7 @@ class _HomeState extends State<Home> {
       },
     ];
 
-    // startTestLoop(); // Start t he test loop
+    // startTestLoop(); // Start  the test loop
   }
 
   Future<void> sendSerialCommandSequence({

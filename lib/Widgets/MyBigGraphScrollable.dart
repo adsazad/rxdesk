@@ -265,10 +265,10 @@ class MyBigGraphV2State extends State<MyBigGraphV2> {
     double localSum = 0;
 
     currentBuffer[localPos] = val;
-    if (channelIndex == 3) {
-      print("FL1");
-      print(val);
-    }
+    // if (channelIndex == 3) {
+    //   print("FL1");
+    //   print(val);
+    // }
 
     for (int stage = StartStageCNo; stage <= MAX_STAGES_MINUS_ONE; stage++) {
       localSum = 0;
@@ -303,7 +303,7 @@ class MyBigGraphV2State extends State<MyBigGraphV2> {
     return localSum;
   }
 
-  // ValueNotifier<List<List<FlSpot>>> plotNotifier = ValueNotifier([]);
+  // ValueNotifier<List<FlSpot>> plotNotifier = ValueNotifier([]);
   // Add this near the top of your class
   int _sampleBatchCounter = 0;
   final int _batchThreshold = 5; // 🔁 update graph every 20 samples
@@ -362,11 +362,46 @@ class MyBigGraphV2State extends State<MyBigGraphV2> {
     });
   }
 
-  List<double> updateEverything(List<double> values) {
-    // print("v1");
-    // print(values);
-    List<double> processedValues = [];
+  void _autoScalePreset(int channelIndex, double value) {
+    final plot = widget.plot[channelIndex];
+    final presets = plot["scalePresets"];
+    if (presets is! List || presets.isEmpty) return;
 
+    int currentIndex = plot["scalePresetIndex"] ?? 0;
+    int newIndex = currentIndex;
+
+    // Upscale: If value exceeds next preset's trigger, go up
+    for (int i = currentIndex + 1; i < presets.length; i++) {
+      final trigger = presets[i]["rangeTrigger"] ?? 0;
+      if (value >= trigger) {
+        newIndex = i;
+      }
+    }
+
+    // Descend: Only if ALL values in window are below previous trigger
+    if (newIndex == currentIndex && currentIndex > 0) {
+      final prevTrigger = presets[currentIndex]["rangeTrigger"] ?? 0;
+      // Get all values in window for this channel
+      final List<double> windowValues = allPlotData[channelIndex]
+          .map((spot) => spot.y)
+          .toList();
+      if (windowValues.isNotEmpty &&
+          windowValues.every((v) => v < prevTrigger)) {
+        newIndex = currentIndex - 1;
+      }
+    }
+
+    if (newIndex != currentIndex) {
+      plot["scalePresetIndex"] = newIndex;
+      plot["boxValue"] = presets[newIndex]["boxValue"];
+      plot["minDisplay"] = presets[newIndex]["minDisplay"];
+      plot["maxDisplay"] = presets[newIndex]["maxDisplay"];
+      setState(() {});
+    }
+  }
+
+  List<double> updateEverything(List<double> values) {
+    List<double> processedValues = [];
     for (int i = 0; i < values.length; i++) {
       double value = values[i];
       value = applyMultiFilterToChannel(i, value);
@@ -378,17 +413,20 @@ class MyBigGraphV2State extends State<MyBigGraphV2> {
           movingAvgConfig["window"] is int &&
           movingAvgConfig["window"] > 1) {
         int window = movingAvgConfig["window"];
-        // Maintain a buffer for moving average per channel
         widget.plot[i]["_maBuffer"] ??= <double>[];
         List<double> maBuffer = widget.plot[i]["_maBuffer"];
         maBuffer.add(value);
         if (maBuffer.length > window) maBuffer.removeAt(0);
         value = maBuffer.reduce((a, b) => a + b) / maBuffer.length;
       }
-      // print("v2");
-      // print(values);
 
       processedValues.add(value);
+
+      // --- Automatic scale switching ---
+      if (widget.plot[i]["autoScale"] == true) {
+        _autoScalePreset(i, value);
+      }
+
       final converter = widget.plot[i]["valueConverter"];
       if (converter != null && converter is Function) {
         value = converter(value);
