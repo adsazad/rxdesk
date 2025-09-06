@@ -169,15 +169,16 @@ class _HomeState extends State<Home> {
           return x;
         },
         "unit": "%",
-        "minDisplay": 0.0,
-        "maxDisplay": 30.0,
+        "flipDisplay": true,
+        "minDisplay": -30.0, // <-- Set to -30
+        "maxDisplay": 0.0, // <-- Set to 0
         "scalePresets": [
-          {"minDisplay": 0.0, "maxDisplay": 5.0, "boxValue": 1.0},
-          {"minDisplay": 0.0, "maxDisplay": 10.0, "boxValue": 2.0},
-          {"minDisplay": 0.0, "maxDisplay": 20.0, "boxValue": 4.0},
-          {"minDisplay": 0.0, "maxDisplay": 30.0, "boxValue": 6.0},
-          {"minDisplay": 0.0, "maxDisplay": 40.0, "boxValue": 8.0},
-          {"minDisplay": 0.0, "maxDisplay": 50.0, "boxValue": 10.0},
+          {"minDisplay": -5.0, "maxDisplay": 0.0, "boxValue": 1.0},
+          {"minDisplay": -10.0, "maxDisplay": 0.0, "boxValue": 2.0},
+          {"minDisplay": -20.0, "maxDisplay": 0.0, "boxValue": 4.0},
+          {"minDisplay": -30.0, "maxDisplay": 0.0, "boxValue": 6.0},
+          {"minDisplay": -40.0, "maxDisplay": 0.0, "boxValue": 8.0},
+          {"minDisplay": -50.0, "maxDisplay": 0.0, "boxValue": 10.0},
         ],
         "scalePresetIndex": 3,
         "filterConfig": {"filterOn": true, "lpf": 3, "hpf": 5, "notch": 1},
@@ -215,6 +216,7 @@ class _HomeState extends State<Home> {
         "unit": "%",
         "minDisplay": 0,
         "maxDisplay": 30,
+        "autoScale": true,
         "scalePresets": [
           {
             "minDisplay": 0.0,
@@ -356,7 +358,7 @@ class _HomeState extends State<Home> {
       },
     ];
 
-    // startTestLoop(); // Start  the test loop
+    startTestLoop(); // Start  the test loop
   }
 
   Future<void> sendSerialCommandSequence({

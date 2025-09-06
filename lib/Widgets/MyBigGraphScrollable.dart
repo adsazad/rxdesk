@@ -382,9 +382,8 @@ class MyBigGraphV2State extends State<MyBigGraphV2> {
     if (newIndex == currentIndex && currentIndex > 0) {
       final prevTrigger = presets[currentIndex]["rangeTrigger"] ?? 0;
       // Get all values in window for this channel
-      final List<double> windowValues = allPlotData[channelIndex]
-          .map((spot) => spot.y)
-          .toList();
+      final List<double> windowValues =
+          allPlotData[channelIndex].map((spot) => spot.y).toList();
       if (windowValues.isNotEmpty &&
           windowValues.every((v) => v < prevTrigger)) {
         newIndex = currentIndex - 1;
@@ -420,7 +419,14 @@ class MyBigGraphV2State extends State<MyBigGraphV2> {
         value = maBuffer.reduce((a, b) => a + b) / maBuffer.length;
       }
 
+      // Save the processed value (unflipped)
       processedValues.add(value);
+
+      // --- Flip display if needed (for plotting only) ---
+      double displayValue = value;
+      if (widget.plot[i]["flipDisplay"] == true) {
+        displayValue = -displayValue;
+      }
 
       // --- Automatic scale switching ---
       if (widget.plot[i]["autoScale"] == true) {
@@ -429,7 +435,7 @@ class MyBigGraphV2State extends State<MyBigGraphV2> {
 
       final converter = widget.plot[i]["valueConverter"];
       if (converter != null && converter is Function) {
-        value = converter(value);
+        displayValue = converter(displayValue);
       }
       if (widget.isImported) {
         if (!_clearedForImport) {
@@ -438,7 +444,7 @@ class MyBigGraphV2State extends State<MyBigGraphV2> {
         }
 
         double x = allPlotData[i].isNotEmpty ? allPlotData[i].last.x + 1 : 0.0;
-        allPlotData[i].add(FlSpot(x, value));
+        allPlotData[i].add(FlSpot(x, displayValue));
       } else {
         if (allCurrentIndexes[i] >= widget.windowSize) {
           widget.onCycleComplete?.call();
@@ -448,7 +454,7 @@ class MyBigGraphV2State extends State<MyBigGraphV2> {
 
         allPlotData[i][allCurrentIndexes[i]] = FlSpot(
           allCurrentIndexes[i].toDouble(),
-          value,
+          displayValue,
         );
         allCurrentIndexes[i]++;
       }
@@ -542,6 +548,9 @@ class MyBigGraphV2State extends State<MyBigGraphV2> {
 
           int labelDecimal =
               widget.plot[i]["labelDecimal"] ?? 1; // Default to 1 decimal
+          if (widget.plot[i]["flipDisplay"] == true) {
+            displayVal = -displayVal;
+          }
           _yAxisLabelList.add(
             MapEntry(
               y,
@@ -571,6 +580,10 @@ class MyBigGraphV2State extends State<MyBigGraphV2> {
             : dataList[(allCurrentIndexes[index] - 1) % widget.windowSize];
 
     double raw = latestPoint.y;
+    // Unflip if flipDisplay is true
+    if (widget.plot[index]["flipDisplay"] == true) {
+      raw = -raw;
+    }
     double scaled = raw * plotGains[index];
     double offsetAdjusted = scaled + plotOffsets[index];
 
