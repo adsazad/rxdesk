@@ -8,6 +8,14 @@ class ModifiedBruceProtocol {
   // Modified Bruce Protocol Phases
   static const List<Map<String, dynamic>> phases = [
     {
+      "id": "stage_0",
+      "name": "Stage 0 (Rest)",
+      "duration": 10,
+      "speed": 0.0,
+      "incline": 0,
+      "description": "Resting phase, treadmill stopped for 10 seconds.",
+    },
+    {
       "id": "stage_1",
       "name": "Stage 1",
       "duration": 180,
@@ -92,6 +100,10 @@ class ModifiedBruceProtocol {
 
   // TrackMaster commands for each phase (send both speed and incline)
   static const Map<String, List<List<int>>> commands = {
+    "stage_0": [
+      [0xA3, 0x30, 0x30, 0x30, 0x30], // Speed 0.0 km/h ("0000")
+      [0xA4, 0x30, 0x30, 0x30, 0x30], // Incline 0% ("0000")
+    ],
     "stage_1": [
       [0xA3, 0x30, 0x30, 0x32, 0x37], // Speed 2.7 km/h ("0027")
       [0xA4, 0x30, 0x30, 0x30, 0x30], // Incline 0% ("0000")
@@ -131,7 +143,8 @@ class ModifiedBruceProtocol {
         0x32,
         0x31,
         0x39,
-      ], // 21.9% ("219") - Note: 4 ASCII bytes expected, pad as needed
+        0x30,
+      ], // 21.9% ("2190") - padded to 4 ASCII bytes
     ],
     "recovery": [
       [0xA3, 0x30, 0x30, 0x32, 0x37], // 2.7 km/h
