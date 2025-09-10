@@ -650,7 +650,7 @@ class MyBigGraphV2State extends State<MyBigGraphV2> {
                             // 🧠 Show Channel Name
                             style: const TextStyle(
                               fontWeight: FontWeight.bold,
-                              fontSize: 12,
+                              fontSize: 11,
                             ),
                             overflow: TextOverflow.ellipsis,
                           ),
@@ -704,6 +704,7 @@ class MyBigGraphV2State extends State<MyBigGraphV2> {
                   ),
                 ),
                 _meter(i),
+
                 Row(
                   children: [
                     IconButton(
@@ -819,6 +820,16 @@ class MyBigGraphV2State extends State<MyBigGraphV2> {
                       activeColor: Colors.deepPurple,
                     ),
                   ],
+                  // AutoScale
+                  SwitchListTile(
+                    title: const Text("Auto Scale"),
+                    value: widget.plot[index]["autoScale"] == true,
+                    onChanged: (val) {
+                      setState(() {
+                        widget.plot[index]["autoScale"] = val;
+                      });
+                    },
+                  ),
                 ],
               );
             },
@@ -903,11 +914,11 @@ class MyBigGraphV2State extends State<MyBigGraphV2> {
 
     return Expanded(
       child: Container(
-        margin: const EdgeInsets.symmetric(horizontal: 6, vertical: 4),
-        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+        margin: const EdgeInsets.symmetric(horizontal: 10, vertical: 0),
+        padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 4),
         decoration: BoxDecoration(
           color: Colors.grey.shade100,
-          borderRadius: BorderRadius.circular(12),
+          borderRadius: BorderRadius.circular(4),
           border: Border.all(color: Colors.grey.shade300, width: 1),
           boxShadow: [
             BoxShadow(
@@ -920,13 +931,12 @@ class MyBigGraphV2State extends State<MyBigGraphV2> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            const SizedBox(height: 2),
             AutoSizeText(
               liveValue,
               maxLines: 1,
-              minFontSize: 12,
+              minFontSize: 10,
               style: const TextStyle(
-                fontSize: 16,
+                fontSize: 13,
                 fontWeight: FontWeight.bold,
                 color: Colors.deepPurple,
               ),

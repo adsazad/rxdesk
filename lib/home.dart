@@ -10,6 +10,7 @@ import 'package:spirobtvo/Pages/RecordingsListPage.dart';
 import 'package:spirobtvo/ProtocolManifests/ProtocolManifest.dart';
 import 'package:spirobtvo/ProviderModals/ImportFileProvider.dart';
 import 'package:spirobtvo/Services/MachineControllers/LodeErgometerController.dart';
+import 'package:spirobtvo/Services/TreadmillSerialController.dart';
 import 'package:spirobtvo/Services/Utility.dart';
 import 'package:spirobtvo/Widgets/BreathStatsTableModal.dart';
 import 'package:spirobtvo/Widgets/MyBigGraphScrollable.dart';
@@ -118,6 +119,8 @@ class _HomeState extends State<Home> {
 
   late ValueNotifier<List<int>> breathPeakIndicesNotifier =
       ValueNotifier<List<int>>([]);
+
+  TreadmillSerialController? treadmillController;
 
   @override
   void initState() {
@@ -228,31 +231,31 @@ class _HomeState extends State<Home> {
             "minDisplay": 0.0,
             "maxDisplay": 5.0,
             "boxValue": 1.0,
-            "rangeTrigger": 2,
+            "rangeTrigger": 3, // was 2, increased for smoother transition
           },
           {
             "minDisplay": 0.0,
             "maxDisplay": 10.0,
             "boxValue": 2.0,
-            "rangeTrigger": 4,
+            "rangeTrigger": 7, // was 4, increased for smoother transition
           },
           {
             "minDisplay": 0.0,
             "maxDisplay": 20.0,
             "boxValue": 4.0,
-            "rangeTrigger": 9,
+            "rangeTrigger": 14, // was 9, increased for smoother transition
           },
           {
             "minDisplay": 0.0,
             "maxDisplay": 30.0,
             "boxValue": 6.0,
-            "rangeTrigger": 18,
+            "rangeTrigger": 24, // was 18, increased for smoother transition
           },
           {
             "minDisplay": 0.0,
             "maxDisplay": 40.0,
             "boxValue": 8.0,
-            "rangeTrigger": 28,
+            "rangeTrigger": 36, // was 28, increased for smoother transition
           },
         ],
         "scalePresetIndex": 3,
@@ -313,37 +316,37 @@ class _HomeState extends State<Home> {
             "minDisplay": 0.0,
             "maxDisplay": 240.0,
             "boxValue": 50.0,
-            "rangeTrigger": 220,
+            "rangeTrigger": 150,
           },
           {
             "minDisplay": 0.0,
             "maxDisplay": 500.0,
             "boxValue": 100.0,
-            "rangeTrigger": 450,
+            "rangeTrigger": 300,
           },
           {
             "minDisplay": 0.0,
             "maxDisplay": 1000.0,
             "boxValue": 200.0,
-            "rangeTrigger": 950,
+            "rangeTrigger": 700,
           },
           {
             "minDisplay": 0.0,
             "maxDisplay": 2000.0,
             "boxValue": 400.0,
-            "rangeTrigger": 1900,
+            "rangeTrigger": 1500,
           },
           {
             "minDisplay": 0.0,
             "maxDisplay": 4000.0,
             "boxValue": 800.0,
-            "rangeTrigger": 3800,
+            "rangeTrigger": 3000,
           },
           {
             "minDisplay": 0.0,
             "maxDisplay": 8000.0,
             "boxValue": 1600.0,
-            "rangeTrigger": 7600,
+            "rangeTrigger": 6000,
           },
         ],
         "scalePresetIndex": 4,
@@ -2550,7 +2553,11 @@ class _HomeState extends State<Home> {
 
   _stopRecording() async {
     // comment for simulatedrecordings
+    if (treadmillController?.isOpen == true) {
+      treadmillController!.sendCommand([0xA2]);
+    }
     port.close();
+    treadmillController?.close();
 
     print("Stopping recording...");
 
@@ -2582,6 +2589,10 @@ class _HomeState extends State<Home> {
         int phaseIndex = -1;
         Duration elapsed = recordingDuration;
 
+        // For display
+        String? loadOrSpeedLabel;
+        String? loadOrSpeedValue;
+
         // Track phase markers: [{name, length}]
         if (protocol['phases'] is List) {
           int secondsPassed = elapsed.inSeconds;
@@ -2592,6 +2603,44 @@ class _HomeState extends State<Home> {
             if (secondsPassed < cumulative + phaseDuration) {
               phaseName = phase['name'] ?? "Phase ${i + 1}";
               phaseIndex = i;
+
+              // --- NEW: Display load or speed ---
+              if (protocol['type'] == "ergoCycle") {
+                if (phase.containsKey('load')) {
+                  if (phase['load'] is String && phase['load'] == "ramp") {
+                    loadOrSpeedLabel = "Load";
+                    loadOrSpeedValue = "Ramp";
+                    // Optionally, calculate ramp value here if you have logic
+                    if (phase.containsKey('rampStart') &&
+                        phase.containsKey('rampEnd') &&
+                        phase.containsKey('duration')) {
+                      int rampStart = phase['rampStart'] ?? 0;
+                      int rampEnd = phase['rampEnd'] ?? 0;
+                      int rampDuration = phase['duration'] ?? 1;
+                      int secondsIntoPhase = secondsPassed - cumulative;
+                      double rampValue =
+                          rampStart +
+                          ((rampEnd - rampStart) *
+                              (secondsIntoPhase / rampDuration));
+                      loadOrSpeedValue =
+                          "Ramp: ${rampValue.toStringAsFixed(1)} W";
+                    }
+                  } else {
+                    loadOrSpeedLabel = "Load";
+                    loadOrSpeedValue = "${phase['load']} W";
+                  }
+                }
+              } else if (protocol['type'] == "treadmill") {
+                if (phase.containsKey('speed')) {
+                  loadOrSpeedLabel = "Speed";
+                  loadOrSpeedValue = "${phase['speed']} km/h";
+                }
+                // Optionally, also show incline
+                if (phase.containsKey('incline')) {
+                  loadOrSpeedValue =
+                      "${phase['speed']} km/h, Incline: ${phase['incline']}%";
+                }
+              }
 
               // If phase changed, update the previous marker's length
               if (lastPhaseIndex != null && lastPhaseIndex != phaseIndex) {
@@ -2616,6 +2665,16 @@ class _HomeState extends State<Home> {
                   "length": 0, // Will be updated when phase ends
                   "type": "protocol_phase",
                 });
+
+                // --- SEND TREADMILL COMMAND ON PHASE START ---
+                if (protocol['type'] == "treadmill" &&
+                    protocol.containsKey('commands') &&
+                    treadmillController?.isOpen == true) {
+                  final cmdBytes = protocol['commands'][phase["id"]];
+                  if (cmdBytes != null) {
+                    treadmillController!.sendCommand(List<int>.from(cmdBytes));
+                  }
+                }
               }
 
               lastPhaseIndex = phaseIndex;
@@ -2671,6 +2730,19 @@ class _HomeState extends State<Home> {
                             fontWeight: FontWeight.w500,
                           ),
                         ),
+                        if (loadOrSpeedLabel != null &&
+                            loadOrSpeedValue != null)
+                          Padding(
+                            padding: const EdgeInsets.only(top: 8.0),
+                            child: Text(
+                              "$loadOrSpeedLabel: $loadOrSpeedValue",
+                              style: TextStyle(
+                                fontSize: 14,
+                                fontWeight: FontWeight.w400,
+                                color: Colors.blueGrey,
+                              ),
+                            ),
+                          ),
                       ],
                     ),
                   ],
@@ -2796,6 +2868,23 @@ class _HomeState extends State<Home> {
                               print(
                                 "Recording started at index: $recordStartIndex",
                               );
+
+                              final globalSettings =
+                                  Provider.of<GlobalSettingsModal>(
+                                    context,
+                                    listen: false,
+                                  );
+                              if (globalSettings.deviceType == "treadmill") {
+                                treadmillController ??=
+                                    TreadmillSerialController();
+                                treadmillController!.open(
+                                  globalSettings.machineCom,
+                                );
+
+                                // --- SEND START BELT COMMAND ---
+                                treadmillController!.sendCommand([0xA0]);
+                              }
+
                               setState(() {
                                 isRecording = true;
                               });

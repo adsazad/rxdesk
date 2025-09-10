@@ -3,14 +3,14 @@ class ModifiedBruceProtocol {
   static const String protocolDescription =
       "A treadmill protocol with gentler initial stages, suitable for patients with lower exercise capacity.";
   static const String protocolVersion = "1.0.0";
-  static const String type = "treadmil";
+  static const String type = "treadmill";
 
-  // Modified Bruce Protocol Phases (based on your screenshot)
+  // Modified Bruce Protocol Phases
   static const List<Map<String, dynamic>> phases = [
     {
       "id": "stage_1",
       "name": "Stage 1",
-      "duration": 180, // 3 min
+      "duration": 180,
       "speed": 2.7,
       "incline": 0,
       "description": "3 min at 1.7 mph (2.7 km/h), 0% grade.",
@@ -75,7 +75,6 @@ class ModifiedBruceProtocol {
       "id": "stage_9",
       "name": "Stage 9",
       "duration": 180,
-      "speed_mph": 6.0,
       "speed": 9.7,
       "incline": 21.9,
       "description": "3 min at 6.0 mph (9.7 km/h), 21.9% grade.",
@@ -91,6 +90,55 @@ class ModifiedBruceProtocol {
     },
   ];
 
+  // TrackMaster commands for each phase (send both speed and incline)
+  static const Map<String, List<List<int>>> commands = {
+    "stage_1": [
+      [0xA3, 0x30, 0x30, 0x32, 0x37], // Speed 2.7 km/h ("0027")
+      [0xA4, 0x30, 0x30, 0x30, 0x30], // Incline 0% ("0000")
+    ],
+    "stage_2": [
+      [0xA3, 0x30, 0x30, 0x32, 0x37], // 2.7 km/h
+      [0xA4, 0x30, 0x30, 0x30, 0x35], // 5% ("0005")
+    ],
+    "stage_3": [
+      [0xA3, 0x30, 0x30, 0x32, 0x37], // 2.7 km/h
+      [0xA4, 0x30, 0x30, 0x31, 0x30], // 10% ("0010")
+    ],
+    "stage_4": [
+      [0xA3, 0x30, 0x30, 0x34, 0x30], // 4.0 km/h ("0040")
+      [0xA4, 0x30, 0x30, 0x31, 0x32], // 12% ("0012")
+    ],
+    "stage_5": [
+      [0xA3, 0x30, 0x30, 0x35, 0x35], // 5.5 km/h ("0055")
+      [0xA4, 0x30, 0x30, 0x31, 0x34], // 14% ("0014")
+    ],
+    "stage_6": [
+      [0xA3, 0x30, 0x30, 0x36, 0x38], // 6.8 km/h ("0068")
+      [0xA4, 0x30, 0x30, 0x31, 0x36], // 16% ("0016")
+    ],
+    "stage_7": [
+      [0xA3, 0x30, 0x30, 0x38, 0x30], // 8.0 km/h ("0080")
+      [0xA4, 0x30, 0x30, 0x31, 0x38], // 18% ("0018")
+    ],
+    "stage_8": [
+      [0xA3, 0x30, 0x30, 0x38, 0x39], // 8.9 km/h ("0089")
+      [0xA4, 0x30, 0x30, 0x32, 0x30], // 20% ("0020")
+    ],
+    "stage_9": [
+      [0xA3, 0x30, 0x30, 0x39, 0x37], // 9.7 km/h ("0097")
+      [
+        0xA4,
+        0x32,
+        0x31,
+        0x39,
+      ], // 21.9% ("219") - Note: 4 ASCII bytes expected, pad as needed
+    ],
+    "recovery": [
+      [0xA3, 0x30, 0x30, 0x32, 0x37], // 2.7 km/h
+      [0xA4, 0x30, 0x30, 0x30, 0x30], // 0%
+    ],
+  };
+
   // Function to get the protocol details
   Map<String, dynamic> getProtocolDetails() {
     return {
@@ -100,6 +148,7 @@ class ModifiedBruceProtocol {
       "version": protocolVersion,
       "type": type,
       "phases": phases,
+      "commands": commands,
     };
   }
 }

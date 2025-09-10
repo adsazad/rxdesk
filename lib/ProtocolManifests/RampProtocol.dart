@@ -65,6 +65,8 @@ class RampProtocol {
       "description":
           "Increase workload by 10–30 watts per minute until exhaustion.",
       "load": "ramp",
+      "rampStart": 0, // <-- Added: starting load in watts
+      "rampEnd": 150, // <-- Added: ending load in watts
     },
     {
       "id": "recovery_phase",
