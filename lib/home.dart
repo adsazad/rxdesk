@@ -166,6 +166,12 @@ class _HomeState extends State<Home> {
           );
           if (globalSettings != null &&
               globalSettings.applyConversion == true) {
+            o2Calibrate = generateCalibrationFunction(
+              voltage1: globalSettings.voltage1,
+              value1: globalSettings.value1,
+              voltage2: globalSettings.voltage2,
+              value2: globalSettings.value2,
+            );
             double result = o2Calibrate(x);
             return result;
           }
@@ -173,20 +179,39 @@ class _HomeState extends State<Home> {
         },
         "unit": "%",
         "flipDisplay": true,
-        "minDisplay": -30.0, // <-- Set to -30
+        "minDisplay": -25.0, // <-- Set to -25
         "maxDisplay": 0.0, // <-- Set to 0
         "scalePresets": [
-          {"minDisplay": -5.0, "maxDisplay": 0.0, "boxValue": 1.0},
-          {"minDisplay": -10.0, "maxDisplay": 0.0, "boxValue": 2.0},
-          {"minDisplay": -20.0, "maxDisplay": 0.0, "boxValue": 4.0},
-          {"minDisplay": -30.0, "maxDisplay": 0.0, "boxValue": 6.0},
-          {"minDisplay": -40.0, "maxDisplay": 0.0, "boxValue": 8.0},
-          {"minDisplay": -50.0, "maxDisplay": 0.0, "boxValue": 10.0},
+          {
+            "minDisplay": -25.0,
+            "maxDisplay": -20.0,
+            "boxValue": 1.0,
+          }, // (-20 - -25)/5 = 1
+          {
+            "minDisplay": -25.0,
+            "maxDisplay": -15.0,
+            "boxValue": 2.0,
+          }, // (-15 - -25)/5 = 2
+          {
+            "minDisplay": -25.0,
+            "maxDisplay": -10.0,
+            "boxValue": 3.0,
+          }, // (-10 - -25)/5 = 3
+          {
+            "minDisplay": -25.0,
+            "maxDisplay": -5.0,
+            "boxValue": 4.0,
+          }, // (-5 - -25)/5 = 4
+          {
+            "minDisplay": -25.0,
+            "maxDisplay": 0.0,
+            "boxValue": 5.0,
+          }, // (0 - -25)/5 = 5
         ],
-        "scalePresetIndex": 3,
+        "scalePresetIndex": 4,
         "filterConfig": {"filterOn": true, "lpf": 3, "hpf": 0, "notch": 0},
         "meter": {
-          "decimal": 3,
+          "decimal": 1,
           "unit":
               Provider.of<GlobalSettingsModal>(
                     context,
@@ -195,24 +220,19 @@ class _HomeState extends State<Home> {
                   ? " %"
                   : " mV",
           "convert": (double x, int index) {
-            x = _inMemoryData[index][1];
-            x = x * 0.000917;
-            globalSettings = Provider.of<GlobalSettingsModal>(
-              context,
-              listen: false,
-            );
-            if (globalSettings != null &&
-                globalSettings.applyConversion == true) {
-              // o2Calibrate = generateCalibrationFunction(
-              //   voltage1: globalSettings.voltage1,
-              //   value1: globalSettings.value1,
-              //   voltage2: globalSettings.voltage2,
-              //   value2: globalSettings.value2,
-              // );
-              double result = o2Calibrate(x);
-              return result;
-            }
-            return x;
+            // x = _inMemoryData[index][1];
+            // x = x * 0.000917;
+            // globalSettings = Provider.of<GlobalSettingsModal>(
+            //   context,
+            //   listen: false,
+            // );
+            // if (globalSettings != null &&
+            //     globalSettings.applyConversion == true) {
+
+            //   double result = o2Calibrate(x);
+            //   return result;
+            // }
+            // return x;
           },
         },
       },
@@ -997,6 +1017,11 @@ class _HomeState extends State<Home> {
             );
             if (edt != null) {
               _inMemoryData.add([edt[0], edt[1], edt[2], edt[3], edt[4]]);
+              setState(() {
+                co2Notifier.value = edt[2];
+                o2Notifier.value = edt[1];
+                tidalVolumeNotifier.value = edt[4];
+              });
             }
 
             delayBuffer.removeAt(0);

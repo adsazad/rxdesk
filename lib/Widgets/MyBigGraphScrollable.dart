@@ -424,9 +424,6 @@ class MyBigGraphV2State extends State<MyBigGraphV2> {
 
       // --- Flip display if needed (for plotting only) ---
       double displayValue = value;
-      if (widget.plot[i]["flipDisplay"] == true) {
-        displayValue = -displayValue;
-      }
 
       // --- Automatic scale switching ---
       if (widget.plot[i]["autoScale"] == true) {
@@ -436,6 +433,9 @@ class MyBigGraphV2State extends State<MyBigGraphV2> {
       final converter = widget.plot[i]["valueConverter"];
       if (converter != null && converter is Function) {
         displayValue = converter(displayValue);
+      }
+      if (widget.plot[i]["flipDisplay"] == true) {
+        displayValue = -displayValue;
       }
       if (widget.isImported) {
         if (!_clearedForImport) {
@@ -669,18 +669,18 @@ class MyBigGraphV2State extends State<MyBigGraphV2> {
                               constraints: const BoxConstraints(),
                               onPressed: () => _adjustScale(i, increase: true),
                             ),
-                            IconButton(
-                              icon: const Icon(
-                                Icons.center_focus_strong,
-                                size: 16,
-                              ),
-                              // ✅ Auto-center icon
-                              padding: EdgeInsets.zero,
-                              constraints: const BoxConstraints(),
-                              onPressed: () => _autoCenterOffset(i),
-                              // ✅ NEW FUNCTION
-                              tooltip: "Auto-Center",
-                            ),
+                            // IconButton(
+                            //   icon: const Icon(
+                            //     Icons.center_focus_strong,
+                            //     size: 16,
+                            //   ),
+                            //   // ✅ Auto-center icon
+                            //   padding: EdgeInsets.zero,
+                            //   constraints: const BoxConstraints(),
+                            //   onPressed: () => _autoCenterOffset(i),
+                            //   // ✅ NEW FUNCTION
+                            //   tooltip: "Auto-Center",
+                            // ),
                           ],
                         ),
                         Row(
@@ -912,39 +912,40 @@ class MyBigGraphV2State extends State<MyBigGraphV2> {
     final name = widget.plot[i]["name"] ?? "Channel ${i + 1}";
     final liveValue = _getLiveValueLabel(i);
 
-    return Expanded(
-      child: Container(
-        width: 55,
-        margin: const EdgeInsets.symmetric(horizontal: 12, vertical: 0),
-        padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 4),
-        decoration: BoxDecoration(
-          color: Colors.grey.shade100,
-          borderRadius: BorderRadius.circular(4),
-          border: Border.all(color: Colors.grey.shade300, width: 1),
-          boxShadow: [
-            BoxShadow(
-              color: Colors.grey.shade300,
-              blurRadius: 4,
-              offset: const Offset(0, 2),
+    return Container(
+      width: 55,
+      height: 50,
+      margin: const EdgeInsets.symmetric(horizontal: 12, vertical: 0),
+      padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+      decoration: BoxDecoration(
+        color: Colors.grey.shade100,
+        borderRadius: BorderRadius.circular(4),
+        border: Border.all(color: Colors.grey.shade300, width: 1),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.grey.shade300,
+            blurRadius: 4,
+            offset: const Offset(0, 2),
+          ),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.center,
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          AutoSizeText(
+            liveValue,
+            maxLines: 1,
+            minFontSize: 10,
+            maxFontSize: 12,
+            style: const TextStyle(
+              fontSize: 11,
+              fontWeight: FontWeight.bold,
+              color: Colors.deepPurple,
             ),
-          ],
-        ),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            AutoSizeText(
-              liveValue,
-              maxLines: 1,
-              minFontSize: 10,
-              style: const TextStyle(
-                fontSize: 13,
-                fontWeight: FontWeight.bold,
-                color: Colors.deepPurple,
-              ),
-              overflow: TextOverflow.ellipsis,
-            ),
-          ],
-        ),
+            overflow: TextOverflow.ellipsis,
+          ),
+        ],
       ),
     );
   }
