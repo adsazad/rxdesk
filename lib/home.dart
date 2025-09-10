@@ -2582,6 +2582,13 @@ class _HomeState extends State<Home> {
   int? lastPhaseIndex;
   String? lastPhaseName;
 
+  Future<void> sendTreadmillPhaseCommands(List<List<int>> cmdBytes) async {
+    for (final cmd in cmdBytes) {
+      treadmillController!.sendCommand(List<int>.from(cmd));
+      await Future.delayed(const Duration(milliseconds: 500));
+    }
+  }
+
   Widget protocolDisplay() {
     return Consumer<GlobalSettingsModal>(
       builder: (context, globalSettings, child) {
@@ -2677,8 +2684,8 @@ class _HomeState extends State<Home> {
                     protocol.containsKey('commands') &&
                     treadmillController?.isOpen == true) {
                   final cmdBytes = protocol['commands'][phase["id"]];
-                  for (final cmd in cmdBytes) {
-                    treadmillController!.sendCommand(List<int>.from(cmd));
+                  if (cmdBytes != null) {
+                    unawaited(sendTreadmillPhaseCommands(cmdBytes));
                   }
                 }
               }
