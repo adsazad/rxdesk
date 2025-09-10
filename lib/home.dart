@@ -2677,8 +2677,8 @@ class _HomeState extends State<Home> {
                     protocol.containsKey('commands') &&
                     treadmillController?.isOpen == true) {
                   final cmdBytes = protocol['commands'][phase["id"]];
-                  if (cmdBytes != null) {
-                    treadmillController!.sendCommand(List<int>.from(cmdBytes));
+                  for (final cmd in cmdBytes) {
+                    treadmillController!.sendCommand(List<int>.from(cmd));
                   }
                 }
               }
