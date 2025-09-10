@@ -179,34 +179,34 @@ class _HomeState extends State<Home> {
         },
         "unit": "%",
         "flipDisplay": true,
-        "minDisplay": -21.0, // <-- Set to -21
+        "minDisplay": -25.0, // <-- Set to -25
         "maxDisplay": 0.0, // <-- Set to 0
         "scalePresets": [
           {
-            "minDisplay": -21.0,
-            "maxDisplay": -17.0,
-            "boxValue": 0.8,
-          }, // (-17 - -21)/5 = 0.8
+            "minDisplay": -25.0,
+            "maxDisplay": -20.0,
+            "boxValue": 1.0,
+          }, // (-20 - -25)/5 = 1.0
           {
-            "minDisplay": -21.0,
-            "maxDisplay": -13.0,
-            "boxValue": 1.6,
-          }, // (-13 - -21)/5 = 1.6
+            "minDisplay": -25.0,
+            "maxDisplay": -15.0,
+            "boxValue": 2.0,
+          }, // (-15 - -25)/5 = 2.0
           {
-            "minDisplay": -21.0,
-            "maxDisplay": -9.0,
-            "boxValue": 2.4,
-          }, // (-9 - -21)/5 = 2.4
+            "minDisplay": -25.0,
+            "maxDisplay": -10.0,
+            "boxValue": 3.0,
+          }, // (-10 - -25)/5 = 3.0
           {
-            "minDisplay": -21.0,
-            "maxDisplay": -3.0,
-            "boxValue": 3.6,
-          }, // (-3 - -21)/5 = 3.6
+            "minDisplay": -25.0,
+            "maxDisplay": -5.0,
+            "boxValue": 4.0,
+          }, // (-5 - -25)/5 = 4.0
           {
-            "minDisplay": -21.0,
+            "minDisplay": -25.0,
             "maxDisplay": 0.0,
-            "boxValue": 4.2,
-          }, // (0 - -21)/5 = 4.2
+            "boxValue": 5.0,
+          }, // (0 - -25)/5 = 5.0
         ],
         "scalePresetIndex": 4,
         "filterConfig": {"filterOn": true, "lpf": 3, "hpf": 0, "notch": 0},
@@ -387,7 +387,7 @@ class _HomeState extends State<Home> {
       },
     ];
 
-    startTestLoop(); // Start  the test loop
+    // startTestLoop(); // Start  the test loop
   }
 
   Future<void> sendSerialCommandSequence({
