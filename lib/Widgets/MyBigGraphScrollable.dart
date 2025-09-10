@@ -914,7 +914,8 @@ class MyBigGraphV2State extends State<MyBigGraphV2> {
 
     return Expanded(
       child: Container(
-        margin: const EdgeInsets.symmetric(horizontal: 10, vertical: 0),
+        width: 55,
+        margin: const EdgeInsets.symmetric(horizontal: 12, vertical: 0),
         padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 4),
         decoration: BoxDecoration(
           color: Colors.grey.shade100,

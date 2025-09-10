@@ -147,7 +147,7 @@ class _HomeState extends State<Home> {
           "filterOn": true,
           "gain": 4,
           "lpf": 3,
-          "hpf": 0,
+          "hpf": 5,
           "notch": 1,
         },
       },
@@ -184,7 +184,7 @@ class _HomeState extends State<Home> {
           {"minDisplay": -50.0, "maxDisplay": 0.0, "boxValue": 10.0},
         ],
         "scalePresetIndex": 3,
-        "filterConfig": {"filterOn": true, "lpf": 3, "hpf": 5, "notch": 1},
+        "filterConfig": {"filterOn": true, "lpf": 3, "hpf": 0, "notch": 0},
         "meter": {
           "decimal": 1,
           "unit":
@@ -219,7 +219,7 @@ class _HomeState extends State<Home> {
         "unit": "%",
         "minDisplay": 0,
         "maxDisplay": 30,
-        "autoScale": true,
+        "autoScale": false,
         "scalePresets": [
           {
             "minDisplay": 0.0,
@@ -304,7 +304,7 @@ class _HomeState extends State<Home> {
       {
         "name": "Tidal Volume",
         "scale": 3,
-        "autoScale": true,
+        "autoScale": false,
         "scalePresets": [
           {
             "minDisplay": 0.0,
@@ -3047,7 +3047,7 @@ class _HomeState extends State<Home> {
                     Expanded(
                       child: MyBigGraphV2(
                         key: myBigGraphKey,
-                        markerIndices: breathPeakIndicesNotifier, // <-- NEW
+                        // markerIndices: breathPeakIndicesNotifier, // <-- NEW
                         // if(delaySamples == null) {
                         isImported: false,
                         onCycleComplete: () {
