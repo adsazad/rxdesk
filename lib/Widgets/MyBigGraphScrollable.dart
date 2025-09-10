@@ -584,7 +584,7 @@ class MyBigGraphV2State extends State<MyBigGraphV2> {
     if (widget.plot[index]["flipDisplay"] == true) {
       raw = -raw;
     }
-    double scaled = raw * plotGains[index];
+    double scaled = raw;
     double offsetAdjusted = scaled + plotOffsets[index];
 
     var meter = widget.plot[index]["meter"];
