@@ -14,8 +14,9 @@ class ProtocolManifest {
   };
 
   static final Map<String, dynamic> _treadmillProtocols = {
-    "Bruce": () => BruceProtocol().getProtocolDetails(),
-    "Modified Bruce": () => ModifiedBruceProtocol().getProtocolDetails(),
+    "bruce_protocol": () => BruceProtocol().getProtocolDetails(),
+    "modified_bruce_protocol":
+        () => ModifiedBruceProtocol().getProtocolDetails(),
   };
 
   dynamic getSelectedProtocol(GlobalSettingsModal globalSettings) {

@@ -802,6 +802,10 @@ class _GlobalSettingsState extends State<GlobalSettings> {
                               border: OutlineInputBorder(),
                             ),
                             items: [
+                              // DropdownMenuItem(
+                              //   value: "Bruce",
+                              //   child: Text("Bruce"),
+                              // ),
                               DropdownMenuItem(
                                 value: "bruce_protocol",
                                 child: Text("Bruce"),
