@@ -2889,6 +2889,11 @@ class _HomeState extends State<Home> {
 
                                 // --- SEND START BELT COMMAND ---
                                 treadmillController!.sendCommand([0xA0]);
+                                await Future.delayed(
+                                  Duration(milliseconds: 1000),
+                                );
+                                // --- SEND SET SPEED COMMAND ---
+                                treadmillController!.sendCommand([0xA1]);
                               }
 
                               setState(() {
