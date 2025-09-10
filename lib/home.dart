@@ -186,7 +186,7 @@ class _HomeState extends State<Home> {
         "scalePresetIndex": 3,
         "filterConfig": {"filterOn": true, "lpf": 3, "hpf": 0, "notch": 0},
         "meter": {
-          "decimal": 1,
+          "decimal": 3,
           "unit":
               Provider.of<GlobalSettingsModal>(
                     context,
