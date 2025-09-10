@@ -2585,7 +2585,15 @@ class _HomeState extends State<Home> {
   Future<void> sendTreadmillPhaseCommands(List<List<int>> cmdBytes) async {
     for (final cmd in cmdBytes) {
       treadmillController!.sendCommand(List<int>.from(cmd));
-      await Future.delayed(const Duration(milliseconds: 500));
+      if (cmd.isNotEmpty && cmd[0] == 0xA3) {
+        // Speed command: wait longer
+        await Future.delayed(const Duration(milliseconds: 1200));
+      } else if (cmd.isNotEmpty && cmd[0] == 0xA4) {
+        // Incline command: shorter wait
+        await Future.delayed(const Duration(milliseconds: 400));
+      } else {
+        await Future.delayed(const Duration(milliseconds: 400));
+      }
     }
   }
 
