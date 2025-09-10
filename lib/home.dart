@@ -203,6 +203,12 @@ class _HomeState extends State<Home> {
             );
             if (globalSettings != null &&
                 globalSettings.applyConversion == true) {
+              o2Calibrate = generateCalibrationFunction(
+                voltage1: globalSettings.voltage1,
+                value1: globalSettings.value1,
+                voltage2: globalSettings.voltage2,
+                value2: globalSettings.value2,
+              );
               double result = o2Calibrate(x);
               return result;
             }
