@@ -18,6 +18,11 @@ class TreadmillSerialController {
     config.bits = 8;
     config.parity = SerialPortParity.none;
     config.stopBits = 1;
+    config.xonXoff = 0;
+    config.rts = 0;
+    config.cts = 0;
+    config.dsr = 0;
+    config.dtr = 1;
     _port!.config = config;
     print("✅ Treadmill port opened: $portName");
     return true;
