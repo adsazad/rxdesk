@@ -468,11 +468,52 @@ class _ReportPreviewPageState extends State<ReportPreviewPage> {
     final samplingRate = 300;
     final timeRows = convertIndexToTimeRows(widget.breathStats, samplingRate);
 
-    final headers = ['time', ...timeRows.first.keys.where((k) => k != 'time')];
+    // 1. Define your data keys and display headers in the same order:
+    final dataKeys = [
+      'time',
+      'start',
+      'end',
+      'vo2',
+      'vo2kg',
+      'vco2',
+      'rer',
+      'vol',
+      'respirationRate',
+      've',
+      'feO2Percent',
+      'feCO2Percent',
+      'avgCO2Raw',
+      'avgO2Raw',
+      'slabCount',
+      'samplesPerSlab',
+      'hr',
+    ];
+
+    final headers = [
+      'Time',
+      'Start',
+      'End',
+      "V'O2 (L/min)",
+      "V'O2/kg (mL/min/kg)",
+      "V'CO2 (L/min)",
+      "RER",
+      "Volume",
+      "Respiratory Rate",
+      "V'E (L/min)",
+      "FeO2 (%)",
+      "FeCO2 (%)",
+      "Avg CO2 Raw",
+      "Avg O2 Raw",
+      "Slab Count",
+      "Samples/Slab",
+      "HR (1/min)",
+    ];
+
+    // 2. Build rows using dataKeys, not headers:
     final rows =
         timeRows.map((row) {
-          return headers.map((h) {
-            final val = row[h];
+          return dataKeys.map((k) {
+            final val = row[k];
             if (val == null) return '-';
             if (val is double) return val.toStringAsFixed(3);
             return val.toString();
@@ -615,7 +656,7 @@ class _ReportPreviewPageState extends State<ReportPreviewPage> {
                 cellAlignment: pw.Alignment.center,
                 headerStyle: pw.TextStyle(
                   fontWeight: pw.FontWeight.bold,
-                  fontSize: 8,
+                  fontSize: 5,
                 ),
                 headerDecoration: pw.BoxDecoration(
                   border: pw.Border(
