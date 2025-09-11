@@ -811,11 +811,11 @@ class _HomeState extends State<Home> {
     try {
       CPETService cpet = CPETService();
       var stats = {};
-      // if (data != null) {
-      //   stats = ecgBPMCalculator.getStats(data);
-      // } else {
-      //   stats = ecgBPMCalculator.getStats(_inMemoryData);
-      // }
+      if (data != null) {
+        stats = ecgBPMCalculator.getStats(data);
+      } else {
+        stats = ecgBPMCalculator.getStats(_inMemoryData);
+      }
       // print(stats);
       final patientProvider = Provider.of<DefaultPatientModal>(
         context,
@@ -837,7 +837,7 @@ class _HomeState extends State<Home> {
       if (isComplete == true) {
         completeCp = cp;
       }
-      print(cp);
+      // print(cp);
 
       // markerlines
       if (cp != null && cp!['breathStats'] is List) {
