@@ -950,6 +950,8 @@ class _HomeState extends State<Home> {
     recentVolumes.clear();
     bool wasExhaling = false;
 
+    int statsSampleCounter = 0; // Counter for 1-second intervals
+
     Timer.periodic(Duration(milliseconds: 1), (timer) {
       if (!mounted) {
         timer.cancel();
@@ -1023,6 +1025,22 @@ class _HomeState extends State<Home> {
                 tidalVolumeNotifier.value = edt[4];
               });
             }
+
+            // ---- Heart Rate Calculation Every 1 Second ----
+            statsSampleCounter++;
+            if (statsSampleCounter >= 300) {
+              statsSampleCounter = 0;
+              try {
+                var stats = ecgBPMCalculator.getStats(_inMemoryData);
+                setState(() {
+                  bpm =
+                      (stats != null && stats["bpm"] != null)
+                          ? stats["bpm"]
+                          : 0.0;
+                });
+              } catch (err) {}
+            }
+            // ---------------------------------------------
 
             delayBuffer.removeAt(0);
           }
@@ -1115,6 +1133,9 @@ class _HomeState extends State<Home> {
     bool wasExhaling = false;
 
     SerialPortReader reader = SerialPortReader(port);
+
+    int statsSampleCounter = 0; // Counter for 1-second intervals
+
     mainDataSubscription = reader.stream.listen(
       (data) {
         int frameLength = 18;
@@ -1155,11 +1176,6 @@ class _HomeState extends State<Home> {
                         ? delayBuffer[co2DelaySamples][2]
                         : current[2];
 
-                // if (vol == 0) {
-                //   delayedO2 = 1212; // ambient O2 %
-                //   delayedCO2 = 30; // ambient CO2 %
-                // }
-
                 var correctedSample = [
                   current[0], // ECG
                   delayedO2, // O2 (delayed)
@@ -1186,6 +1202,23 @@ class _HomeState extends State<Home> {
                     tidalVolumeNotifier.value = edt[4];
                   });
                 }
+
+                // ---- Heart Rate Calculation Every 1 Second ----
+                statsSampleCounter++;
+                if (statsSampleCounter >= 300) {
+                  // 300 samples = 1 second at 300Hz
+                  statsSampleCounter = 0;
+                  try {
+                    var stats = ecgBPMCalculator.getStats(_inMemoryData);
+                    setState(() {
+                      bpm =
+                          (stats != null && stats["bpm"] != null)
+                              ? stats["bpm"]
+                              : 0.0;
+                    });
+                  } catch (err) {}
+                }
+                // ---------------------------------------------
 
                 delayBuffer.removeAt(0);
               }
