@@ -11,6 +11,7 @@ import 'package:spirobtvo/ProviderModals/GlobalSettingsModal.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter/rendering.dart';
 import 'package:flutter/painting.dart';
+import 'package:spirobtvo/Services/EcgBPMCalculator.dart';
 import 'package:spirobtvo/Widgets/ChartsBuilder.dart';
 import 'dart:developer' as developer;
 
@@ -21,6 +22,7 @@ class ReportPreviewPage extends StatefulWidget {
   final List<Map<String, dynamic>>? markers;
   final List<String>?
   graphBase64List; // Optional: List of base64 PNGs for graphs
+  final List<List<double>> inMemoryData; // <-- Add this
 
   const ReportPreviewPage({
     Key? key,
@@ -29,6 +31,7 @@ class ReportPreviewPage extends StatefulWidget {
     required this.protocolDetails,
     required this.markers,
     this.graphBase64List,
+    required this.inMemoryData, // <-- Add this
   }) : super(key: key);
 
   @override
@@ -46,6 +49,47 @@ class _ReportPreviewPageState extends State<ReportPreviewPage> {
   @override
   void initState() {
     super.initState();
+
+    // Calculate R-peaks and HRs from inMemoryData
+    final ecgCalculator = EcgBPMCalculator();
+    final rPeaks = ecgCalculator.getStatsLite(
+      widget.inMemoryData,
+      sampleRate: 300,
+    );
+    final samplingRate = 300;
+
+    for (final breath in widget.breathStats) {
+      final int breathIdx = breath['index'] ?? 0;
+
+      // Find the last two R-peaks before this breath
+      int? prevR, prevPrevR;
+      for (int i = 0; i < rPeaks.length; i++) {
+        if (rPeaks[i] > breathIdx) {
+          if (i >= 2) {
+            prevR = rPeaks[i - 1];
+            prevPrevR = rPeaks[i - 2];
+          }
+          break;
+        }
+      }
+      // If breath is after last R-peak
+      if (prevR == null && rPeaks.isNotEmpty && breathIdx >= rPeaks.last) {
+        if (rPeaks.length >= 2) {
+          prevR = rPeaks[rPeaks.length - 1];
+          prevPrevR = rPeaks[rPeaks.length - 2];
+        }
+      }
+
+      double? hr;
+      if (prevR != null && prevPrevR != null) {
+        final rrInterval = (prevR - prevPrevR) / samplingRate;
+        if (rrInterval > 0) {
+          hr = 60.0 / rrInterval;
+        }
+      }
+      breath['hr'] = hr ?? breath['hr'] ?? null;
+    }
+
     WidgetsBinding.instance.addPostFrameCallback((_) {
       setState(() {
         _showChart = true;
@@ -515,7 +559,14 @@ class _ReportPreviewPageState extends State<ReportPreviewPage> {
           return dataKeys.map((k) {
             final val = row[k];
             if (val == null) return '-';
-            if (val is double) return val.toStringAsFixed(3);
+            if (val is double) {
+              if (k != 'time' && k != 'hr') {
+                return val.toStringAsFixed(3);
+              }
+              if (k == 'hr') {
+                return val.toStringAsFixed(0);
+              }
+            }
             return val.toString();
           }).toList();
         }).toList();
@@ -804,7 +855,7 @@ Future<File> generateBreathStatsPdf({
               row['rer']?.toString() ?? '',
               row['minuteVentilation']?.toString() ?? '',
               row['vt']?.toString() ?? '',
-              row['hr']?.toString() ?? '',
+              row['hr']?.toStringAsFixed(0) ?? '',
             ],
           )
           .toList();

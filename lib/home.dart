@@ -3097,6 +3097,9 @@ class _HomeState extends State<Home> {
                                         markers: importedMarkers,
                                         protocolDetails: importedProtocol,
                                         graphBase64List: graphBase64List,
+                                        inMemoryData: List<List<double>>.from(
+                                          _inMemoryData,
+                                        ), // <-- Add this line
                                       ),
                                 ),
                               );
