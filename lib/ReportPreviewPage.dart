@@ -41,9 +41,6 @@ class ReportPreviewPage extends StatefulWidget {
 class _ReportPreviewPageState extends State<ReportPreviewPage> {
   late String htmlContent;
 
-  Uint8List? chartImage;
-  Uint8List? vo2Vco2ChartImage; // <-- Add this field
-
   bool _showChart = false;
   Key pdfPreviewKey = UniqueKey();
 
@@ -98,18 +95,11 @@ class _ReportPreviewPageState extends State<ReportPreviewPage> {
       WidgetsBinding.instance.addPostFrameCallback((_) async {
         await Future.delayed(const Duration(milliseconds: 100));
         chartImage = await _captureChartImage(_veTimeChartKey);
-        // Capture VO2 vs VCO2 chart image
         vo2Vco2ChartImage = await _captureChartImage(_vo2Vco2ChartKey);
-        print(
-          "Chart images captured: ${chartImage != null}, ${vo2Vco2ChartImage != null}",
-        );
-        if (mounted) {
-          setState(() {
-            // Change the key to force PdfPreview to rebuild with the new image
-            pdfPreviewKey = UniqueKey();
-          });
-        }
+        vo2TimeChartImage = await _captureChartImage(_vo2TimeChartKey);
+        veVco2ChartImage = await _captureChartImage(_veVco2ChartKey);
         setState(() {
+          pdfPreviewKey = UniqueKey();
           _showChart = false;
         });
       });
@@ -485,7 +475,14 @@ class _ReportPreviewPageState extends State<ReportPreviewPage> {
   }
 
   GlobalKey _veTimeChartKey = GlobalKey();
-  GlobalKey _vo2Vco2ChartKey = GlobalKey(); // <-- Add this key
+  GlobalKey _vo2Vco2ChartKey = GlobalKey();
+  GlobalKey _vo2TimeChartKey = GlobalKey();
+  GlobalKey _veVco2ChartKey = GlobalKey();
+
+  Uint8List? chartImage;
+  Uint8List? vo2Vco2ChartImage;
+  Uint8List? vo2TimeChartImage;
+  Uint8List? veVco2ChartImage;
 
   Future<Uint8List?> _captureChartImage(GlobalKey key) async {
     RenderRepaintBoundary? boundary =
@@ -778,9 +775,9 @@ class _ReportPreviewPageState extends State<ReportPreviewPage> {
                               ? pw.Image(
                                 pw.MemoryImage(chartImage!),
                                 fit: pw.BoxFit.contain,
-                                height: 220,
+                                height: 180,
                               )
-                              : pw.Text('Chart image not available.'),
+                              : pw.Text('VE vs Time chart not available.'),
                     ),
                     pw.SizedBox(width: 12),
                     pw.Flexible(
@@ -789,11 +786,36 @@ class _ReportPreviewPageState extends State<ReportPreviewPage> {
                               ? pw.Image(
                                 pw.MemoryImage(vo2Vco2ChartImage!),
                                 fit: pw.BoxFit.contain,
-                                height: 220,
+                                height: 180,
                               )
-                              : pw.Text(
-                                'VO2 vs VCO2 chart image not available.',
-                              ),
+                              : pw.Text('VO2 vs VCO2 chart not available.'),
+                    ),
+                  ],
+                ),
+                pw.SizedBox(height: 12),
+                pw.Row(
+                  crossAxisAlignment: pw.CrossAxisAlignment.start,
+                  children: [
+                    pw.Flexible(
+                      child:
+                          vo2TimeChartImage != null
+                              ? pw.Image(
+                                pw.MemoryImage(vo2TimeChartImage!),
+                                fit: pw.BoxFit.contain,
+                                height: 180,
+                              )
+                              : pw.Text('VO2 vs Time chart not available.'),
+                    ),
+                    pw.SizedBox(width: 12),
+                    pw.Flexible(
+                      child:
+                          veVco2ChartImage != null
+                              ? pw.Image(
+                                pw.MemoryImage(veVco2ChartImage!),
+                                fit: pw.BoxFit.contain,
+                                height: 180,
+                              )
+                              : pw.Text('VE vs VCO2 chart not available.'),
                     ),
                   ],
                 ),
@@ -802,16 +824,30 @@ class _ReportPreviewPageState extends State<ReportPreviewPage> {
                   mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
                   children: [
                     pw.Text(
-                      'VE vs Time Chart',
+                      'VE vs Time',
                       style: pw.TextStyle(
-                        fontSize: 14,
+                        fontSize: 12,
                         fontWeight: pw.FontWeight.bold,
                       ),
                     ),
                     pw.Text(
-                      'VO2 vs VCO2 Chart',
+                      'VO2 vs VCO2',
                       style: pw.TextStyle(
-                        fontSize: 14,
+                        fontSize: 12,
+                        fontWeight: pw.FontWeight.bold,
+                      ),
+                    ),
+                    pw.Text(
+                      'VO2 vs Time',
+                      style: pw.TextStyle(
+                        fontSize: 12,
+                        fontWeight: pw.FontWeight.bold,
+                      ),
+                    ),
+                    pw.Text(
+                      'VE vs VCO2',
+                      style: pw.TextStyle(
+                        fontSize: 12,
                         fontWeight: pw.FontWeight.bold,
                       ),
                     ),
@@ -844,38 +880,67 @@ class _ReportPreviewPageState extends State<ReportPreviewPage> {
             allowPrinting: false,
             allowSharing: false,
           ),
-          // In your build method, where you show the chart:
+          // VE vs Time chart
           Offstage(
             offstage: !_showChart,
             child: SizedBox(
-              height: 480, // Adjust this value as needed
-              child: Column(
-                children: [
-                  SizedBox(
-                    height: 480, // Keep or adjust as needed
-                    child: RepaintBoundary(
-                      key: _veTimeChartKey,
-                      child: ChartsBuilder.buildTimeVsVEChart(
-                        context,
-                        widget.breathStats,
-                        width: 600,
-                        height: 300,
-                      ),
-                    ),
-                  ),
-                  SizedBox(
-                    height: 480, // Keep or adjust as needed
-                    child: RepaintBoundary(
-                      key: _vo2Vco2ChartKey,
-                      child: ChartsBuilder.buildVO2vsVCO2Chart(
-                        context,
-                        widget.breathStats,
-                        width: 600,
-                        height: 300,
-                      ),
-                    ),
-                  ),
-                ],
+              height: 500,
+              child: RepaintBoundary(
+                key: _veTimeChartKey,
+                child: ChartsBuilder.buildTimeVsVEChart(
+                  context,
+                  widget.breathStats,
+                  width: 600,
+                  height: 500,
+                ),
+              ),
+            ),
+          ),
+          // VO2 vs VCO2 chart
+          Offstage(
+            offstage: !_showChart,
+            child: SizedBox(
+              height: 500,
+              child: RepaintBoundary(
+                key: _vo2Vco2ChartKey,
+                child: ChartsBuilder.buildVO2vsVCO2Chart(
+                  context,
+                  widget.breathStats,
+                  width: 600,
+                  height: 500,
+                ),
+              ),
+            ),
+          ),
+          // VO2 vs Time chart
+          Offstage(
+            offstage: !_showChart,
+            child: SizedBox(
+              height: 500,
+              child: RepaintBoundary(
+                key: _vo2TimeChartKey,
+                child: ChartsBuilder.buildTimeVsVO2Chart(
+                  context,
+                  widget.breathStats,
+                  width: 600,
+                  height: 500,
+                ),
+              ),
+            ),
+          ),
+          // VE vs VCO2 chart
+          Offstage(
+            offstage: !_showChart,
+            child: SizedBox(
+              height: 500,
+              child: RepaintBoundary(
+                key: _veVco2ChartKey,
+                child: ChartsBuilder.buildVCO2vsVEChart(
+                  context,
+                  widget.breathStats,
+                  width: 600,
+                  height: 500,
+                ),
               ),
             ),
           ),
