@@ -826,6 +826,40 @@ class _GlobalSettingsState extends State<GlobalSettings> {
                       ],
                     ),
                   ),
+                // In your _deviceSettingsTab or "Other Settings" tab, add this widget where you want the setting to appear:
+                Container(
+                  margin: EdgeInsets.all(10),
+                  decoration: BoxDecoration(
+                    border: Border.all(color: Colors.blue),
+                    borderRadius: BorderRadius.circular(10),
+                  ),
+                  child: Padding(
+                    padding: const EdgeInsets.all(8.0),
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Text(
+                          "Breath Calibration Marker",
+                          style: TextStyle(
+                            fontSize: 18,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                        Consumer<GlobalSettingsModal>(
+                          builder: (context, globalSettings, child) {
+                            return Switch(
+                              value: globalSettings.breathCalibrationMarker,
+                              onChanged: (val) {
+                                globalSettings.setBreathCalibrationMarker(val);
+                                onChange();
+                              },
+                            );
+                          },
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
               ],
             ),
           ),

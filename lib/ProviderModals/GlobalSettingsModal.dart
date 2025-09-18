@@ -44,6 +44,8 @@ class GlobalSettingsModal with ChangeNotifier {
   int transportDelayO2Ms = 0; // Transport delay for O2 in milliseconds
   int transportDelayCO2Ms = 0; // Transport delay for CO2 in milliseconds
 
+  bool breathCalibrationMarker = false;
+
   GlobalSettingsModal({
     required this.com,
     required this.autoRecordOnOff,
@@ -74,6 +76,7 @@ class GlobalSettingsModal with ChangeNotifier {
     this.transportDelayMs = 0,
     this.transportDelayO2Ms = 0,
     this.transportDelayCO2Ms = 0,
+    this.breathCalibrationMarker = false,
   });
 
   void setAutoRecordOnOff(bool value) {
@@ -193,6 +196,11 @@ class GlobalSettingsModal with ChangeNotifier {
     notifyListeners();
   }
 
+  void setBreathCalibrationMarker(bool value) {
+    breathCalibrationMarker = value;
+    notifyListeners();
+  }
+
   void setAll(
     bool autoRecordOnOff,
     bool filterOnOf,
@@ -260,6 +268,7 @@ class GlobalSettingsModal with ChangeNotifier {
       "transportDelayMs": transportDelayMs,
       "transportDelayO2Ms": transportDelayO2Ms,
       "transportDelayCO2Ms": transportDelayCO2Ms,
+      "breathCalibrationMarker": breathCalibrationMarker,
     };
     String jsonString = jsonEncode(json);
     return jsonString;
@@ -298,6 +307,7 @@ class GlobalSettingsModal with ChangeNotifier {
     transportDelayMs = arr["transportDelayMs"] ?? 0;
     transportDelayO2Ms = arr["transportDelayO2Ms"] ?? 0;
     transportDelayCO2Ms = arr["transportDelayCO2Ms"] ?? 0;
+    breathCalibrationMarker = arr["breathCalibrationMarker"] ?? false;
 
     notifyListeners();
   }

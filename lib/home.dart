@@ -120,6 +120,8 @@ class _HomeState extends State<Home> {
   late ValueNotifier<List<int>> breathPeakIndicesNotifier =
       ValueNotifier<List<int>>([]);
 
+  late ValueNotifier<List<int>> breathPeakIndicesNotifierEmpty =
+      ValueNotifier<List<int>>([]);
   TreadmillSerialController? treadmillController;
 
   @override
@@ -3137,7 +3139,10 @@ class _HomeState extends State<Home> {
                     Expanded(
                       child: MyBigGraphV2(
                         key: myBigGraphKey,
-                        // markerIndices: breathPeakIndicesNotifier, // <-- NEW
+                        markerIndices:
+                            globalSettings.breathCalibrationMarker
+                                ? breathPeakIndicesNotifier
+                                : breathPeakIndicesNotifierEmpty, // <-- NEW
                         // if(delaySamples == null) {
                         isImported: false,
                         onCycleComplete: () {
