@@ -111,3 +111,4 @@ msix_config:
   msix_version: 1.0.2.0
   logo_path: assets/bioBT-black.png
   capabilities: internetClient, location, microphone, webcam
+  install_certificate: false
