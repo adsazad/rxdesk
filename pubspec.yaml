@@ -109,5 +109,5 @@ msix_config:
   publisher_display_name: BioBT
   identity_name: com.biobt.spirobt
   msix_version: 1.0.2.0
-  logo_path: C:\Users\harjo\StudioProjects\spirobtvo\assets\bioBT-black.png
+  logo_path: assets/bioBT-black.png
   capabilities: internetClient, location, microphone, webcam
