@@ -2,8 +2,8 @@ import 'package:auto_size_text/auto_size_text.dart';
 import 'package:fl_chart/fl_chart.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
-import 'package:spirobtvo/Services/FilterClass.dart';
-import 'package:spirobtvo/Services/MultiFilter.dart';
+import 'package:bluevo2/Services/FilterClass.dart';
+import 'package:bluevo2/Services/MultiFilter.dart';
 
 class MyBigGraph extends StatefulWidget {
   final dynamic plot;

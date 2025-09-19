@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import 'package:spirobtvo/Pages/patient/PatientRecords.dart';
-import 'package:spirobtvo/Pages/patient/patientAdd.dart';
-import 'package:spirobtvo/ProviderModals/DefaultPatientModal.dart';
-import 'package:spirobtvo/data/local/database.dart';
+import 'package:bluevo2/Pages/patient/PatientRecords.dart';
+import 'package:bluevo2/Pages/patient/patientAdd.dart';
+import 'package:bluevo2/ProviderModals/DefaultPatientModal.dart';
+import 'package:bluevo2/data/local/database.dart';
 
 class PatientsList extends StatefulWidget {
   const PatientsList({super.key});

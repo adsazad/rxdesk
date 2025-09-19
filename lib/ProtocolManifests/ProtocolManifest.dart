@@ -1,10 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import 'package:spirobtvo/ProtocolManifests/BruceProtocol.dart';
-import 'package:spirobtvo/ProtocolManifests/IncrementalStepProtocol.dart';
-import 'package:spirobtvo/ProtocolManifests/ModifiedBruceProtocol.dart';
-import 'package:spirobtvo/ProtocolManifests/RampProtocol.dart';
-import 'package:spirobtvo/ProviderModals/GlobalSettingsModal.dart';
+import 'package:bluevo2/ProtocolManifests/BruceProtocol.dart';
+import 'package:bluevo2/ProtocolManifests/IncrementalStepProtocol.dart';
+import 'package:bluevo2/ProtocolManifests/ModifiedBruceProtocol.dart';
+import 'package:bluevo2/ProtocolManifests/RampProtocol.dart';
+import 'package:bluevo2/ProviderModals/GlobalSettingsModal.dart';
 
 class ProtocolManifest {
   static final Map<String, dynamic> _ergoProtocols = {

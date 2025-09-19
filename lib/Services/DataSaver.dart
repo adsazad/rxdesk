@@ -23,7 +23,7 @@ class DataSaver {
     initialized = true;
 
     final dir = await getApplicationDocumentsDirectory();
-    final tempDirPath = '${dir.path}/SpiroBT/Temp';
+    final tempDirPath = '${dir.path}/BlueVO2/Temp';
     final tempDir = Directory(tempDirPath);
     if (!await tempDir.exists()) {
       await tempDir.create(recursive: true);

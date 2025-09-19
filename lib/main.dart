@@ -5,12 +5,12 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:provider/provider.dart' as pvrd;
 import 'package:shared_preferences/shared_preferences.dart';
-import 'package:spirobtvo/ProviderModals/DefaultPatientModal.dart';
-import 'package:spirobtvo/ProviderModals/GlobalSettingsModal.dart';
-import 'package:spirobtvo/ProviderModals/ImportFileProvider.dart';
-import 'package:spirobtvo/Services/navigatorService.dart';
-import 'package:spirobtvo/data/local/database.dart';
-import 'package:spirobtvo/home.dart';
+import 'package:bluevo2/ProviderModals/DefaultPatientModal.dart';
+import 'package:bluevo2/ProviderModals/GlobalSettingsModal.dart';
+import 'package:bluevo2/ProviderModals/ImportFileProvider.dart';
+import 'package:bluevo2/Services/navigatorService.dart';
+import 'package:bluevo2/data/local/database.dart';
+import 'package:bluevo2/home.dart';
 import 'package:window_manager/window_manager.dart';
 
 void main() async {
@@ -18,7 +18,7 @@ void main() async {
   await windowManager.ensureInitialized();
 
   WindowOptions windowOptions = WindowOptions(
-    title: 'SpiroBT',
+    title: 'BlueVO2',
     size: Size(1920, 1080),
     center: true,
     minimumSize: Size(800, 600),

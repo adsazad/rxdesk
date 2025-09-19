@@ -3,7 +3,7 @@ import 'dart:io';
 import 'dart:math';
 
 import 'package:path_provider/path_provider.dart';
-import 'package:spirobtvo/Services/FilterClass.dart';
+import 'package:bluevo2/Services/FilterClass.dart';
 import 'package:share_plus/share_plus.dart';
 
 class PanThonkins {

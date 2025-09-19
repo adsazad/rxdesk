@@ -6,43 +6,43 @@ import 'dart:math';
 import 'dart:typed_data';
 import 'dart:ui';
 import 'package:path_provider/path_provider.dart';
-import 'package:spirobtvo/Pages/RecordingsListPage.dart';
-import 'package:spirobtvo/ProtocolManifests/ProtocolManifest.dart';
-import 'package:spirobtvo/ProviderModals/ImportFileProvider.dart';
-import 'package:spirobtvo/Services/MachineControllers/LodeErgometerController.dart';
-import 'package:spirobtvo/Services/TreadmillSerialController.dart';
-import 'package:spirobtvo/Services/Utility.dart';
-import 'package:spirobtvo/Widgets/BreathStatsTableModal.dart';
-import 'package:spirobtvo/Widgets/MyBigGraphScrollable.dart';
-import 'package:spirobtvo/Widgets/current_co2_display.dart';
-import 'package:spirobtvo/Widgets/current_o2_display.dart';
-import 'package:spirobtvo/data/local/database.dart';
+import 'package:bluevo2/Pages/RecordingsListPage.dart';
+import 'package:bluevo2/ProtocolManifests/ProtocolManifest.dart';
+import 'package:bluevo2/ProviderModals/ImportFileProvider.dart';
+import 'package:bluevo2/Services/MachineControllers/LodeErgometerController.dart';
+import 'package:bluevo2/Services/TreadmillSerialController.dart';
+import 'package:bluevo2/Services/Utility.dart';
+import 'package:bluevo2/Widgets/BreathStatsTableModal.dart';
+import 'package:bluevo2/Widgets/MyBigGraphScrollable.dart';
+import 'package:bluevo2/Widgets/current_co2_display.dart';
+import 'package:bluevo2/Widgets/current_o2_display.dart';
+import 'package:bluevo2/data/local/database.dart';
 
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:libserialport/libserialport.dart';
 import 'package:provider/provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-import 'package:spirobtvo/Pages/ChartGenerator.dart';
-import 'package:spirobtvo/Pages/GlobalSettings.dart';
-import 'package:spirobtvo/Pages/patient/list.dart';
-import 'package:spirobtvo/Pages/patient/patientAdd.dart';
-import 'package:spirobtvo/ProviderModals/DefaultPatientModal.dart';
-import 'package:spirobtvo/ProviderModals/GlobalSettingsModal.dart';
-import 'package:spirobtvo/Services/CPETService.dart';
-import 'package:spirobtvo/Services/CalibrationFunction.dart';
-import 'package:spirobtvo/Services/DataSaver.dart';
-import 'package:spirobtvo/Services/EcgBPMCalculator.dart';
-import 'package:spirobtvo/Widgets/CustomLineChart.dart';
-import 'package:spirobtvo/Widgets/MyBigGraph.dart';
-import 'package:spirobtvo/Widgets/VitalsBox.dart';
+import 'package:bluevo2/Pages/ChartGenerator.dart';
+import 'package:bluevo2/Pages/GlobalSettings.dart';
+import 'package:bluevo2/Pages/patient/list.dart';
+import 'package:bluevo2/Pages/patient/patientAdd.dart';
+import 'package:bluevo2/ProviderModals/DefaultPatientModal.dart';
+import 'package:bluevo2/ProviderModals/GlobalSettingsModal.dart';
+import 'package:bluevo2/Services/CPETService.dart';
+import 'package:bluevo2/Services/CalibrationFunction.dart';
+import 'package:bluevo2/Services/DataSaver.dart';
+import 'package:bluevo2/Services/EcgBPMCalculator.dart';
+import 'package:bluevo2/Widgets/CustomLineChart.dart';
+import 'package:bluevo2/Widgets/MyBigGraph.dart';
+import 'package:bluevo2/Widgets/VitalsBox.dart';
 import 'package:file_selector/file_selector.dart';
 import 'package:file_picker/file_picker.dart';
 import 'dart:typed_data';
 import 'package:path/path.dart' as p;
-import 'package:spirobtvo/ReportPreviewPage.dart'; // <-- Import your preview page
-import 'package:spirobtvo/SavedChartsDialogContent.dart';
-import 'package:spirobtvo/Widgets/IconButtonColumn.dart';
+import 'package:bluevo2/ReportPreviewPage.dart'; // <-- Import your preview page
+import 'package:bluevo2/SavedChartsDialogContent.dart';
+import 'package:bluevo2/Widgets/IconButtonColumn.dart';
 import 'package:drift/drift.dart' as drift;
 import 'package:uuid/uuid.dart';
 
@@ -741,7 +741,7 @@ class _HomeState extends State<Home> {
         if (!dataSaver.initialized) {
           print("✅ Initializing DataSaver...");
           await dataSaver.init(
-            filename: "spirobt-${DateTime.now().microsecondsSinceEpoch}.bin",
+            filename: "bluevo2-${DateTime.now().microsecondsSinceEpoch}.bin",
             patientInfo: patient,
           );
           _saverInitialized = true;
@@ -1899,7 +1899,7 @@ class _HomeState extends State<Home> {
 
     // ✅ Get documents directory
     final Directory docsDir = await getApplicationDocumentsDirectory();
-    final String recordingsPath = p.join(docsDir.path, 'SpiroBT', 'Records');
+    final String recordingsPath = p.join(docsDir.path, 'BlueVO2', 'Records');
     final recordingsDir = Directory(recordingsPath);
     if (!await recordingsDir.exists()) {
       await recordingsDir.create(recursive: true);

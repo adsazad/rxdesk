@@ -1,7 +1,7 @@
 import 'dart:typed_data';
 
 import 'package:libserialport/libserialport.dart';
-import 'package:spirobtvo/ProviderModals/GlobalSettingsModal.dart';
+import 'package:bluevo2/ProviderModals/GlobalSettingsModal.dart';
 
 import 'package:flutter/material.dart';
 

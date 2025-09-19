@@ -1,7 +1,7 @@
 import 'dart:collection';
 import 'dart:math';
 
-import 'package:spirobtvo/Services/PanThomkins.dart';
+import 'package:bluevo2/Services/PanThomkins.dart';
 
 class EcgBPMCalculator {
   int ecgIndex = 0;

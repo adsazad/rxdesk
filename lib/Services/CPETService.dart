@@ -1,4 +1,4 @@
-import 'package:spirobtvo/Services/CalibrationFunction.dart';
+import 'package:bluevo2/Services/CalibrationFunction.dart';
 
 class CPETService {
   CalibrationFunction? o2Calibrate;

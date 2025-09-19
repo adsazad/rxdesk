@@ -1,11 +1,11 @@
 ; installer.iss
 [Setup]
-AppName=SpiroBT
+AppName=BlueVO2
 AppVersion=1.0.2
-DefaultDirName={pf}\SpiroBT
-DefaultGroupName=SpiroBT
+DefaultDirName={pf}\BlueVO2
+DefaultGroupName=BlueVO2
 OutputDir=build\installer
-OutputBaseFilename=SpiroBT-Setup
+OutputBaseFilename=BlueVO2-Setup
 Compression=lzma
 SolidCompression=yes
 
@@ -13,5 +13,5 @@ SolidCompression=yes
 Source: "build\windows\x64\runner\Release\*"; DestDir: "{app}"; Flags: recursesubdirs
 
 [Icons]
-Name: "{group}\SpiroBT"; Filename: "{app}\spirobtvo.exe"
-Name: "{group}\Uninstall SpiroBT"; Filename: "{uninstallexe}"
+Name: "{group}\BlueVO2"; Filename: "{app}\bluevo2.exe"
+Name: "{group}\Uninstall BlueVO2"; Filename: "{uninstallexe}"
