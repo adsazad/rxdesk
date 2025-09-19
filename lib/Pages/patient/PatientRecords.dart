@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import 'package:spirobtvo/data/local/database.dart';
-import 'package:spirobtvo/ProviderModals/ImportFileProvider.dart';
+import 'package:bluevo2/data/local/database.dart';
+import 'package:bluevo2/ProviderModals/ImportFileProvider.dart';
 
 class PatientRecordingsPage extends StatelessWidget {
   final int patientId;

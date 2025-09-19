@@ -1,4 +1,4 @@
-import 'package:spirobtvo/Services/FilterClass.dart';
+import 'package:bluevo2/Services/FilterClass.dart';
 
 class MultiFilter {
   List<FilterClass> filters = [];

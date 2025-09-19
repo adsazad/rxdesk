@@ -4,8 +4,8 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
-import 'package:spirobtvo/Services/FilterClass.dart';
-import 'package:spirobtvo/Services/MultiFilter.dart';
+import 'package:bluevo2/Services/FilterClass.dart';
+import 'package:bluevo2/Services/MultiFilter.dart';
 
 class MyBigGraphV2 extends StatefulWidget {
   final dynamic plot;
