@@ -1,4 +1,4 @@
-import 'package:bluevo2/Services/FilterClass.dart';
+import 'package:holtersync/Services/FilterClass.dart';
 
 class MultiFilter {
   List<FilterClass> filters = [];

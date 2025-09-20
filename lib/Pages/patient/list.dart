@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import 'package:bluevo2/Pages/patient/PatientRecords.dart';
-import 'package:bluevo2/Pages/patient/patientAdd.dart';
-import 'package:bluevo2/ProviderModals/DefaultPatientModal.dart';
-import 'package:bluevo2/data/local/database.dart';
+import 'package:holtersync/Pages/patient/PatientRecords.dart';
+import 'package:holtersync/Pages/patient/patientAdd.dart';
+import 'package:holtersync/ProviderModals/DefaultPatientModal.dart';
+import 'package:holtersync/data/local/database.dart';
 
 class PatientsList extends StatefulWidget {
   const PatientsList({super.key});

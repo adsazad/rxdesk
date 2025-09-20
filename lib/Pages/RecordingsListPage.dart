@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import 'package:bluevo2/ProviderModals/ImportFileProvider.dart';
-import 'package:bluevo2/data/local/database.dart';
+import 'package:holtersync/ProviderModals/ImportFileProvider.dart';
+import 'package:holtersync/data/local/database.dart';
 import "package:drift/drift.dart" as drift;
 
 class RecordingsListPage extends StatefulWidget {

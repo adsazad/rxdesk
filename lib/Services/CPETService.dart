@@ -1,4 +1,4 @@
-import 'package:bluevo2/Services/CalibrationFunction.dart';
+import 'package:holtersync/Services/CalibrationFunction.dart';
 
 class CPETService {
   CalibrationFunction? o2Calibrate;

@@ -1,11 +1,11 @@
 ; installer.iss
 [Setup]
-AppName=BlueVO2
+AppName=HolterSync
 AppVersion=1.0.2
-DefaultDirName={pf}\BlueVO2
-DefaultGroupName=BlueVO2
+DefaultDirName={pf}\HolterSync
+DefaultGroupName=HolterSync
 OutputDir=build\installer
-OutputBaseFilename=BlueVO2-Setup
+OutputBaseFilename=HolterSync-Setup
 Compression=lzma
 SolidCompression=yes
 
@@ -13,5 +13,5 @@ SolidCompression=yes
 Source: "build\windows\x64\runner\Release\*"; DestDir: "{app}"; Flags: recursesubdirs
 
 [Icons]
-Name: "{group}\BlueVO2"; Filename: "{app}\bluevo2.exe"
-Name: "{group}\Uninstall BlueVO2"; Filename: "{uninstallexe}"
+Name: "{group}\HolterSync"; Filename: "{app}\holtersync.exe"
+Name: "{group}\Uninstall HolterSync"; Filename: "{uninstallexe}"

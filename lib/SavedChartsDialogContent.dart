@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-import 'package:bluevo2/Widgets/CustomLineChart.dart';
+import 'package:holtersync/Widgets/CustomLineChart.dart';
 import 'dart:convert';
-import 'package:bluevo2/Widgets/ChartsBuilder.dart';
+import 'package:holtersync/Widgets/ChartsBuilder.dart';
 
 class SavedChartsDialogContent extends StatefulWidget {
   final dynamic cp; // cp is passed from the parent widget

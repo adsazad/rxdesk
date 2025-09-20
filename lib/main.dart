@@ -5,12 +5,12 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:provider/provider.dart' as pvrd;
 import 'package:shared_preferences/shared_preferences.dart';
-import 'package:bluevo2/ProviderModals/DefaultPatientModal.dart';
-import 'package:bluevo2/ProviderModals/GlobalSettingsModal.dart';
-import 'package:bluevo2/ProviderModals/ImportFileProvider.dart';
-import 'package:bluevo2/Services/navigatorService.dart';
-import 'package:bluevo2/data/local/database.dart';
-import 'package:bluevo2/home.dart';
+import 'package:holtersync/ProviderModals/DefaultPatientModal.dart';
+import 'package:holtersync/ProviderModals/GlobalSettingsModal.dart';
+import 'package:holtersync/ProviderModals/ImportFileProvider.dart';
+import 'package:holtersync/Services/navigatorService.dart';
+import 'package:holtersync/data/local/database.dart';
+import 'package:holtersync/home.dart';
 import 'package:window_manager/window_manager.dart';
 
 void main() async {
@@ -18,7 +18,7 @@ void main() async {
   await windowManager.ensureInitialized();
 
   WindowOptions windowOptions = WindowOptions(
-    title: 'BlueVO2',
+    title: 'HolterSync',
     size: Size(1920, 1080),
     center: true,
     minimumSize: Size(800, 600),
