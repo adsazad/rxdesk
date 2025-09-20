@@ -13,14 +13,12 @@ import 'package:holtersync/Services/MachineControllers/LodeErgometerController.d
 import 'package:holtersync/Services/TreadmillSerialController.dart';
 import 'package:holtersync/Services/Utility.dart';
 import 'package:holtersync/Widgets/BreathStatsTableModal.dart';
-import 'package:holtersync/Widgets/MyBigGraphScrollable.dart';
 import 'package:holtersync/Widgets/current_co2_display.dart';
 import 'package:holtersync/Widgets/current_o2_display.dart';
 import 'package:holtersync/data/local/database.dart';
 
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:libserialport/libserialport.dart';
 import 'package:provider/provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:holtersync/Pages/ChartGenerator.dart';
@@ -29,16 +27,9 @@ import 'package:holtersync/Pages/patient/list.dart';
 import 'package:holtersync/Pages/patient/patientAdd.dart';
 import 'package:holtersync/ProviderModals/DefaultPatientModal.dart';
 import 'package:holtersync/ProviderModals/GlobalSettingsModal.dart';
-import 'package:holtersync/Services/CPETService.dart';
-import 'package:holtersync/Services/CalibrationFunction.dart';
 import 'package:holtersync/Services/DataSaver.dart';
-import 'package:holtersync/Services/EcgBPMCalculator.dart';
-import 'package:holtersync/Widgets/CustomLineChart.dart';
-import 'package:holtersync/Widgets/MyBigGraph.dart';
 import 'package:holtersync/Widgets/VitalsBox.dart';
-import 'package:file_selector/file_selector.dart';
 import 'package:file_picker/file_picker.dart';
-import 'dart:typed_data';
 import 'package:path/path.dart' as p;
 import 'package:holtersync/ReportPreviewPage.dart'; // <-- Import your preview page
 import 'package:holtersync/SavedChartsDialogContent.dart';
@@ -54,22 +45,12 @@ class Home extends StatefulWidget {
 }
 
 class _HomeState extends State<Home> {
-  final GlobalKey<MyBigGraphV2State> myBigGraphKey =
-      GlobalKey<MyBigGraphV2State>();
   final ValueNotifier<List<Map<String, dynamic>>> breathStatsNotifier =
       ValueNotifier<List<Map<String, dynamic>>>([]);
   Map<String, dynamic>? fullCp;
 
   double time = 0.0; // 🧠 To move the sine wave over time
   late Timer timer;
-  double votwo = 0;
-  double votwokg = 0;
-  double vco = 0;
-  double? rer = 0;
-  double? vol = 0;
-  double? flow = 0;
-  double? bpm = 0;
-  double? respirationRate = 0;
 
   List<double> rawDataFull = [];
   SharedPreferences? prefs;
@@ -79,19 +60,12 @@ class _HomeState extends State<Home> {
 
   List<List<double>> _inMemoryData = [];
 
-  EcgBPMCalculator ecgBPMCalculator = EcgBPMCalculator();
-
-  Queue<double> o2Buffer = Queue<double>();
-  Queue<double> co2Buffer = Queue<double>();
-  int? delaySamples = 174; // Initially null
-  List<List<double>> delayBuffer = []; // holds [ecg, o2, co2, vol, flow]
-  void Function(void Function())? modalSetState;
-  late GlobalSettingsModal globalSettings;
-
   bool isImported = false;
-
-  var o2Calibrate;
-  late SerialPort port;
+  double currentImportDisplayIndex = 0;
+  var o2Calibrate; // For UI components that still use it
+  List<double> recentVolumes = []; // For existing functionality 
+  bool wasExhaling = false; // For existing functionality
+  List<List<double>> delayBuffer = []; // For existing functionality
 
   // Recorder
   int sampleCounter = 0;
@@ -101,7 +75,6 @@ class _HomeState extends State<Home> {
 
   Map<String, dynamic>? cp;
   Map<String, dynamic>? completeCp;
-  late List<Map<String, dynamic>> plotConfig; // <-- Move plot config here
 
   StreamSubscription<Uint8List>? mainDataSubscription;
 
@@ -131,272 +104,17 @@ class _HomeState extends State<Home> {
     o2Notifier = ValueNotifier<double>(0.0);
     tidalVolumeNotifier = ValueNotifier<double>(0.0);
     breathPeakIndicesNotifier = ValueNotifier<List<int>>([]);
-
-    initFunc();
-
-    // Initialize plotConfig in state
-
-    plotConfig = [
-      {
-        "name": "ECG",
-        "boxValue": 4096 / 12,
-        "unit": "mV",
-        "minDisplay": (-4096 / 12) * 3,
-        "maxDisplay": (4096 / 12) * 3,
-        "scale": 3,
-        "gain": 0.4,
-        "filterConfig": {
-          "filterOn": true,
-          "gain": 4,
-          "lpf": 3,
-          "hpf": 5,
-          "notch": 1,
-        },
-      },
-      {
-        "name": "O2",
-        "scale": 3,
-        "boxValue": 5,
-        "valueConverter": (double x) {
-          // x = x * 0.00072105;
-          // 0.0009
-          x = x * 0.000917;
-
-          globalSettings = Provider.of<GlobalSettingsModal>(
-            context,
-            listen: false,
-          );
-          if (globalSettings != null &&
-              globalSettings.applyConversion == true) {
-            o2Calibrate = generateCalibrationFunction(
-              voltage1: globalSettings.voltage1,
-              value1: globalSettings.value1,
-              voltage2: globalSettings.voltage2,
-              value2: globalSettings.value2,
-            );
-            double result = o2Calibrate(x);
-            return result;
-          }
-          return x;
-        },
-        "unit": "%",
-        "flipDisplay": true,
-        "minDisplay": -25.0, // <-- Set to -25
-        "maxDisplay": 0.0, // <-- Set to 0
-        "scalePresets": [
-          {
-            "minDisplay": -25.0,
-            "maxDisplay": -20.0,
-            "boxValue": 1.0,
-          }, // (-20 - -25)/5 = 1.0
-          {
-            "minDisplay": -25.0,
-            "maxDisplay": -15.0,
-            "boxValue": 2.0,
-          }, // (-15 - -25)/5 = 2.0
-          {
-            "minDisplay": -25.0,
-            "maxDisplay": -10.0,
-            "boxValue": 3.0,
-          }, // (-10 - -25)/5 = 3.0
-          {
-            "minDisplay": -25.0,
-            "maxDisplay": -5.0,
-            "boxValue": 4.0,
-          }, // (-5 - -25)/5 = 4.0
-          {
-            "minDisplay": -25.0,
-            "maxDisplay": 0.0,
-            "boxValue": 5.0,
-          }, // (0 - -25)/5 = 5.0
-        ],
-        "scalePresetIndex": 4,
-        "filterConfig": {"filterOn": true, "lpf": 3, "hpf": 0, "notch": 0},
-        "meter": {
-          "decimal": 1,
-          "unit":
-              Provider.of<GlobalSettingsModal>(
-                    context,
-                    listen: false,
-                  ).applyConversion
-                  ? " %"
-                  : " mV",
-          "convert": (double x, int index) {
-            // x = _inMemoryData[index][1];
-            // x = x * 0.000917;
-            // globalSettings = Provider.of<GlobalSettingsModal>(
-            //   context,
-            //   listen: false,
-            // );
-            // if (globalSettings != null &&
-            //     globalSettings.applyConversion == true) {
-
-            //   double result = o2Calibrate(x);
-            //   return result;
-            // }
-            // return x;
-          },
-        },
-      },
-      {
-        "name": "CO2",
-        "scale": 3,
-        "boxValue": 30 / 6,
-        "labelDecimal": 0,
-        "valueConverter": (double x) => x / 100,
-        "unit": "%",
-        "minDisplay": 0,
-        "maxDisplay": 30,
-        "autoScale": false,
-        "scalePresets": [
-          {
-            "minDisplay": 0.0,
-            "maxDisplay": 0.5,
-            "boxValue": 0.1,
-            "rangeTrigger": 0,
-          }, // default
-          {
-            "minDisplay": 0.0,
-            "maxDisplay": 5.0,
-            "boxValue": 1.0,
-            "rangeTrigger": 3, // was 2, increased for smoother transition
-          },
-          {
-            "minDisplay": 0.0,
-            "maxDisplay": 10.0,
-            "boxValue": 2.0,
-            "rangeTrigger": 7, // was 4, increased for smoother transition
-          },
-          {
-            "minDisplay": 0.0,
-            "maxDisplay": 20.0,
-            "boxValue": 4.0,
-            "rangeTrigger": 14, // was 9, increased for smoother transition
-          },
-          {
-            "minDisplay": 0.0,
-            "maxDisplay": 30.0,
-            "boxValue": 6.0,
-            "rangeTrigger": 24, // was 18, increased for smoother transition
-          },
-          {
-            "minDisplay": 0.0,
-            "maxDisplay": 40.0,
-            "boxValue": 8.0,
-            "rangeTrigger": 36, // was 28, increased for smoother transition
-          },
-        ],
-        "scalePresetIndex": 3,
-        "filterConfig": {"filterOn": false, "lpf": 3, "hpf": 5, "notch": 1},
-        "meter": {
-          "decimal": 1,
-          "unit": "%",
-          "convert": (double x) {
-            // print("CO@METER");
-            // print(x);
-            return x;
-          },
-        },
-      },
-      {
-        "name": "Flow",
-        "scale": 3,
-        "scalePresets": [
-          {"minDisplay": 0.0, "maxDisplay": 125.0, "boxValue": 25.0},
-          {"minDisplay": 0.0, "maxDisplay": 240.0, "boxValue": 50.0},
-          {"minDisplay": 0.0, "maxDisplay": 500.0, "boxValue": 100.0},
-          {"minDisplay": 0.0, "maxDisplay": 1000.0, "boxValue": 200.0},
-          {"minDisplay": 0.0, "maxDisplay": 2000.0, "boxValue": 400.0},
-          {"minDisplay": 0.0, "maxDisplay": 4000.0, "boxValue": 800.0},
-          {"minDisplay": 0.0, "maxDisplay": 8000.0, "boxValue": 1600.0},
-        ],
-        "scalePresetIndex": 4,
-        "boxValue": 400.0,
-        "boxStep": 25.0,
-        "unit": "ml/s",
-        "minDisplay": 0.0,
-        "maxDisplay": 2000.0,
-        "meter": {"decimal": 0, "unit": " ", "convert": (double x) => x},
-        "yAxisLabelConvert": (double x) => x < 1000 ? x : x / 1000,
-        "yAxisLabelUnit": (double x) => x < 1000 ? "ml/s" : "L/s",
-        // moving average
-        "movingAverage": {"enabled": true, "window": 10},
-        "filterConfig": {
-          "filterOn": true,
-          "lpf": 2,
-          "hpf": 7,
-          "notch": 1,
-          "additionalGainCal": 3.14,
-        },
-      },
-      {
-        "name": "Tidal Volume",
-        "scale": 3,
-        "autoScale": false,
-        "scalePresets": [
-          {
-            "minDisplay": 0.0,
-            "maxDisplay": 125.0,
-            "boxValue": 25.0,
-            "rangeTrigger": 0,
-          },
-          {
-            "minDisplay": 0.0,
-            "maxDisplay": 240.0,
-            "boxValue": 50.0,
-            "rangeTrigger": 150,
-          },
-          {
-            "minDisplay": 0.0,
-            "maxDisplay": 500.0,
-            "boxValue": 100.0,
-            "rangeTrigger": 300,
-          },
-          {
-            "minDisplay": 0.0,
-            "maxDisplay": 1000.0,
-            "boxValue": 200.0,
-            "rangeTrigger": 700,
-          },
-          {
-            "minDisplay": 0.0,
-            "maxDisplay": 2000.0,
-            "boxValue": 400.0,
-            "rangeTrigger": 1500,
-          },
-          {
-            "minDisplay": 0.0,
-            "maxDisplay": 4000.0,
-            "boxValue": 800.0,
-            "rangeTrigger": 3000,
-          },
-          {
-            "minDisplay": 0.0,
-            "maxDisplay": 8000.0,
-            "boxValue": 1600.0,
-            "rangeTrigger": 6000,
-          },
-        ],
-        "scalePresetIndex": 4,
-        "boxValue": 400.0,
-        "boxStep": 25.0,
-        "unit": "ml",
-        "minDisplay": 0.0,
-        "maxDisplay": 2000.0,
-        "meter": {"decimal": 0, "unit": " ", "convert": (double x) => x},
-        "yAxisLabelConvert": (double x) => x < 1000 ? x : x / 1000,
-        "yAxisLabelUnit": (double x) => x < 1000 ? "ml" : "L",
-      },
-    ];
-
-    // startTestLoop(); // Start  the test loop
   }
 
   Future<void> sendSerialCommandSequence({
-    required SerialPort port,
+    required dynamic port, // Changed from SerialPort
     required void Function(String) updateResponse,
     required void Function() onComplete,
   }) async {
+    // Serial functionality removed
+    updateResponse("Serial communication disabled");
+    onComplete();
+  }
     // stop main stream
     if (mainDataSubscription != null) {
       await mainDataSubscription!.cancel();
@@ -587,10 +305,13 @@ class _HomeState extends State<Home> {
   }
 
   Future<void> sendSerialCommand({
-    required SerialPort port,
+    required dynamic port, // Changed from SerialPort
     required String command,
     required void Function(String) updateResponse,
   }) async {
+    // Serial functionality removed
+    updateResponse("Serial communication disabled");
+  }
     if (!port.isOpen) {
       print("❌ Port not open.");
       return;
@@ -700,20 +421,6 @@ class _HomeState extends State<Home> {
     sendNextCommand();
   }
 
-  initFunc() async {
-    globalSettings = Provider.of<GlobalSettingsModal>(context, listen: false);
-    print('here');
-    print(globalSettings.applyConversion);
-    o2Calibrate = generateCalibrationFunction(
-      voltage1: globalSettings.voltage1,
-      value1: globalSettings.value1,
-      voltage2: globalSettings.voltage2,
-      value2: globalSettings.value2,
-    );
-    // await loadGlobalSettingsFromPrefs();
-    print("INIT");
-  }
-
   bool _saverInitialized = false;
   List<double> _buffer = []; // Store [ecg, o2, co2, vol, flow, ecg, o2, ...]
   final int _samplesPerBatch = 300 * 5; // 5 seconds worth of data
@@ -805,140 +512,6 @@ class _HomeState extends State<Home> {
   List<double> testData = [];
   int dataIndex = 0;
 
-  List<double> recentVolumes = [];
-  bool wasExhaling = false;
-
-  onExhalationDetected({data = null, isComplete = false}) {
-    print("Exaust Detected");
-    try {
-      CPETService cpet = CPETService();
-      var stats = {};
-      if (data != null) {
-        stats = ecgBPMCalculator.getStats(data);
-      } else {
-        stats = ecgBPMCalculator.getStats(_inMemoryData);
-      }
-      // print(stats);
-      final patientProvider = Provider.of<DefaultPatientModal>(
-        context,
-        listen: false,
-      );
-      final patient = patientProvider.patient;
-
-      print("VOLPEAK");
-      final globalSettings = Provider.of<GlobalSettingsModal>(
-        context,
-        listen: false,
-      );
-
-      if (data != null) {
-        cp = cpet.init(data, globalSettings);
-      } else {
-        cp = cpet.init(_inMemoryData, globalSettings);
-      }
-      if (isComplete == true) {
-        completeCp = cp;
-      }
-      // print(cp);
-
-      // markerlines
-      if (cp != null && cp!['breathStats'] is List) {
-        final peaks =
-            (cp!['breathStats'] as List)
-                .whereType<Map>()
-                .expand<int>((e) sync* {
-                  if (e['start'] is num) yield (e['start'] as num).toInt();
-                  if (e['end'] is num) yield (e['end'] as num).toInt();
-                })
-                .toSet() // ensure uniqueness
-                .toList()
-              ..sort();
-        breathPeakIndicesNotifier.value = peaks;
-      }
-      // print(cp);
-      // Safely extract values with null checks
-      final lastBreathStat = cp != null ? cp!["averageStats"] : null;
-      setState(() {
-        final respirationPerMin =
-            (lastBreathStat != null &&
-                    lastBreathStat["respirationRate"] != null)
-                ? (lastBreathStat["respirationRate"] as num).toDouble()
-                : (cp != null && cp!["respirationRate"] != null)
-                ? (cp!["respirationRate"] as num).toDouble()
-                : 0.0;
-
-        // VO2 per minute (prefer precomputed field if present)
-        double vo2PerBreath =
-            (lastBreathStat != null && lastBreathStat["vo2"] != null)
-                ? (lastBreathStat["vo2"] as num).toDouble()
-                : 0.0;
-        double vo2MinuteStat =
-            (lastBreathStat != null && lastBreathStat["vo2Minute"] != null)
-                ? (lastBreathStat["vo2Minute"] as num).toDouble()
-                : (respirationPerMin > 0
-                    ? vo2PerBreath * respirationPerMin
-                    : 0.0);
-
-        double vco2PerBreath =
-            (lastBreathStat != null && lastBreathStat["vco2"] != null)
-                ? (lastBreathStat["vco2"] as num).toDouble()
-                : 0.0;
-        double vco2MinuteStat =
-            (lastBreathStat != null && lastBreathStat["vco2Minute"] != null)
-                ? (lastBreathStat["vco2Minute"] as num).toDouble()
-                : (respirationPerMin > 0
-                    ? vco2PerBreath * respirationPerMin
-                    : 0.0);
-
-        votwo = vo2MinuteStat; // store as L/min
-        vco = vco2MinuteStat; // NOW VCO2 per minute (L/min)
-
-        rer =
-            (lastBreathStat != null && lastBreathStat["rer"] != null)
-                ? lastBreathStat["rer"]
-                : 0.0;
-        vol =
-            (cp != null && cp!["minuteVentilation"] != null)
-                ? cp!["minuteVentilation"]
-                : 0.0;
-        respirationRate =
-            (cp != null && cp!["respirationRate"] != null)
-                ? cp!["respirationRate"]
-                : 0.0;
-        bpm = (stats != null && stats["bpm"] != null) ? stats["bpm"] : 0.0;
-        final defaultProvider = Provider.of<DefaultPatientModal>(
-          context,
-          listen: false,
-        );
-        final patient = defaultProvider.patient;
-        if (patient != null && patient["weight"] != null && votwo != null) {
-          double? weight = double.tryParse(patient["weight"].toString());
-          if (weight != null && weight > 0) {
-            votwokg = (votwo * 1000) / weight;
-          } else {
-            votwokg = 0.0;
-          }
-        } else {
-          votwokg = 0.0;
-        }
-      });
-      if (cp != null && cp!['breathStats'] != null) {
-        fullCp = Map<String, dynamic>.from(cp!); // stores full cp object
-        final updatedBreathStats = List<Map<String, dynamic>>.from(
-          cp!['breathStats'],
-        );
-        breathStatsNotifier.value = updatedBreathStats;
-        if (modalSetState != null) {
-          modalSetState!(() {}); // manually update modal table
-        }
-      }
-
-      print("update");
-    } catch (e) {
-      print(e);
-    }
-  }
-
   void startTestLoop() async {
     testData = await loadTestData();
     dataIndex = 0;
@@ -948,7 +521,7 @@ class _HomeState extends State<Home> {
     final o2DelaySamples = (o2DelayMs * 300 / 1000).round();
     final co2DelaySamples = (co2DelayMs * 300 / 1000).round();
 
-    List<List<double>> delayBuffer = [];
+    // Use existing delayBuffer
     recentVolumes.clear();
     bool wasExhaling = false;
 
@@ -983,7 +556,7 @@ class _HomeState extends State<Home> {
           bool currentIsZero = vol <= 5;
 
           if (nonZeroCount >= 5 && currentIsZero && wasExhaling) {
-            onExhalationDetected();
+            // CPET exhalation detection removed
             wasExhaling = false;
           }
           if (vol > 50) wasExhaling = true;
@@ -1016,7 +589,8 @@ class _HomeState extends State<Home> {
               co2: correctedSample[2],
             );
 
-            List<double>? edt = myBigGraphKey.currentState?.updateEverything(
+            // Graph functionality removed
+            List<double>? edt = null; // myBigGraphKey.currentState?.updateEverything(
               correctedSample,
             );
             if (edt != null) {
@@ -1057,197 +631,22 @@ class _HomeState extends State<Home> {
   }
 
   init() {
-    final globalSettings = Provider.of<GlobalSettingsModal>(
-      context,
-      listen: false,
-    );
-
-    port = SerialPort(globalSettings.com.toString());
-
-    try {
-      if (port.isOpen) {
-        print("ℹ️ Port is already open.");
-      } else {
-        if (!port.openReadWrite()) {
-          print("❌ Failed to open port.");
-          print("Last error: ${SerialPort.lastError}");
-        } else {
-          print("✅ Port opened successfully.");
-        }
-      }
-    } catch (e) {
-      print("❌ Exception while opening port: $e");
-    }
-
-    try {
-      final config = port.config;
-      config.baudRate = 230400;
-      port.config = config;
-      config.bits = 8;
-      config.stopBits = 1;
-      config.stopBits = 1;
-      config.xonXoff = 0;
-      config.rts = 0;
-      config.cts = 0;
-      config.dsr = 0;
-      config.dtr = 1;
-      port.config = config;
-
-      port.write(Uint8List.fromList([0x0D]));
-    } catch (error) {
-      print(error);
-      // ignoring error
-    } finally {
-      // widget.port.dispose();
-    }
-    // await Future.delayed(Duration(milliseconds: 300));
-    // print('✅ Serial port opened! Flushing...');
-
-    // Create a reader
-    SerialPortReader reader = SerialPortReader(port);
-    // Variables you should declare globally at top of your class:
-    double ecgMax = -double.infinity;
-    double ecgMin = double.infinity;
-    double o2Max = -double.infinity;
-    double o2Min = double.infinity;
-    double flowMax = -double.infinity;
-    double flowMin = double.infinity;
-    double co2Max = -double.infinity;
-    double co2Min = double.infinity;
-
-    startMainDataStream(port); // Start the main data stream
+    print("Init called - serial communication disabled");
+    // Serial communication functionality removed
   }
 
   int lastNotifierUpdate = DateTime.now().millisecondsSinceEpoch;
 
-  void startMainDataStream(SerialPort port) {
-    if (mainDataSubscription != null) {
-      mainDataSubscription?.cancel();
-    }
-
-    final o2DelayMs = globalSettings.transportDelayO2Ms;
-    final co2DelayMs = globalSettings.transportDelayCO2Ms;
-    final o2DelaySamples = (o2DelayMs * 300 / 1000).round();
-    final co2DelaySamples = (co2DelayMs * 300 / 1000).round();
-
-    List<List<double>> delayBuffer = [];
-    recentVolumes.clear();
-    bool wasExhaling = false;
-
-    SerialPortReader reader = SerialPortReader(port);
-
-    int statsSampleCounter = 0; // Counter for 1-second intervals
-
-    mainDataSubscription = reader.stream.listen(
-      (data) {
-        int frameLength = 18;
-        for (int i = 0; i <= data.length - frameLength;) {
-          if (data[i] == 'B'.codeUnitAt(0) &&
-              data[i + 1] == 'T'.codeUnitAt(0)) {
-            if (i + frameLength <= data.length) {
-              final frame = data.sublist(i, i + frameLength);
-
-              double ecg = (frame[3] * 256 + frame[2]) * 1.0;
-              double o2 = (frame[7] * 256 + frame[6]) * 1.0;
-              double co2 = (frame[15] * 256 + frame[14]) * 1.0;
-              double flow = (frame[11] * 256 + frame[10]) * 1.0;
-              double vol = (frame[13] * 256 + frame[12]) * 1.0;
-              vol = (vol * globalSettings.tidalScalingFactor);
-
-              recentVolumes.add(vol);
-              if (recentVolumes.length > 10) recentVolumes.removeAt(0);
-
-              int nonZeroCount = recentVolumes.where((v) => v > 50).length;
-              bool currentIsZero = vol <= 5;
-
-              if (nonZeroCount >= 5 && currentIsZero && wasExhaling) {
-                onExhalationDetected();
-                wasExhaling = false;
-              }
-              if (vol > 50) wasExhaling = true;
-
-              delayBuffer.add([ecg, o2, co2, flow, vol]);
-              if (delayBuffer.length > max(o2DelaySamples, co2DelaySamples)) {
-                final current = delayBuffer[0];
-                var delayedO2 =
-                    delayBuffer.length > o2DelaySamples
-                        ? delayBuffer[o2DelaySamples][1]
-                        : current[1];
-                var delayedCO2 =
-                    delayBuffer.length > co2DelaySamples
-                        ? delayBuffer[co2DelaySamples][2]
-                        : current[2];
-
-                var correctedSample = [
-                  current[0], // ECG
-                  delayedO2, // O2 (delayed)
-                  delayedCO2, // CO2 (delayed)
-                  current[3], // Flow
-                  current[4], // Vol
-                ];
-
-                saver(
-                  ecg: correctedSample[0],
-                  o2: correctedSample[1],
-                  flow: correctedSample[3],
-                  vol: correctedSample[4],
-                  co2: correctedSample[2],
-                );
-
-                List<double>? edt = myBigGraphKey.currentState
-                    ?.updateEverything(correctedSample);
-                if (edt != null) {
-                  _inMemoryData.add([edt[0], edt[1], edt[2], edt[3], edt[4]]);
-                  setState(() {
-                    co2Notifier.value = edt[2];
-                    o2Notifier.value = edt[1];
-                    tidalVolumeNotifier.value = edt[4];
-                  });
-                }
-
-                // ---- Heart Rate Calculation Every 1 Second ----
-                statsSampleCounter++;
-                if (statsSampleCounter >= 300) {
-                  // 300 samples = 1 second at 300Hz
-                  statsSampleCounter = 0;
-                  try {
-                    var stats = ecgBPMCalculator.getStats(_inMemoryData);
-                    setState(() {
-                      bpm =
-                          (stats != null && stats["bpm"] != null)
-                              ? stats["bpm"]
-                              : 0.0;
-                    });
-                  } catch (err) {}
-                }
-                // ---------------------------------------------
-
-                delayBuffer.removeAt(0);
-              }
-              i += frameLength;
-              continue;
-            } else {
-              break;
-            }
-          } else {
-            i++;
-          }
-        }
-      },
-      onDone: () {
-        print("Serial Done");
-      },
-      onError: (e) {
-        print("❌ Serial port error: $e");
-      },
-    );
+  void startMainDataStream(dynamic port) { // Changed from SerialPort
+    print("Serial data stream disabled");
+    // Serial data streaming functionality removed
   }
 
   @override
   void dispose() {
     recordingTimer?.cancel();
     timer.cancel();
-    port.close();
+    // Serial port functionality removed
     super.dispose();
   }
 
@@ -1279,8 +678,7 @@ class _HomeState extends State<Home> {
             context,
             listen: false,
           );
-          // SerialPort port = SerialPort(globalSettings.com.toString());
-          port.close();
+          // Serial port functionality removed
           resetAllData();
           setState(() {
             isPlaying = false;
@@ -1631,7 +1029,8 @@ class _HomeState extends State<Home> {
         numericSample[3] = numericSample[4];
         numericSample[4] = temp;
 
-        final edt = myBigGraphKey.currentState?.updateEverythingWithoutGraph(
+        // Graph functionality removed
+        final edt = null; // myBigGraphKey.currentState?.updateEverythingWithoutGraph(
           numericSample,
         );
         if (edt != null && edt.length >= 5) {
@@ -1658,7 +1057,7 @@ class _HomeState extends State<Home> {
         importProgressPercent = 1.0;
         isImported = true;
       });
-      onExhalationDetected(isComplete: true);
+      // CPET processing removed
     } catch (e) {
       print("❌ Error while importing: $e");
       setState(() {
@@ -1722,7 +1121,8 @@ class _HomeState extends State<Home> {
       // wait
       // await Future.delayed(Duration(milliseconds: 100));
 
-      final edt = myBigGraphKey.currentState?.updateEverything(numericSample);
+      // Graph functionality removed
+      final edt = numericSample; // myBigGraphKey.currentState?.updateEverything(numericSample);
       if (edt != null && edt.length >= 5) {
         chunkData.add([edt[0], edt[1], edt[2], edt[3], edt[4]]);
       }
@@ -1738,11 +1138,11 @@ class _HomeState extends State<Home> {
       for (int i = 0; i < padCount; i++) {
         // final edt = myBigGraphKey.currentState?.updateEverything(numericSample);
         chunkData.add(List<double>.from(lastSample));
-        // graph
-        myBigGraphKey.currentState?.updateEverything(lastSample);
+        // graph functionality removed
+        // myBigGraphKey.currentState?.updateEverything(lastSample);
       }
     }
-    onExhalationDetected(data: chunkData);
+    // CPET processing removed 
     // return samples;
   }
 
@@ -1765,8 +1165,9 @@ class _HomeState extends State<Home> {
                     .clamp(0, double.infinity);
               });
               await getSamplesFromFile(currentImportDisplayIndex.toInt());
-              myBigGraphKey.currentState?.cycleMinus();
-              myBigGraphKey.currentState?.cycleMinus();
+              // Graph functionality removed
+              // myBigGraphKey.currentState?.cycleMinus();
+              // myBigGraphKey.currentState?.cycleMinus();
             },
           ),
           // show the point where we are in time
@@ -2009,8 +1410,8 @@ class _HomeState extends State<Home> {
       _inMemoryData.clear();
       breathStatsNotifier.value = [];
 
-      // Reset graph widget
-      myBigGraphKey.currentState?.reset();
+      // Reset graph widget - removed
+      // myBigGraphKey.currentState?.reset();
 
       // Reset flags
       wasExhaling = false;
@@ -2022,7 +1423,7 @@ class _HomeState extends State<Home> {
   }
 
   calibratorModel() {
-    final context = myBigGraphKey.currentContext ?? this.context;
+    final context = this.context; // myBigGraphKey.currentContext ?? this.context;
 
     showDialog(
       context: context,
@@ -2584,12 +1985,13 @@ class _HomeState extends State<Home> {
                             );
                             globalSettings.notifyListeners();
 
-                            o2Calibrate = generateCalibrationFunction(
-                              voltage1: globalSettings.voltage1,
-                              value1: globalSettings.value1,
-                              voltage2: globalSettings.voltage2,
-                              value2: globalSettings.value2,
-                            );
+                            // Calibration function removed
+                            // o2Calibrate = generateCalibrationFunction(
+                            //   voltage1: globalSettings.voltage1,
+                            //   value1: globalSettings.value1,
+                            //   voltage2: globalSettings.voltage2,
+                            //   value2: globalSettings.value2,
+                            // );
 
                             final prefs = await SharedPreferences.getInstance();
                             await prefs.setString(
@@ -2622,7 +2024,7 @@ class _HomeState extends State<Home> {
     if (treadmillController?.isOpen == true) {
       treadmillController!.sendCommand([0xA2]);
     }
-    port.close();
+    // Serial port functionality removed
     treadmillController?.close();
 
     print("Stopping recording...");
@@ -2921,7 +2323,7 @@ class _HomeState extends State<Home> {
                                     context,
                                     listen: false,
                                   );
-                              port.close();
+                              // Serial port functionality removed
                               resetAllData();
                               setState(() {
                                 isPlaying = false;
@@ -2943,8 +2345,8 @@ class _HomeState extends State<Home> {
                           onPressed: () async {
                             if (!isRecording) {
                               resetAllData(); // Reset all data before starting
-                              // reset graph
-                              myBigGraphKey.currentState?.resetXAxisTimer();
+                              // reset graph - removed
+                              // myBigGraphKey.currentState?.resetXAxisTimer();
                               recordStartIndex = sampleCounter;
                               print(
                                 "Recording started at index: $recordStartIndex",
@@ -3134,102 +2536,8 @@ class _HomeState extends State<Home> {
                 ),
 
                 SizedBox(height: 3),
-                Row(
-                  children: [
-                    Expanded(
-                      child: MyBigGraphV2(
-                        key: myBigGraphKey,
-                        markerIndices:
-                            globalSettings.breathCalibrationMarker
-                                ? breathPeakIndicesNotifier
-                                : breathPeakIndicesNotifierEmpty, // <-- NEW
-                        // if(delaySamples == null) {
-                        isImported: false,
-                        onCycleComplete: () {
-                          // if(delaySamples == null) {
-                          //   CPETService cpet = CPETService();
-                          //   delaySamples = cpet.detectO2Co2DelayFromVolumePeaks(
-                          //       _inMemoryData);
-                          //   print("DELAY REQ");
-                          //   print(delaySamples);
-                          // }
-                        },
-                        streamConfig: [
-                          {
-                            "vo2": {
-                              "fun": (e) {
-                                if (e.length > 2 &&
-                                    e[1] != null &&
-                                    e[4] != null) {
-                                  double o2Percent = e[1] * 0.013463 - 0.6;
-                                  double flow = e[4];
-                                  return flow * (20.93 - o2Percent);
-                                } else {
-                                  return null;
-                                }
-                              },
-                            },
-                          },
-                          {
-                            "vco2": {
-                              "fun": (e) {
-                                if (e.length > 3 &&
-                                    e[4] != null &&
-                                    e[4] != null) {
-                                  double co2Fraction = e[2] / 100; // CO₂ %
-                                  double flow = e[4]; // Flow in L/min
-                                  return flow * co2Fraction;
-                                } else {
-                                  return null;
-                                }
-                              },
-                            },
-                          },
-                        ],
-
-                        onStreamResult: (resultMap) {
-                          setState(() {
-                            // votwo = resultMap["vo2"];
-                            // vco = resultMap["vco2"];
-                            // if (defaultPatient != null) {
-                            //   double weight = double.parse(
-                            //     defaultPatient["weight"],
-                            //   );
-                            //   votwokg = resultMap["vo2"] / weight;
-                            // }
-                            // if (votwo != null && votwo != null && votwo != 0) {
-                            //   rer = vco / votwo;
-                            // } else {
-                            //   rer = 0; // Or 0.0 or "--"
-                            // }
-                          });
-                        },
-                        plot: plotConfig, // <-- Use state variable here
-                        windowSize: 6000,
-                        verticalLineConfigs: [
-                          {
-                            'seconds': 0.5,
-                            'stroke': 0.5,
-                            'color': Colors.blue.shade100,
-                          },
-                          {
-                            'seconds': 1.0,
-                            'stroke': 0.8,
-                            'color': Colors.red.shade100,
-                          },
-                        ],
-                        horizontalInterval: 4096 / 12,
-                        verticalInterval: 8,
-                        samplingRate: 300,
-                        minY: -(4096 / 12) * 5,
-                        maxY: (4096 / 12) * 25,
-                      ),
-                    ),
-
-                    // Text("Ss")
-                    _vitals(defaultPatient: defaultPatient),
-                  ],
-                ),
+                // Graph removed - keeping only vitals
+                _vitals(defaultPatient: defaultPatient),
               ],
             ),
           ),
