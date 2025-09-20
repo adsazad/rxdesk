@@ -30,7 +30,6 @@ import 'package:holtersync/ProviderModals/GlobalSettingsModal.dart';
 import 'package:holtersync/Services/DataSaver.dart';
 import 'package:holtersync/Widgets/VitalsBox.dart';
 import 'package:file_picker/file_picker.dart';
-import 'dart:typed_data';
 import 'package:path/path.dart' as p;
 import 'package:holtersync/ReportPreviewPage.dart'; // <-- Import your preview page
 import 'package:holtersync/SavedChartsDialogContent.dart';
@@ -60,6 +59,13 @@ class _HomeState extends State<Home> {
   DataSaver dataSaver = DataSaver();
 
   List<List<double>> _inMemoryData = [];
+
+  bool isImported = false;
+  double currentImportDisplayIndex = 0;
+  var o2Calibrate; // For UI components that still use it
+  List<double> recentVolumes = []; // For existing functionality 
+  bool wasExhaling = false; // For existing functionality
+  List<List<double>> delayBuffer = []; // For existing functionality
 
   // Recorder
   int sampleCounter = 0;
@@ -101,10 +107,14 @@ class _HomeState extends State<Home> {
   }
 
   Future<void> sendSerialCommandSequence({
-    required SerialPort port,
+    required dynamic port, // Changed from SerialPort
     required void Function(String) updateResponse,
     required void Function() onComplete,
   }) async {
+    // Serial functionality removed
+    updateResponse("Serial communication disabled");
+    onComplete();
+  }
     // stop main stream
     if (mainDataSubscription != null) {
       await mainDataSubscription!.cancel();
@@ -295,10 +305,13 @@ class _HomeState extends State<Home> {
   }
 
   Future<void> sendSerialCommand({
-    required SerialPort port,
+    required dynamic port, // Changed from SerialPort
     required String command,
     required void Function(String) updateResponse,
   }) async {
+    // Serial functionality removed
+    updateResponse("Serial communication disabled");
+  }
     if (!port.isOpen) {
       print("❌ Port not open.");
       return;
@@ -508,7 +521,7 @@ class _HomeState extends State<Home> {
     final o2DelaySamples = (o2DelayMs * 300 / 1000).round();
     final co2DelaySamples = (co2DelayMs * 300 / 1000).round();
 
-    List<List<double>> delayBuffer = [];
+    // Use existing delayBuffer
     recentVolumes.clear();
     bool wasExhaling = false;
 
@@ -624,7 +637,7 @@ class _HomeState extends State<Home> {
 
   int lastNotifierUpdate = DateTime.now().millisecondsSinceEpoch;
 
-  void startMainDataStream(SerialPort port) {
+  void startMainDataStream(dynamic port) { // Changed from SerialPort
     print("Serial data stream disabled");
     // Serial data streaming functionality removed
   }
@@ -1972,12 +1985,13 @@ class _HomeState extends State<Home> {
                             );
                             globalSettings.notifyListeners();
 
-                            o2Calibrate = generateCalibrationFunction(
-                              voltage1: globalSettings.voltage1,
-                              value1: globalSettings.value1,
-                              voltage2: globalSettings.voltage2,
-                              value2: globalSettings.value2,
-                            );
+                            // Calibration function removed
+                            // o2Calibrate = generateCalibrationFunction(
+                            //   voltage1: globalSettings.voltage1,
+                            //   value1: globalSettings.value1,
+                            //   voltage2: globalSettings.voltage2,
+                            //   value2: globalSettings.value2,
+                            // );
 
                             final prefs = await SharedPreferences.getInstance();
                             await prefs.setString(
