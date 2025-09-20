@@ -1,4 +1,4 @@
-# BlueVO2
+# HolterSync
 
 A new Flutter project.
 

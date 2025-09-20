@@ -4,7 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:libserialport/libserialport.dart';
 import 'package:provider/provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-import 'package:bluevo2/ProviderModals/GlobalSettingsModal.dart';
+import 'package:holtersync/ProviderModals/GlobalSettingsModal.dart';
 
 class GlobalSettings extends StatefulWidget {
   const GlobalSettings({super.key});

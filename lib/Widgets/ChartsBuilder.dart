@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:bluevo2/Widgets/CustomLineChart.dart';
+import 'package:holtersync/Widgets/CustomLineChart.dart';
 
 class ChartsBuilder {
   static Widget buildVCO2vsVEChart(

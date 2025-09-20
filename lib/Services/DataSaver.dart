@@ -23,7 +23,7 @@ class DataSaver {
     initialized = true;
 
     final dir = await getApplicationDocumentsDirectory();
-    final tempDirPath = '${dir.path}/BlueVO2/Temp';
+    final tempDirPath = '${dir.path}/HolterSync/Temp';
     final tempDir = Directory(tempDirPath);
     if (!await tempDir.exists()) {
       await tempDir.create(recursive: true);

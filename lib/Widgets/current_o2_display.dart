@@ -1,7 +1,7 @@
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import 'package:bluevo2/ProviderModals/GlobalSettingsModal.dart';
+import 'package:holtersync/ProviderModals/GlobalSettingsModal.dart';
 
 class CurrentO2Display extends StatefulWidget {
   final ValueListenable<double> notifier;

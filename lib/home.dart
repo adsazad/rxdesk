@@ -6,43 +6,43 @@ import 'dart:math';
 import 'dart:typed_data';
 import 'dart:ui';
 import 'package:path_provider/path_provider.dart';
-import 'package:bluevo2/Pages/RecordingsListPage.dart';
-import 'package:bluevo2/ProtocolManifests/ProtocolManifest.dart';
-import 'package:bluevo2/ProviderModals/ImportFileProvider.dart';
-import 'package:bluevo2/Services/MachineControllers/LodeErgometerController.dart';
-import 'package:bluevo2/Services/TreadmillSerialController.dart';
-import 'package:bluevo2/Services/Utility.dart';
-import 'package:bluevo2/Widgets/BreathStatsTableModal.dart';
-import 'package:bluevo2/Widgets/MyBigGraphScrollable.dart';
-import 'package:bluevo2/Widgets/current_co2_display.dart';
-import 'package:bluevo2/Widgets/current_o2_display.dart';
-import 'package:bluevo2/data/local/database.dart';
+import 'package:holtersync/Pages/RecordingsListPage.dart';
+import 'package:holtersync/ProtocolManifests/ProtocolManifest.dart';
+import 'package:holtersync/ProviderModals/ImportFileProvider.dart';
+import 'package:holtersync/Services/MachineControllers/LodeErgometerController.dart';
+import 'package:holtersync/Services/TreadmillSerialController.dart';
+import 'package:holtersync/Services/Utility.dart';
+import 'package:holtersync/Widgets/BreathStatsTableModal.dart';
+import 'package:holtersync/Widgets/MyBigGraphScrollable.dart';
+import 'package:holtersync/Widgets/current_co2_display.dart';
+import 'package:holtersync/Widgets/current_o2_display.dart';
+import 'package:holtersync/data/local/database.dart';
 
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:libserialport/libserialport.dart';
 import 'package:provider/provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-import 'package:bluevo2/Pages/ChartGenerator.dart';
-import 'package:bluevo2/Pages/GlobalSettings.dart';
-import 'package:bluevo2/Pages/patient/list.dart';
-import 'package:bluevo2/Pages/patient/patientAdd.dart';
-import 'package:bluevo2/ProviderModals/DefaultPatientModal.dart';
-import 'package:bluevo2/ProviderModals/GlobalSettingsModal.dart';
-import 'package:bluevo2/Services/CPETService.dart';
-import 'package:bluevo2/Services/CalibrationFunction.dart';
-import 'package:bluevo2/Services/DataSaver.dart';
-import 'package:bluevo2/Services/EcgBPMCalculator.dart';
-import 'package:bluevo2/Widgets/CustomLineChart.dart';
-import 'package:bluevo2/Widgets/MyBigGraph.dart';
-import 'package:bluevo2/Widgets/VitalsBox.dart';
+import 'package:holtersync/Pages/ChartGenerator.dart';
+import 'package:holtersync/Pages/GlobalSettings.dart';
+import 'package:holtersync/Pages/patient/list.dart';
+import 'package:holtersync/Pages/patient/patientAdd.dart';
+import 'package:holtersync/ProviderModals/DefaultPatientModal.dart';
+import 'package:holtersync/ProviderModals/GlobalSettingsModal.dart';
+import 'package:holtersync/Services/CPETService.dart';
+import 'package:holtersync/Services/CalibrationFunction.dart';
+import 'package:holtersync/Services/DataSaver.dart';
+import 'package:holtersync/Services/EcgBPMCalculator.dart';
+import 'package:holtersync/Widgets/CustomLineChart.dart';
+import 'package:holtersync/Widgets/MyBigGraph.dart';
+import 'package:holtersync/Widgets/VitalsBox.dart';
 import 'package:file_selector/file_selector.dart';
 import 'package:file_picker/file_picker.dart';
 import 'dart:typed_data';
 import 'package:path/path.dart' as p;
-import 'package:bluevo2/ReportPreviewPage.dart'; // <-- Import your preview page
-import 'package:bluevo2/SavedChartsDialogContent.dart';
-import 'package:bluevo2/Widgets/IconButtonColumn.dart';
+import 'package:holtersync/ReportPreviewPage.dart'; // <-- Import your preview page
+import 'package:holtersync/SavedChartsDialogContent.dart';
+import 'package:holtersync/Widgets/IconButtonColumn.dart';
 import 'package:drift/drift.dart' as drift;
 import 'package:uuid/uuid.dart';
 
@@ -741,7 +741,7 @@ class _HomeState extends State<Home> {
         if (!dataSaver.initialized) {
           print("✅ Initializing DataSaver...");
           await dataSaver.init(
-            filename: "bluevo2-${DateTime.now().microsecondsSinceEpoch}.bin",
+            filename: "holtersync-${DateTime.now().microsecondsSinceEpoch}.bin",
             patientInfo: patient,
           );
           _saverInitialized = true;
@@ -1899,7 +1899,7 @@ class _HomeState extends State<Home> {
 
     // ✅ Get documents directory
     final Directory docsDir = await getApplicationDocumentsDirectory();
-    final String recordingsPath = p.join(docsDir.path, 'BlueVO2', 'Records');
+    final String recordingsPath = p.join(docsDir.path, 'HolterSync', 'Records');
     final recordingsDir = Directory(recordingsPath);
     if (!await recordingsDir.exists()) {
       await recordingsDir.create(recursive: true);

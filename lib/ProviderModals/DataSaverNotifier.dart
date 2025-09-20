@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:bluevo2/Services/DataSaver.dart';
+import 'package:holtersync/Services/DataSaver.dart';
 
 class DataSaverNotifier extends ChangeNotifier {
   DataSaver _dataSaver = DataSaver();
