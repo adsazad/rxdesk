@@ -191,7 +191,7 @@ class PatientRecordingsPage extends StatelessWidget {
                               ),
                             ),
                             subtitle: Text(
-                              'Recorded at: ${rec.recordedAt?.toLocal().toString().split(".")[0] ?? "Unknown"}',
+                              'Recorded at: ${rec.recordedAt.toLocal().toString().split(".")[0]}',
                               style: const TextStyle(fontSize: 13),
                             ),
                             trailing: IconButton(
@@ -201,10 +201,14 @@ class PatientRecordingsPage extends StatelessWidget {
                               ),
                               tooltip: "Load in Home",
                               onPressed: () {
-                                Provider.of<ImportFileProvider>(
-                                  context,
-                                  listen: false,
-                                ).setFilePath(rec.filePath);
+                                final provider =
+                                    Provider.of<ImportFileProvider>(
+                                      context,
+                                      listen: false,
+                                    );
+                                // provider.setFilePath(rec.filePath);
+                                print("Setting recording ID to ${rec.id}");
+                                provider.setRecordingId(rec.id);
                                 Navigator.of(
                                   context,
                                 ).popUntil((route) => route.isFirst);

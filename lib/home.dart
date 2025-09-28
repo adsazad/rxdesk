@@ -5,6 +5,7 @@ import 'dart:io';
 import 'dart:math';
 import 'dart:typed_data';
 import 'dart:ui';
+import 'package:holtersync/Services/HolterReportGenerator.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:holtersync/Pages/RecordingsListPage.dart';
 import 'package:holtersync/ProtocolManifests/ProtocolManifest.dart';
@@ -979,17 +980,49 @@ class _HomeState extends State<Home> {
     );
   }
 
+  Future<void> _runHolterFromRecordingId(int recordingId) async {
+    try {
+      final db = Provider.of<AppDatabase>(context, listen: false);
+      final holter = HolterReportGenerator();
+      await holter.initWithRecordingId(db, recordingId);
+
+      print("Holter analysis done for recording ID: $recordingId");
+      print("Avg BPM: ${holter.avrBpm.toStringAsFixed(1)}");
+      print("Min BPM: ${holter.minBpm.toStringAsFixed(1)}");
+      print("Max BPM: ${holter.maxBpm.toStringAsFixed(1)}");
+
+      final conditions =
+          holter.conditions is List ? (holter.conditions as List) : const [];
+      if (conditions.isEmpty) {
+        print("No conditions detected.");
+      } else {
+        for (final c in conditions) {
+          final name = c['name']?.toString() ?? 'Unknown';
+          final count = (c['index'] is List) ? (c['index'] as List).length : 0;
+          print("Condition: $name — $count events");
+        }
+      }
+    } catch (e, st) {
+      print("Holter analysis failed: $e");
+      print(st);
+    }
+  }
+
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
     final importProvider = Provider.of<ImportFileProvider>(context);
-    if (importProvider.filePath != null) {
-      resetAllData(import: true); // Reset data on every dependency change
-      importBinFileFromPath(importProvider.filePath!);
-      // Schedule clear after build is complete
-      WidgetsBinding.instance.addPostFrameCallback((_) {
-        importProvider.clear();
+    print("ImportFileProvider recordingId:");
+    print(importProvider.recordingId);
+    // New flow: recordingId from the "Load Data" page
+    if (importProvider.recordingId != null) {
+      final int recId = importProvider.recordingId!;
+      WidgetsBinding.instance.addPostFrameCallback((_) async {
+        print("Importing recording ID: $recId");
+        await _runHolterFromRecordingId(recId);
+        importProvider.clear(); // ensure it won’t re-trigger
       });
+      return;
     }
   }
 

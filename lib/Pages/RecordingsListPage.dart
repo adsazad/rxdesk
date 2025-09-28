@@ -108,7 +108,7 @@ class _RecordingsListPageState extends State<RecordingsListPage> {
                             Provider.of<ImportFileProvider>(
                               context,
                               listen: false,
-                            ).setFilePath(rec.filePath);
+                            ).setRecordingId(rec.id);
                             Navigator.of(
                               context,
                             ).popUntil((route) => route.isFirst);
