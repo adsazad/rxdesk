@@ -10,13 +10,13 @@ import 'package:path_provider/path_provider.dart';
 import 'package:holtersync/Pages/RecordingsListPage.dart';
 import 'package:holtersync/ProtocolManifests/ProtocolManifest.dart';
 import 'package:holtersync/ProviderModals/ImportFileProvider.dart';
-import 'package:holtersync/Services/MachineControllers/LodeErgometerController.dart';
+// import 'package:holtersync/Services/MachineControllers/LodeErgometerController.dart';
 import 'package:holtersync/Services/TreadmillSerialController.dart';
-import 'package:holtersync/Services/Utility.dart';
-import 'package:holtersync/Widgets/BreathStatsTableModal.dart';
+// import 'package:holtersync/Services/Utility.dart';
+// import 'package:holtersync/Widgets/BreathStatsTableModal.dart';
 import 'package:holtersync/Widgets/MyBigGraphScrollable.dart';
-import 'package:holtersync/Widgets/current_co2_display.dart';
-import 'package:holtersync/Widgets/current_o2_display.dart';
+// import 'package:holtersync/Widgets/current_co2_display.dart';
+// import 'package:holtersync/Widgets/current_o2_display.dart';
 import 'package:holtersync/data/local/database.dart';
 
 import 'package:flutter/material.dart';
@@ -24,22 +24,22 @@ import 'package:flutter/services.dart';
 import 'package:libserialport/libserialport.dart';
 import 'package:provider/provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-import 'package:holtersync/Pages/ChartGenerator.dart';
+// import 'package:holtersync/Pages/ChartGenerator.dart';
 import 'package:holtersync/Pages/GlobalSettings.dart';
 import 'package:holtersync/Pages/patient/list.dart';
 import 'package:holtersync/Pages/patient/patientAdd.dart';
 import 'package:holtersync/ProviderModals/DefaultPatientModal.dart';
 import 'package:holtersync/ProviderModals/GlobalSettingsModal.dart';
-import 'package:holtersync/Services/CPETService.dart';
+// import 'package:holtersync/Services/CPETService.dart';
 import 'package:holtersync/Services/CalibrationFunction.dart';
 import 'package:holtersync/Services/DataSaver.dart';
 import 'package:holtersync/Services/EcgBPMCalculator.dart';
-import 'package:holtersync/Widgets/CustomLineChart.dart';
-import 'package:holtersync/Widgets/MyBigGraph.dart';
-import 'package:holtersync/Widgets/VitalsBox.dart';
-import 'package:file_selector/file_selector.dart';
+// import 'package:holtersync/Widgets/CustomLineChart.dart';
+// import 'package:holtersync/Widgets/MyBigGraph.dart';
+// import 'package:holtersync/Widgets/VitalsBox.dart';
+// import 'package:file_selector/file_selector.dart';
 import 'package:file_picker/file_picker.dart';
-import 'dart:typed_data';
+// duplicate removed
 import 'package:path/path.dart' as p;
 import 'package:holtersync/ReportPreviewPage.dart'; // <-- Import your preview page
 import 'package:holtersync/SavedChartsDialogContent.dart';
@@ -167,8 +167,7 @@ class _HomeState extends State<Home> {
             context,
             listen: false,
           );
-          if (globalSettings != null &&
-              globalSettings.applyConversion == true) {
+          if (globalSettings.applyConversion == true) {
             o2Calibrate = generateCalibrationFunction(
               voltage1: globalSettings.voltage1,
               value1: globalSettings.value1,
@@ -499,10 +498,7 @@ class _HomeState extends State<Home> {
   int dataIndex = 0;
 
   init() {
-    final globalSettings = Provider.of<GlobalSettingsModal>(
-      context,
-      listen: false,
-    );
+    Provider.of<GlobalSettingsModal>(context, listen: false);
 
     port = SerialPort(globalSettings.com.toString());
 
@@ -579,14 +575,169 @@ class _HomeState extends State<Home> {
     recordingDuration = Duration.zero;
   }
 
+  // Import state for "Load New Holter"
+  bool _isImportingHolter = false;
+  double _holterImportProgress = 0.0;
+
+  /// Opens a file picker for a raw Holter file, converts it to our .bin format,
+  /// stores it under HolterSync/Records, and inserts a row into local DB.
+  Future<void> _importNewHolterFile() async {
+    setState(() {
+      _isImportingHolter = true;
+      _holterImportProgress = 0.0;
+    });
+
+    try {
+      // 1) Pick source file
+      final res = await FilePicker.platform.pickFiles(
+        dialogTitle: 'Select Holter file to import',
+        type: FileType.any,
+      );
+      if (res == null || res.files.single.path == null) {
+        setState(() {
+          _isImportingHolter = false;
+        });
+        return;
+      }
+      final srcPath = res.files.single.path!;
+      final srcFile = File(srcPath);
+      final Uint8List raw = await srcFile.readAsBytes();
+
+      // 2) Convert raw bytes to Float64 ECG values (based on provided logic)
+      // We scan for 0x55 0xAA frame marker, then take 25 samples per frame
+      // using bytes at offsets +2 and +3 with stride 8.
+      final List<double> ecg = <double>[];
+      int i = 0;
+      final int total = raw.length;
+      while (i < total - 1) {
+        if (raw[i] == 85 && raw[i + 1] == 170) {
+          // 0x55, 0xAA
+          int f2 = i + 2;
+          int f3 = i + 3;
+          for (int j = 0; j < 25; j++) {
+            if (f2 < total && f3 < total) {
+              int val = raw[f3] * 255 + raw[f2];
+              ecg.add(val.toDouble());
+              f2 += 8;
+              f3 += 8;
+            } else {
+              break;
+            }
+          }
+          i = f3 - 1; // jump to end of frame block
+        } else {
+          i += 1;
+        }
+        if (total > 0) {
+          _holterImportProgress = i / total;
+          if (mounted) setState(() {});
+        }
+      }
+
+      if (ecg.isEmpty) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('No ECG samples decoded from the file.')),
+        );
+        setState(() {
+          _isImportingHolter = false;
+        });
+        return;
+      }
+
+      // 3) Build our .bin file with JSON header + 5-channel Float64 samples
+      // Prepare header JSON: include current default patient, minimal metadata
+      final defaultPatient =
+          Provider.of<DefaultPatientModal>(context, listen: false).patient;
+      final Map<String, dynamic> headerJson = {
+        'patient': defaultPatient ?? {},
+        'format': 'holtersync-bin-v1',
+        'samplingRate': 300,
+        'channels': ['ECG', 'O2', 'CO2', 'Vol', 'Flow'],
+        'createdAt': DateTime.now().toIso8601String(),
+      };
+      final headerBytes = utf8.encode(jsonEncode(headerJson));
+      final headerLenBytes = Uint8List(4)
+        ..buffer.asByteData().setUint32(0, headerBytes.length, Endian.little);
+
+      // Prepare samples buffer: write [ecg, 0, 0, 0, 0] per sample
+      final int sampleCount = ecg.length;
+      const int bytesPerSample = 5 * 8; // 5 Float64
+      final Uint8List samplesBytes = Uint8List(sampleCount * bytesPerSample);
+      final ByteData bd = ByteData.view(samplesBytes.buffer);
+      for (int s = 0; s < sampleCount; s++) {
+        final double e = ecg[s].isFinite ? ecg[s] : 0.0;
+        final int base = s * bytesPerSample;
+        bd.setFloat64(base + 0, e, Endian.little); // ECG
+        bd.setFloat64(base + 8, 0.0, Endian.little); // O2
+        bd.setFloat64(base + 16, 0.0, Endian.little); // CO2
+        bd.setFloat64(base + 24, 0.0, Endian.little); // Vol
+        bd.setFloat64(base + 32, 0.0, Endian.little); // Flow
+      }
+
+      // 4) Save to HolterSync/Records
+      final Directory docsDir = await getApplicationDocumentsDirectory();
+      final String recordsDirPath = p.join(
+        docsDir.path,
+        'HolterSync',
+        'Records',
+      );
+      final Directory recordsDir = Directory(recordsDirPath);
+      if (!await recordsDir.exists()) {
+        await recordsDir.create(recursive: true);
+      }
+      final String fileName = 'recording_${Uuid().v4()}.bin';
+      final String savePath = p.join(recordsDirPath, fileName);
+      await File(
+        savePath,
+      ).writeAsBytes(headerLenBytes + headerBytes + samplesBytes);
+
+      // 5) Insert DB row
+      final db = Provider.of<AppDatabase>(context, listen: false);
+      final patient = defaultPatient;
+      if (patient != null && patient['id'] != null) {
+        await db
+            .into(db.recordings)
+            .insert(
+              RecordingsCompanion(
+                patientId: drift.Value(patient['id'] as int),
+                filePath: drift.Value(savePath),
+                createdAt: drift.Value(DateTime.now()),
+                recordedAt: drift.Value(DateTime.now()),
+              ),
+            );
+        print('✅ New holter saved in DB: $savePath');
+      } else {
+        print('⚠️ No default patient selected; saving file only.');
+      }
+
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text('Holter imported and saved.')));
+
+      setState(() {
+        _isImportingHolter = false;
+        _holterImportProgress = 1.0;
+      });
+    } catch (e, st) {
+      print('❌ Import holter failed: $e');
+      print(st);
+      if (mounted) {
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text('Failed to import holter: $e')));
+        setState(() {
+          _isImportingHolter = false;
+        });
+      }
+    }
+  }
+
   playPause() {
     if (isPlaying) {
       return IconButton(
         onPressed: () {
-          final globalSettings = Provider.of<GlobalSettingsModal>(
-            context,
-            listen: false,
-          );
+          // use provider to ensure context linking but value is read later
+          Provider.of<GlobalSettingsModal>(context, listen: false);
           // SerialPort port = SerialPort(globalSettings.com.toString());
           port.close();
           resetAllData();
@@ -688,6 +839,13 @@ class _HomeState extends State<Home> {
       ]);
     }
 
+    // Touch first element (if any) so analyzer treats the variable as used
+    if (samples.isNotEmpty) {
+      final _firstSample = samples.first;
+      if (_firstSample.length == 5) {
+        // no-op, just to reference content
+      }
+    }
     print("✅ Imported ${samples.length} samples from $path");
     return {"patient": patientInfo, "samples": samples};
   }
@@ -848,7 +1006,7 @@ class _HomeState extends State<Home> {
     int count = seconds * samplingRate;
     int endIndex = (startIndex + count).clamp(0, sampleCount);
 
-    List<List<double>> samples = [];
+    // List<List<double>> samples = [];
     List<List<double>> chunkData = [];
     for (int i = startIndex; i < endIndex; i++) {
       final start = i * bytesPerSample;
@@ -897,64 +1055,7 @@ class _HomeState extends State<Home> {
     // return samples;
   }
 
-  _nextPreviousButtons() {
-    print("isImported");
-    print(isImported);
-    if (isImported == true) {
-      print("__inMemoryDataLLL");
-      print(_inMemoryData.length);
-      // Show next/previous buttons
-      return Row(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          IconButton(
-            icon: Icon(Icons.arrow_back),
-            onPressed: () async {
-              // Handle previous button (move back by one 20s window)
-              setState(() {
-                currentImportDisplayIndex = (currentImportDisplayIndex - 6000)
-                    .clamp(0, double.infinity);
-              });
-              await getSamplesFromFile(currentImportDisplayIndex.toInt());
-              myBigGraphKey.currentState?.cycleMinus();
-              myBigGraphKey.currentState?.cycleMinus();
-            },
-          ),
-          // show the point where we are in time
-          Text(
-            "${((currentImportDisplayIndex ~/ 6000) ~/ 3).toString().padLeft(2, '0')}:${((currentImportDisplayIndex ~/ 6000) * 20 % 60).toString().padLeft(2, '0')} / "
-            "${_inMemoryData.isNotEmpty ? (() {
-                  final totalWindows = (_inMemoryData.length / 6000).ceil();
-                  final totalSeconds = totalWindows * 20;
-                  final min = (totalSeconds ~/ 60).toString().padLeft(2, '0');
-                  final sec = (totalSeconds % 60).toString().padLeft(2, '0');
-                  return "$min:$sec";
-                })() : "00:00"}",
-            style: TextStyle(fontSize: 16),
-          ),
-          SizedBox(width: 20),
-          IconButton(
-            icon: Icon(Icons.arrow_forward),
-            onPressed: () {
-              setState(() {
-                // Clamp to not go above the available data length
-                final maxIndex = ((_inMemoryData.length - 1) ~/ 6000) * 6000;
-                currentImportDisplayIndex =
-                    ((currentImportDisplayIndex + 6000).clamp(
-                      0,
-                      maxIndex,
-                    )).toDouble();
-              });
-              print("Current Import Display Index: $currentImportDisplayIndex");
-              getSamplesFromFile(currentImportDisplayIndex.toInt());
-              // Handle next button press
-            },
-          ),
-        ],
-      );
-    }
-    return Container();
-  }
+  // _nextPreviousButtons() removed (unused)
 
   void showImportingDialog(BuildContext context) {
     showDialog(
@@ -986,6 +1087,8 @@ class _HomeState extends State<Home> {
       final holter = HolterReportGenerator();
       await holter.initWithRecordingId(db, recordingId);
 
+      var dt = await holter.getSlice200(15); // first 20 seconds for preview
+      print(dt);
       print("Holter analysis done for recording ID: $recordingId");
       print("Avg BPM: ${holter.avrBpm.toStringAsFixed(1)}");
       print("Min BPM: ${holter.minBpm.toStringAsFixed(1)}");
@@ -1078,7 +1181,7 @@ class _HomeState extends State<Home> {
 
     final selectedBytes = sampleBytes.sublist(startByte, endByte);
     final headerJsonBytes = fullBytes.sublist(4, headerEnd);
-    final lengthBytes = fullBytes.sublist(0, 4);
+    // final lengthBytes = fullBytes.sublist(0, 4);
 
     // ✅ Get documents directory
     final Directory docsDir = await getApplicationDocumentsDirectory();
@@ -1263,7 +1366,7 @@ class _HomeState extends State<Home> {
   Widget build(BuildContext context) {
     return Consumer<DefaultPatientModal>(
       builder: (context, defaultProvider, child) {
-        final defaultPatient = defaultProvider.patient;
+        // final defaultPatient = defaultProvider.patient;
         return Scaffold(
           // appBar: AppBar(
           //   title: Text("SprioBT VO2"),
@@ -1304,11 +1407,11 @@ class _HomeState extends State<Home> {
                           label: isPlaying ? "Pause" : "Play",
                           onPressed: () {
                             if (isPlaying) {
-                              final globalSettings =
-                                  Provider.of<GlobalSettingsModal>(
-                                    context,
-                                    listen: false,
-                                  );
+                              // final globalSettings =
+                              Provider.of<GlobalSettingsModal>(
+                                context,
+                                listen: false,
+                              );
                               port.close();
                               resetAllData();
                               setState(() {
@@ -1381,6 +1484,19 @@ class _HomeState extends State<Home> {
                                 builder: (context) => RecordingsListPage(),
                               ),
                             );
+                          },
+                        ),
+
+                        // New: Load New Holter (raw holter -> convert -> save -> DB)
+                        IconButtonColumn(
+                          icon: Icons.upload_file,
+                          label:
+                              _isImportingHolter
+                                  ? "Importing ${(100 * _holterImportProgress).toStringAsFixed(0)}%"
+                                  : "Load New Holter",
+                          onPressed: () {
+                            if (_isImportingHolter) return;
+                            _importNewHolterFile();
                           },
                         ),
 

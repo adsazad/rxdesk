@@ -726,6 +726,7 @@ class HolterReportGenerator {
     // file = File(fileName.toString());
     //
     // await readFileInChunks(file);
+    print(filePath);
     final file = File(filePath);
     final fileLength = await file.length();
     final partSize = (fileLength / 3).ceil();
