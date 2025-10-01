@@ -766,4 +766,116 @@ class HolterReportGenerator {
 
     print("RAWDATALEN: ${rawDataFullLength}");
   }
+
+  /// Returns raw ECG samples for a given range [startSample, startSample+lengthSamples).
+  /// Supports both:
+  /// - Raw Float64 streams (8 bytes per sample)
+  /// - HolterSync .bin with JSON header + 5 Float64 channels per sample (40 bytes per sample)
+  Future<List<double>> getEcgSamples(int startSample, int lengthSamples) async {
+    if (fileName == null || fileName!.isEmpty) {
+      throw StateError('HolterReportGenerator not initialized with a file');
+    }
+
+    final file = File(fileName!);
+    if (!await file.exists()) return [];
+
+    final raf = await file.open();
+    try {
+      // Try to detect headered 5-channel format
+      int headerLen = 0;
+      int baseOffset = 0;
+      int bytesPerSample = 8; // default: raw Float64 stream
+
+      // Read first 4 bytes to check for header length
+      if (await file.length() >= 4) {
+        final headerLenBytes = await raf.read(4);
+        if (headerLenBytes.length == 4) {
+          headerLen = ByteData.sublistView(
+            headerLenBytes,
+          ).getUint32(0, Endian.little);
+          // Plausible header length guard
+          if (headerLen > 0 &&
+              headerLen <= 8192 &&
+              await file.length() >= 4 + headerLen) {
+            baseOffset = 4 + headerLen;
+            final dataBytes = (await file.length()) - baseOffset;
+            if (dataBytes > 0 && dataBytes % (5 * 8) == 0) {
+              // Treat as 5-channel [ECG,O2,CO2,Vol,Flow] Float64
+              bytesPerSample = 5 * 8;
+            } else {
+              // Not a valid 5-channel bin, fallback to raw
+              baseOffset = 0;
+              bytesPerSample = 8;
+            }
+          } else {
+            // No valid header, fallback to raw
+            headerLen = 0;
+            baseOffset = 0;
+            bytesPerSample = 8;
+          }
+        }
+      }
+
+      final fileLen = await file.length();
+      final totalSamples = ((fileLen - baseOffset) ~/ bytesPerSample);
+      if (startSample >= totalSamples) return [];
+
+      final safeLength = lengthSamples.clamp(0, totalSamples - startSample);
+      if (safeLength <= 0) return [];
+
+      final startByte = baseOffset + startSample * bytesPerSample;
+      await raf.setPosition(startByte);
+      final readBytes = await raf.read(safeLength * bytesPerSample);
+
+      // Extract ECG
+      if (bytesPerSample == 8) {
+        // Raw Float64 stream
+        final floats = Float64List.view(readBytes.buffer, 0, safeLength);
+        return floats.toList();
+      } else {
+        // 5-channel; take ECG at channel offset 0
+        final bd = ByteData.sublistView(readBytes);
+        final List<double> ecg = List.filled(safeLength, 0.0);
+        for (int i = 0; i < safeLength; i++) {
+          final off = i * bytesPerSample;
+          ecg[i] = bd.getFloat64(off + 0, Endian.little);
+        }
+        return ecg;
+      }
+    } finally {
+      await raf.close();
+    }
+  }
+
+  /// Returns total number of ECG samples available in the underlying file.
+  Future<int> getTotalEcgSamples() async {
+    if (fileName == null || fileName!.isEmpty) {
+      throw StateError('HolterReportGenerator not initialized with a file');
+    }
+    final file = File(fileName!);
+    if (!await file.exists()) return 0;
+    final len = await file.length();
+    if (len < 4) {
+      // raw float64 stream
+      return (len ~/ 8);
+    }
+    final raf = await file.open();
+    try {
+      final headerLenBytes = await raf.read(4);
+      if (headerLenBytes.length != 4) return (len ~/ 8);
+      final headerLen = ByteData.sublistView(
+        headerLenBytes,
+      ).getUint32(0, Endian.little);
+      if (headerLen > 0 && headerLen <= 8192 && len >= 4 + headerLen) {
+        final dataBytes = len - (4 + headerLen);
+        if (dataBytes > 0 && dataBytes % (5 * 8) == 0) {
+          return (dataBytes ~/ (5 * 8));
+        }
+      }
+      // fallback raw
+      return (len ~/ 8);
+    } finally {
+      await raf.close();
+    }
+  }
 }

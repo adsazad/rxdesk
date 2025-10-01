@@ -163,6 +163,52 @@ class MyBigGraphV2State extends State<MyBigGraphV2> {
       oldWidget.markerIndices?.removeListener(_onMarkerUpdate);
       widget.markerIndices?.addListener(_onMarkerUpdate);
     }
+
+    // If the plot channel count changed (e.g., switch from 1 to 10 rows), reinitialize buffers
+    if (oldWidget.plot.length != widget.plot.length) {
+      // Rebuild data structures according to new plot length
+      filterBuffs = List.generate(
+        widget.plot.length,
+        (_) => List<double>.filled(FILT_BUF_SIZE, 0.0),
+      );
+      filterPositions = List.generate(widget.plot.length, (_) => 0);
+      allPlotData = List.generate(widget.plot.length, (_) => []);
+      allCurrentIndexes = List.generate(widget.plot.length, (_) => 0);
+
+      plotScales =
+          widget.plot.map((e) {
+            final boxes = (e["scale"] ?? 5).toDouble();
+            final boxValue = (e["boxValue"] ?? (4096 / 12)).toDouble();
+            return boxValue * boxes;
+          }).toList();
+
+      plotThresholds =
+          widget.plot.map((e) => (e["threshold"] ?? 1000.0) as double).toList();
+
+      plotGains =
+          widget.plot.map((e) {
+            final gainValue = (e["gain"] ?? 1.0);
+            return (gainValue is int || gainValue is double)
+                ? gainValue.toDouble()
+                : 1.0;
+          }).toList();
+
+      plotOffsets = List.generate(widget.plot.length, (_) => 0.0);
+
+      // Prepare zero-filled windows for cyclic mode
+      for (int i = 0; i < widget.plot.length; i++) {
+        allPlotData[i] = List.generate(
+          widget.windowSize,
+          (index) => FlSpot(index.toDouble(), 0),
+        );
+      }
+      _refreshMultiFilter();
+      // Notify chart to rebuild
+      plotNotifier.value = List.generate(
+        allPlotData.length,
+        (i) => List.of(allPlotData[i]),
+      );
+    }
   }
 
   @override
@@ -342,6 +388,118 @@ class MyBigGraphV2State extends State<MyBigGraphV2> {
 
     fullLengthIndex++;
     return processedValues;
+  }
+
+  /// Render a full page composed of multiple rows (one row per plot channel).
+  /// Each rows[i] is a list of consecutive ECG samples for that row.
+  /// This method clears existing data and replaces it with the provided rows.
+  void renderMultiRowPage(List<List<double>> rows) {
+    if (rows.isEmpty) return;
+    // If internal buffers are out of sync with widget.plot, reinit structures
+    if (allPlotData.length != widget.plot.length ||
+        filterBuffs.length != widget.plot.length ||
+        allCurrentIndexes.length != widget.plot.length) {
+      filterBuffs = List.generate(
+        widget.plot.length,
+        (_) => List<double>.filled(FILT_BUF_SIZE, 0.0),
+      );
+      filterPositions = List.generate(widget.plot.length, (_) => 0);
+      allPlotData = List.generate(widget.plot.length, (_) => []);
+      allCurrentIndexes = List.generate(widget.plot.length, (_) => 0);
+      plotScales =
+          widget.plot.map((e) {
+            final boxes = (e["scale"] ?? 5).toDouble();
+            final boxValue = (e["boxValue"] ?? (4096 / 12)).toDouble();
+            return boxValue * boxes;
+          }).toList();
+      plotThresholds =
+          widget.plot.map((e) => (e["threshold"] ?? 1000.0) as double).toList();
+      plotGains =
+          widget.plot.map((e) {
+            final gainValue = (e["gain"] ?? 1.0);
+            return (gainValue is int || gainValue is double)
+                ? gainValue.toDouble()
+                : 1.0;
+          }).toList();
+      plotOffsets = List.generate(widget.plot.length, (_) => 0.0);
+      // Prepare zero-filled windows for cyclic mode size
+      for (int i = 0; i < widget.plot.length; i++) {
+        allPlotData[i] = List.generate(
+          widget.windowSize,
+          (index) => FlSpot(index.toDouble(), 0),
+        );
+      }
+      _refreshMultiFilter();
+    }
+
+    // Adjust rows count to available channels
+    final int channelCount = [
+      rows.length,
+      widget.plot.length,
+      allPlotData.length,
+    ].reduce((a, b) => a < b ? a : b);
+    if (channelCount <= 0) return;
+    if (rows.length != channelCount) {
+      rows = rows.sublist(0, channelCount);
+    }
+
+    // Reset per-page state
+    for (int i = 0; i < channelCount; i++) {
+      // Clear plot data and rebuild empty capacity
+      allPlotData[i].clear();
+      allCurrentIndexes[i] = 0;
+      // Reset filters and moving average buffers for each channel
+      if (i < filterBuffs.length) {
+        for (int k = 0; k < filterBuffs[i].length; k++) filterBuffs[i][k] = 0.0;
+      }
+      if (i < filterPositions.length) filterPositions[i] = 0;
+      widget.plot[i]["_maBuffer"] = <double>[];
+    }
+    _clearedForImport = true; // treat as imported-like static page
+    _cycleCount = 0;
+    _sampleBatchCounter = 0;
+    fullLengthIndex = 0;
+
+    // Fill per channel
+    for (int ch = 0; ch < channelCount; ch++) {
+      final row = rows[ch];
+      for (int j = 0; j < row.length; j++) {
+        double value = row[j];
+        value = applyMultiFilterToChannel(ch, value);
+
+        // Moving average if configured
+        final movingAvgConfig = widget.plot[ch]["movingAverage"];
+        if (movingAvgConfig != null && movingAvgConfig["enabled"] == true) {
+          final int window = movingAvgConfig["window"] ?? 0;
+          if (window > 1) {
+            widget.plot[ch]["_maBuffer"] ??= <double>[];
+            List<double> maBuffer = widget.plot[ch]["_maBuffer"];
+            maBuffer.add(value);
+            if (maBuffer.length > window) maBuffer.removeAt(0);
+            value = maBuffer.reduce((a, b) => a + b) / maBuffer.length;
+          }
+        }
+
+        double displayValue = value;
+        final converter = widget.plot[ch]["valueConverter"];
+        if (converter != null && converter is Function) {
+          displayValue = converter(displayValue);
+        }
+        if (widget.plot[ch]["flipDisplay"] == true) {
+          displayValue = -displayValue;
+        }
+
+        if (ch < allPlotData.length) {
+          allPlotData[ch].add(FlSpot(j.toDouble(), displayValue));
+        }
+      }
+    }
+
+    // Emit new data to chart
+    plotNotifier.value = List.generate(
+      allPlotData.length,
+      (i) => List.of(allPlotData[i]),
+    );
   }
 
   clean() {
@@ -571,13 +729,26 @@ class MyBigGraphV2State extends State<MyBigGraphV2> {
   }
 
   String _getLiveValueLabel(int index) {
+    if (index < 0 || index >= allPlotData.length) return "--";
     final dataList = allPlotData[index];
     if (dataList.isEmpty) return "--";
 
-    final latestPoint =
-        widget.isImported
-            ? dataList.last
-            : dataList[(allCurrentIndexes[index] - 1) % widget.windowSize];
+    FlSpot latestPoint;
+    if (widget.isImported) {
+      latestPoint = dataList.last;
+    } else {
+      if (index >= allCurrentIndexes.length || widget.windowSize == 0) {
+        return "--";
+      }
+      final pos =
+          allCurrentIndexes[index] > 0
+              ? (allCurrentIndexes[index] - 1) % widget.windowSize
+              : 0;
+      if (pos < 0 || pos >= dataList.length) {
+        return "--";
+      }
+      latestPoint = dataList[pos];
+    }
 
     double raw = latestPoint.y;
     // Unflip if flipDisplay is true
@@ -856,60 +1027,14 @@ class MyBigGraphV2State extends State<MyBigGraphV2> {
     );
   }
 
-  Widget _filterDropdown(
-    String label,
-    Map config,
-    String key,
-    List<dynamic> options,
-  ) {
-    return DropdownButtonFormField(
-      decoration: InputDecoration(labelText: label),
-      value: config[key],
-      items:
-          options.map<DropdownMenuItem>((option) {
-            return DropdownMenuItem(
-              value: option,
-              child: Text(option.toString()),
-            );
-          }).toList(),
-      onChanged: (val) => config[key] = val,
-    );
-  }
-
-  Widget _filterDropdownWithCaptions(
-    String label,
-    Map config,
-    String key,
-    List<String> captions,
-  ) {
-    return DropdownButtonFormField(
-      decoration: InputDecoration(labelText: label),
-      value: config[key],
-      items: List.generate(captions.length, (i) {
-        return DropdownMenuItem(value: i, child: Text(captions[i]));
-      }),
-      onChanged: (val) => config[key] = val,
-    );
-  }
-
-  Widget _filterTextField(String label, Map config, String key) {
-    return TextFormField(
-      decoration: InputDecoration(labelText: label),
-      initialValue: config[key].toString(),
-      keyboardType: TextInputType.numberWithOptions(decimal: true),
-      onChanged: (val) {
-        double? parsed = double.tryParse(val);
-        if (parsed != null) config[key] = parsed;
-      },
-    );
-  }
+  // Removed unused helper widgets to satisfy strict lints.
 
   _meter(i) {
     if (widget.plot[i]["meter"] == null) {
       return Container();
     }
 
-    final name = widget.plot[i]["name"] ?? "Channel ${i + 1}";
+    // final name = widget.plot[i]["name"] ?? "Channel ${i + 1}";
     final liveValue = _getLiveValueLabel(i);
 
     return Container(
@@ -1067,32 +1192,7 @@ class MyBigGraphV2State extends State<MyBigGraphV2> {
     });
   }
 
-  void _autoCenterOffset(int index) {
-    final plot = allPlotData[index];
-    if (plot.isEmpty) return;
-
-    double minVal = double.infinity;
-    double maxVal = double.negativeInfinity;
-
-    for (final spot in plot) {
-      final val = spot.y * plotGains[index];
-      if (val < minVal) minVal = val;
-      if (val > maxVal) maxVal = val;
-    }
-
-    final midVal = (maxVal + minVal) / 2;
-
-    double totalHeight = widget.maxY - widget.minY;
-    double plotSpacing = totalHeight / widget.plot.length;
-    double verticalCenter = widget.maxY - plotSpacing * (index + 0.5);
-
-    double normalizedY = (midVal / plotScales[index]) * (plotSpacing / 2);
-    double newOffset = verticalCenter - (verticalCenter + normalizedY);
-
-    setState(() {
-      plotOffsets[index] = newOffset;
-    });
-  }
+  // Removed unused _autoCenterOffset to satisfy strict lints.
 
   void _adjustOffset(int index, {required bool up}) {
     setState(() {
@@ -1311,7 +1411,6 @@ class MyBigGraphV2State extends State<MyBigGraphV2> {
   }
 
   double pixelsPerSample = 1; // ✅ Tune this as needed
-  ScrollController _scrollController = ScrollController(); // At state level
 
   void reset() {
     setState(() {
@@ -1360,7 +1459,7 @@ class MyBigGraphV2State extends State<MyBigGraphV2> {
   Widget build(BuildContext context) {
     return Row(
       children: [
-        _leftConsole(), // ✅ Left panel with controls
+        // _leftConsole(), // ✅ Left panel with controls (commented per request)
         Expanded(
           child: ValueListenableBuilder<List<List<FlSpot>>>(
             valueListenable: plotNotifier,
