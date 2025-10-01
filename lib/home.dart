@@ -14,7 +14,6 @@ import 'package:holtersync/Pages/patient/patientAdd.dart';
 import 'package:holtersync/ProviderModals/DefaultPatientModal.dart';
 import 'package:holtersync/ProviderModals/ImportFileProvider.dart';
 import 'package:holtersync/Services/HolterReportGenerator.dart';
-import 'package:holtersync/Widgets/IconButtonColumn.dart';
 import 'package:holtersync/Widgets/MyBigGraphScrollable.dart';
 import 'package:holtersync/data/local/database.dart';
 import 'package:path/path.dart' as p;
@@ -130,13 +129,11 @@ class _HomeState extends State<Home> {
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
-    // Attach TabController listener once available to detect tab switches
-    final tc = DefaultTabController.of(context);
-    if (!identical(_tabController, tc)) {
-      _tabController?.removeListener(_onTabChanged);
-      _tabController = tc;
-      _tabController!.addListener(_onTabChanged);
-    }
+    // Attach TabController listener after first frame when DefaultTabController is available
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) return;
+      _attachTabControllerIfAvailable();
+    });
     final importProvider = Provider.of<ImportFileProvider>(context);
     if (importProvider.recordingId != null) {
       final int recId = importProvider.recordingId!;
@@ -145,6 +142,19 @@ class _HomeState extends State<Home> {
         await _loadPage(0); // show first page once holter is ready
         importProvider.clear();
       });
+    }
+  }
+
+  void _attachTabControllerIfAvailable() {
+    try {
+      final tc = DefaultTabController.of(context);
+      if (!identical(_tabController, tc)) {
+        _tabController?.removeListener(_onTabChanged);
+        _tabController = tc;
+        _tabController!.addListener(_onTabChanged);
+      }
+    } catch (_) {
+      // DefaultTabController not found yet; will try again on next frame/build
     }
   }
 
@@ -468,37 +478,47 @@ class _HomeState extends State<Home> {
 
   Widget _buildTopToolbar() {
     return Container(
-      alignment: Alignment.center,
+      alignment: Alignment.centerLeft,
       color: Colors.blue.shade700,
-      height: 70,
+      height: 44,
       width: double.infinity,
-      padding: const EdgeInsets.symmetric(horizontal: 8),
+      padding: const EdgeInsets.symmetric(horizontal: 6),
       child: SingleChildScrollView(
         scrollDirection: Axis.horizontal,
         child: Row(
-          mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            IconButtonColumn(
+            Padding(
+              padding: const EdgeInsets.only(right: 10),
+              child: Text(
+                'HolterSync',
+                style: TextStyle(
+                  color: Colors.white,
+                  fontSize: 18,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+            ),
+            _toolbarButton(
               icon: Icons.save_alt,
-              label: "Load Data",
+              label: 'Load Data',
               onPressed: () {
                 Navigator.of(context).push(
                   MaterialPageRoute(builder: (context) => RecordingsListPage()),
                 );
               },
             ),
-            IconButtonColumn(
+            _toolbarButton(
               icon: Icons.upload_file,
               label:
                   _isImportingHolter
-                      ? "Importing ${(100 * _holterImportProgress).toStringAsFixed(0)}%"
-                      : "Load New Holter",
+                      ? 'Importing ${(100 * _holterImportProgress).toStringAsFixed(0)}%'
+                      : 'Load New Holter',
               onPressed: () {
                 if (_isImportingHolter) return;
                 _importNewHolterFile();
               },
             ),
-            IconButtonColumn(
+            _toolbarButton(
               icon: Icons.settings,
               label: 'Settings',
               onPressed: () {
@@ -507,7 +527,7 @@ class _HomeState extends State<Home> {
                 );
               },
             ),
-            IconButtonColumn(
+            _toolbarButton(
               icon: Icons.people,
               label: 'Patients',
               onPressed: () {
@@ -516,7 +536,7 @@ class _HomeState extends State<Home> {
                 ).push(MaterialPageRoute(builder: (context) => PatientsList()));
               },
             ),
-            IconButtonColumn(
+            _toolbarButton(
               icon: Icons.person_add,
               label: 'Add Patient',
               onPressed: () {
@@ -526,6 +546,31 @@ class _HomeState extends State<Home> {
               },
             ),
           ],
+        ),
+      ),
+    );
+  }
+
+  Widget _toolbarButton({
+    required IconData icon,
+    required String label,
+    required VoidCallback onPressed,
+  }) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 4),
+      child: TextButton.icon(
+        onPressed: onPressed,
+        icon: Icon(icon, size: 18, color: Colors.white),
+        label: Text(
+          label,
+          style: const TextStyle(fontSize: 12, color: Colors.white),
+          overflow: TextOverflow.ellipsis,
+        ),
+        style: TextButton.styleFrom(
+          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
+          minimumSize: const Size(0, 32),
+          tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+          visualDensity: VisualDensity.compact,
         ),
       ),
     );
@@ -837,16 +882,31 @@ class _HomeState extends State<Home> {
       child: Scaffold(
         appBar: AppBar(
           backgroundColor: Colors.blue.shade700,
-          title: const Text('HolterSync'),
+          title: null,
+          toolbarHeight: 0,
+          automaticallyImplyLeading: false,
+          elevation: 0,
+          scrolledUnderElevation: 0,
+          titleSpacing: 0,
           bottom: PreferredSize(
-            preferredSize: const Size.fromHeight(70 + 3 + 48),
+            preferredSize: const Size.fromHeight(44 + 3 + 48),
             child: Column(
               mainAxisSize: MainAxisSize.min,
               children: [
                 _buildTopToolbar(),
-                const SizedBox(height: 3),
-                const TabBar(
-                  tabs: [Tab(text: 'Viewer'), Tab(text: 'AI interpretation')],
+                const SizedBox(height: 2),
+                Container(
+                  color: Colors.white,
+                  child: TabBar(
+                    labelColor: Colors.blue.shade700,
+                    unselectedLabelColor: Colors.grey.shade600,
+                    indicatorColor: Colors.blue.shade700,
+                    indicatorWeight: 3,
+                    tabs: const [
+                      Tab(text: 'Viewer'),
+                      Tab(text: 'AI interpretation'),
+                    ],
+                  ),
                 ),
               ],
             ),
