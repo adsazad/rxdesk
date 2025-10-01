@@ -33,6 +33,7 @@ class Home extends StatefulWidget {
 class _HomeState extends State<Home> {
   final GlobalKey<MyBigGraphV2State> myBigGraphKey = GlobalKey();
   final HolterReportGenerator _holter = HolterReportGenerator();
+  TabController? _tabController;
 
   // Paging: 10 rows x 30 seconds each @ 300Hz = 90,000 samples per page
   static const int rowsPerPage = 10;
@@ -42,6 +43,8 @@ class _HomeState extends State<Home> {
   static const int samplesPerPage = rowsPerPage * samplesPerRow; // 90,000
   int _currentPage = 0;
   int _totalSamples = 0;
+  List<List<double>>?
+  _lastRows; // cache of last rendered rows for quick refresh
 
   int get _totalPages =>
       _totalSamples > 0
@@ -122,10 +125,18 @@ class _HomeState extends State<Home> {
   bool isImported = false;
   double importProgressPercent = 0.0;
   double currentImportDisplayIndex = 0;
+  bool _isRunningAi = false;
 
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
+    // Attach TabController listener once available to detect tab switches
+    final tc = DefaultTabController.of(context);
+    if (!identical(_tabController, tc)) {
+      _tabController?.removeListener(_onTabChanged);
+      _tabController = tc;
+      _tabController!.addListener(_onTabChanged);
+    }
     final importProvider = Provider.of<ImportFileProvider>(context);
     if (importProvider.recordingId != null) {
       final int recId = importProvider.recordingId!;
@@ -135,6 +146,68 @@ class _HomeState extends State<Home> {
         importProvider.clear();
       });
     }
+  }
+
+  void _onTabChanged() {
+    // Only act when the animation/gesture has ended
+    if (_tabController == null || _tabController!.indexIsChanging) return;
+    // If switched back to Viewer tab (index 0), ensure graph content is visible immediately
+    if (_tabController!.index == 0) {
+      // If plotConfig lost its 10-channel setup (hot reload or earlier state), restore
+      if (plotConfig.length != rowsPerPage) {
+        plotConfig
+          ..clear()
+          ..addAll(
+            List.generate(
+              rowsPerPage,
+              (i) => {
+                "name": "ECG ${i + 1}",
+                "boxValue": 4096 / 12,
+                "unit": "mV",
+                "minDisplay": (-4096 / 12) * 3,
+                "maxDisplay": (4096 / 12) * 3,
+                "scale": 3,
+                "gain": 1.0,
+                "filterConfig": {
+                  "filterOn": true,
+                  "lpf": 3,
+                  "hpf": 5,
+                  "notch": 1,
+                },
+                "meter": {
+                  "decimal": 1,
+                  "unit": "mV",
+                  "convert": (double x) => x,
+                },
+              },
+            ),
+          );
+        setState(() {});
+        // Schedule render after rebuild
+        WidgetsBinding.instance.addPostFrameCallback((_) async {
+          if (_lastRows != null && _lastRows!.isNotEmpty) {
+            myBigGraphKey.currentState?.renderMultiRowPage(_lastRows!);
+          } else {
+            await _loadPage(_currentPage);
+          }
+        });
+      } else {
+        // Re-render existing data to force paint if needed, otherwise reload current page
+        WidgetsBinding.instance.addPostFrameCallback((_) async {
+          if (_lastRows != null && _lastRows!.isNotEmpty) {
+            myBigGraphKey.currentState?.renderMultiRowPage(_lastRows!);
+          } else {
+            await _loadPage(_currentPage);
+          }
+        });
+      }
+    }
+  }
+
+  @override
+  void dispose() {
+    _tabController?.removeListener(_onTabChanged);
+    super.dispose();
   }
 
   // Pick raw holter, convert to .bin (ECG-only), save under app docs, insert DB row
@@ -380,6 +453,320 @@ class _HomeState extends State<Home> {
     }
   }
 
+  Future<void> _runAiInterpretation() async {
+    if (_isRunningAi) return;
+    if (_holter.fileName == null || (_holter.fileName?.isEmpty ?? true)) return;
+    setState(() => _isRunningAi = true);
+    try {
+      await _holter.aiReporter();
+    } catch (_) {
+      // ignore errors for now, could surface to UI if needed
+    } finally {
+      if (mounted) setState(() => _isRunningAi = false);
+    }
+  }
+
+  Widget _buildTopToolbar() {
+    return Container(
+      alignment: Alignment.center,
+      color: Colors.blue.shade700,
+      height: 70,
+      width: double.infinity,
+      padding: const EdgeInsets.symmetric(horizontal: 8),
+      child: SingleChildScrollView(
+        scrollDirection: Axis.horizontal,
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            IconButtonColumn(
+              icon: Icons.save_alt,
+              label: "Load Data",
+              onPressed: () {
+                Navigator.of(context).push(
+                  MaterialPageRoute(builder: (context) => RecordingsListPage()),
+                );
+              },
+            ),
+            IconButtonColumn(
+              icon: Icons.upload_file,
+              label:
+                  _isImportingHolter
+                      ? "Importing ${(100 * _holterImportProgress).toStringAsFixed(0)}%"
+                      : "Load New Holter",
+              onPressed: () {
+                if (_isImportingHolter) return;
+                _importNewHolterFile();
+              },
+            ),
+            IconButtonColumn(
+              icon: Icons.settings,
+              label: 'Settings',
+              onPressed: () {
+                Navigator.of(context).push(
+                  MaterialPageRoute(builder: (context) => GlobalSettings()),
+                );
+              },
+            ),
+            IconButtonColumn(
+              icon: Icons.people,
+              label: 'Patients',
+              onPressed: () {
+                Navigator.of(
+                  context,
+                ).push(MaterialPageRoute(builder: (context) => PatientsList()));
+              },
+            ),
+            IconButtonColumn(
+              icon: Icons.person_add,
+              label: 'Add Patient',
+              onPressed: () {
+                Navigator.of(
+                  context,
+                ).push(MaterialPageRoute(builder: (context) => PatientAdd()));
+              },
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildViewerTab() {
+    return SingleChildScrollView(
+      child: Column(
+        children: [
+          const SizedBox(height: 3),
+          Row(
+            children: [
+              Expanded(
+                child: MyBigGraphV2(
+                  key: myBigGraphKey,
+                  isImported: true,
+                  onCycleComplete: () {},
+                  streamConfig: const [],
+                  onStreamResult: (_) {},
+                  plot:
+                      plotConfig.length == 1
+                          ? plotConfig
+                          : plotConfig, // will be 10 rows after first page load
+                  windowSize: samplesPerRow, // 30 sec @ 300 Hz per row
+                  verticalLineConfigs: [
+                    {
+                      'seconds': 0.5,
+                      'stroke': 0.5,
+                      'color': Colors.blueAccent.withOpacity(0.2),
+                    },
+                    {
+                      'seconds': 1.0,
+                      'stroke': 0.8,
+                      'color': Colors.redAccent.withOpacity(0.2),
+                    },
+                  ],
+                  horizontalInterval: 4096 / 12,
+                  verticalInterval: 8,
+                  samplingRate: 300,
+                  minY: -(4096 / 12) * 5,
+                  maxY: (4096 / 12) * 25,
+                ),
+              ),
+              // Right-side panel with page/time, navigation, and stats
+              Container(
+                width: 200,
+                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    Text(
+                      _totalPages > 0
+                          ? 'Page ${_currentPage + 1} / $_totalPages'
+                          : 'Page -- / --',
+                      textAlign: TextAlign.center,
+                      style: const TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                    const SizedBox(height: 6),
+                    Text(
+                      _currentPageTimeRangeText,
+                      textAlign: TextAlign.center,
+                      style: const TextStyle(
+                        fontSize: 12,
+                        color: Colors.black87,
+                      ),
+                    ),
+                    const SizedBox(height: 12),
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                      children: [
+                        IconButton(
+                          tooltip: 'Previous Page',
+                          onPressed:
+                              (_currentPage > 0)
+                                  ? () async {
+                                    await _loadPage(_currentPage - 1);
+                                  }
+                                  : null,
+                          icon: const Icon(Icons.chevron_left),
+                        ),
+                        IconButton(
+                          tooltip: 'Next Page',
+                          onPressed:
+                              (_totalPages == 0 ||
+                                      _currentPage >= _totalPages - 1)
+                                  ? null
+                                  : () async {
+                                    await _loadPage(_currentPage + 1);
+                                  },
+                          icon: const Icon(Icons.chevron_right),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 12),
+                    _statBox(
+                      'Avg BPM',
+                      (_holter.avrBpm > 0)
+                          ? _holter.avrBpm.toStringAsFixed(1)
+                          : '--',
+                    ),
+                    _statBox(
+                      'Min BPM',
+                      (_holter.minBpm > 0)
+                          ? _holter.minBpm.toStringAsFixed(1)
+                          : '--',
+                    ),
+                    _statBox(
+                      'Max BPM',
+                      (_holter.maxBpm > 0)
+                          ? _holter.maxBpm.toStringAsFixed(1)
+                          : '--',
+                    ),
+                    _statBox(
+                      'R-peaks',
+                      (_holter.allRrIndexes.isNotEmpty)
+                          ? _holter.allRrIndexes.length.toString()
+                          : '--',
+                    ),
+                    if (_holter.conditions != null &&
+                        _holter.conditions is List &&
+                        (_holter.conditions as List).isNotEmpty) ...[
+                      const SizedBox(height: 8),
+                      const Text(
+                        'Conditions',
+                        textAlign: TextAlign.center,
+                        style: TextStyle(fontWeight: FontWeight.w600),
+                      ),
+                      const SizedBox(height: 6),
+                      for (final cond in (_holter.conditions as List).take(3))
+                        _statBox(
+                          '${cond['name']}',
+                          (cond['index'] is List)
+                              ? (cond['index'] as List).length.toString()
+                              : '0',
+                        ),
+                    ],
+                  ],
+                ),
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildAiTab() {
+    final hasData =
+        _totalSamples > 0 || (_holter.fileName?.isNotEmpty ?? false);
+    return Padding(
+      padding: const EdgeInsets.all(12.0),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              ElevatedButton.icon(
+                onPressed:
+                    hasData && !_isRunningAi ? _runAiInterpretation : null,
+                icon: const Icon(Icons.bolt),
+                label: Text(
+                  _isRunningAi ? 'Running…' : 'Run AI interpretation',
+                ),
+              ),
+              const SizedBox(width: 12),
+              if (_isRunningAi)
+                ValueListenableBuilder<String>(
+                  valueListenable: _holter.progress,
+                  builder: (_, value, __) => Text('Progress: $value'),
+                ),
+            ],
+          ),
+          const SizedBox(height: 16),
+          Wrap(
+            spacing: 8,
+            runSpacing: 8,
+            children: [
+              _statBox(
+                'Avg BPM',
+                (_holter.avrBpm > 0) ? _holter.avrBpm.toStringAsFixed(1) : '--',
+              ),
+              _statBox(
+                'Min BPM',
+                (_holter.minBpm > 0) ? _holter.minBpm.toStringAsFixed(1) : '--',
+              ),
+              _statBox(
+                'Max BPM',
+                (_holter.maxBpm > 0) ? _holter.maxBpm.toStringAsFixed(1) : '--',
+              ),
+              _statBox(
+                'R-peaks',
+                (_holter.allRrIndexes.isNotEmpty)
+                    ? _holter.allRrIndexes.length.toString()
+                    : '--',
+              ),
+            ],
+          ),
+          const SizedBox(height: 16),
+          const Text(
+            'Detected conditions',
+            style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
+          ),
+          const SizedBox(height: 8),
+          Expanded(
+            child:
+                hasData
+                    ? (_holter.conditions is List &&
+                            (_holter.conditions as List).isNotEmpty)
+                        ? ListView.builder(
+                          itemCount: (_holter.conditions as List).length,
+                          itemBuilder: (_, idx) {
+                            final cond = (_holter.conditions as List)[idx];
+                            final name = cond['name']?.toString() ?? 'Unknown';
+                            final count =
+                                (cond['index'] is List)
+                                    ? (cond['index'] as List).length
+                                    : 0;
+                            return Card(
+                              child: ListTile(
+                                leading: const Icon(Icons.analytics),
+                                title: Text(name),
+                                subtitle: Text('Occurrences: $count'),
+                              ),
+                            );
+                          },
+                        )
+                        : const Center(
+                          child: Text(
+                            'No conditions detected yet. Run AI interpretation.',
+                          ),
+                        )
+                    : const Center(child: Text('Load a recording first.')),
+          ),
+        ],
+      ),
+    );
+  }
+
   Future<void> _loadPage(int pageIndex) async {
     if (_totalSamples <= 0) return;
     if (pageIndex < 0) return;
@@ -435,9 +822,9 @@ class _HomeState extends State<Home> {
       setState(() {});
     }
 
-    // Render page
+    // Render page and update current page
+    _lastRows = rows;
     myBigGraphKey.currentState?.renderMultiRowPage(rows);
-
     setState(() {
       _currentPage = pageIndex;
     });
@@ -445,221 +832,52 @@ class _HomeState extends State<Home> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      body: SingleChildScrollView(
-        child: Column(
-          children: [
-            // Toolbar
-            Container(
-              alignment: Alignment.center,
-              color: Colors.blue.shade700,
-              height: 70,
-              width: double.infinity,
-              padding: const EdgeInsets.symmetric(horizontal: 8),
-              child: SingleChildScrollView(
-                scrollDirection: Axis.horizontal,
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    IconButtonColumn(
-                      icon: Icons.save_alt,
-                      label: "Load Data",
-                      onPressed: () {
-                        Navigator.of(context).push(
-                          MaterialPageRoute(
-                            builder: (context) => RecordingsListPage(),
-                          ),
-                        );
-                      },
-                    ),
-                    IconButtonColumn(
-                      icon: Icons.upload_file,
-                      label:
-                          _isImportingHolter
-                              ? "Importing ${(100 * _holterImportProgress).toStringAsFixed(0)}%"
-                              : "Load New Holter",
-                      onPressed: () {
-                        if (_isImportingHolter) return;
-                        _importNewHolterFile();
-                      },
-                    ),
-                    IconButtonColumn(
-                      icon: Icons.settings,
-                      label: 'Settings',
-                      onPressed: () {
-                        Navigator.of(context).push(
-                          MaterialPageRoute(
-                            builder: (context) => GlobalSettings(),
-                          ),
-                        );
-                      },
-                    ),
-                    IconButtonColumn(
-                      icon: Icons.people,
-                      label: 'Patients',
-                      onPressed: () {
-                        Navigator.of(context).push(
-                          MaterialPageRoute(
-                            builder: (context) => PatientsList(),
-                          ),
-                        );
-                      },
-                    ),
-                    IconButtonColumn(
-                      icon: Icons.person_add,
-                      label: 'Add Patient',
-                      onPressed: () {
-                        Navigator.of(context).push(
-                          MaterialPageRoute(builder: (context) => PatientAdd()),
-                        );
-                      },
-                    ),
-                  ],
-                ),
-              ),
-            ),
-
-            const SizedBox(height: 3),
-            Row(
+    return DefaultTabController(
+      length: 2,
+      child: Scaffold(
+        appBar: AppBar(
+          backgroundColor: Colors.blue.shade700,
+          title: const Text('HolterSync'),
+          bottom: PreferredSize(
+            preferredSize: const Size.fromHeight(70 + 3 + 48),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
               children: [
-                Expanded(
-                  child: MyBigGraphV2(
-                    key: myBigGraphKey,
-                    isImported: true,
-                    onCycleComplete: () {},
-                    streamConfig: const [],
-                    onStreamResult: (_) {},
-                    plot:
-                        plotConfig.length == 1
-                            ? plotConfig
-                            : plotConfig, // will be 10 rows after first page load
-                    windowSize: samplesPerRow, // 30 sec @ 300 Hz per row
-                    verticalLineConfigs: [
-                      {
-                        'seconds': 0.5,
-                        'stroke': 0.5,
-                        'color': Colors.blueAccent.withOpacity(0.2),
-                      },
-                      {
-                        'seconds': 1.0,
-                        'stroke': 0.8,
-                        'color': Colors.redAccent.withOpacity(0.2),
-                      },
-                    ],
-                    horizontalInterval: 4096 / 12,
-                    verticalInterval: 8,
-                    samplingRate: 300,
-                    minY: -(4096 / 12) * 5,
-                    maxY: (4096 / 12) * 25,
-                  ),
-                ),
-                Container(
-                  width: 200,
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 8,
-                    vertical: 8,
-                  ),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.stretch,
-                    children: [
-                      Text(
-                        _totalPages > 0
-                            ? 'Page ${_currentPage + 1} / $_totalPages'
-                            : 'Page -- / --',
-                        textAlign: TextAlign.center,
-                        style: const TextStyle(
-                          fontSize: 16,
-                          fontWeight: FontWeight.w600,
-                        ),
-                      ),
-                      const SizedBox(height: 6),
-                      Text(
-                        _currentPageTimeRangeText,
-                        textAlign: TextAlign.center,
-                        style: const TextStyle(
-                          fontSize: 12,
-                          color: Colors.black87,
-                        ),
-                      ),
-                      const SizedBox(height: 12),
-                      Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                        children: [
-                          IconButton(
-                            tooltip: 'Previous Page',
-                            onPressed:
-                                (_currentPage > 0)
-                                    ? () async {
-                                      await _loadPage(_currentPage - 1);
-                                    }
-                                    : null,
-                            icon: const Icon(Icons.chevron_left),
-                          ),
-                          IconButton(
-                            tooltip: 'Next Page',
-                            onPressed:
-                                (_totalPages == 0 ||
-                                        _currentPage >= _totalPages - 1)
-                                    ? null
-                                    : () async {
-                                      await _loadPage(_currentPage + 1);
-                                    },
-                            icon: const Icon(Icons.chevron_right),
-                          ),
-                        ],
-                      ),
-                      const SizedBox(height: 12),
-                      // Stats boxes from HolterReportGenerator
-                      _statBox(
-                        'Avg BPM',
-                        (_holter.avrBpm > 0)
-                            ? _holter.avrBpm.toStringAsFixed(1)
-                            : '--',
-                      ),
-                      _statBox(
-                        'Min BPM',
-                        (_holter.minBpm > 0)
-                            ? _holter.minBpm.toStringAsFixed(1)
-                            : '--',
-                      ),
-                      _statBox(
-                        'Max BPM',
-                        (_holter.maxBpm > 0)
-                            ? _holter.maxBpm.toStringAsFixed(1)
-                            : '--',
-                      ),
-                      _statBox(
-                        'R-peaks',
-                        (_holter.allRrIndexes.isNotEmpty)
-                            ? _holter.allRrIndexes.length.toString()
-                            : '--',
-                      ),
-                      if (_holter.conditions != null &&
-                          _holter.conditions is List &&
-                          (_holter.conditions as List).isNotEmpty) ...[
-                        const SizedBox(height: 8),
-                        const Text(
-                          'Conditions',
-                          textAlign: TextAlign.center,
-                          style: TextStyle(fontWeight: FontWeight.w600),
-                        ),
-                        const SizedBox(height: 6),
-                        for (final cond in (_holter.conditions as List).take(3))
-                          _statBox(
-                            '${cond['name']}',
-                            (cond['index'] is List)
-                                ? (cond['index'] as List).length.toString()
-                                : '0',
-                          ),
-                      ],
-                    ],
-                  ),
+                _buildTopToolbar(),
+                const SizedBox(height: 3),
+                const TabBar(
+                  tabs: [Tab(text: 'Viewer'), Tab(text: 'AI interpretation')],
                 ),
               ],
             ),
+          ),
+        ),
+        body: TabBarView(
+          children: [
+            _KeepAlive(child: _buildViewerTab()),
+            _KeepAlive(child: _buildAiTab()),
           ],
         ),
       ),
     );
+  }
+}
+
+class _KeepAlive extends StatefulWidget {
+  final Widget child;
+  const _KeepAlive({Key? key, required this.child}) : super(key: key);
+  @override
+  State<_KeepAlive> createState() => _KeepAliveState();
+}
+
+class _KeepAliveState extends State<_KeepAlive>
+    with AutomaticKeepAliveClientMixin {
+  @override
+  bool get wantKeepAlive => true;
+
+  @override
+  Widget build(BuildContext context) {
+    super.build(context);
+    return widget.child;
   }
 }
