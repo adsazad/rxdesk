@@ -85,7 +85,11 @@ flutter:
   # To add assets to your application, add an assets section, like this:
   assets:
     - assets/
-
+    - assets/model.tflite
+    - assets/areaofinterest.tflite
+    - assets/rrglu.tflite
+    - assets/scaler_params.json
+    - assets/areaofinterestscaler.json
   # An image asset can refer to one or more resolution-specific "variants", see
   # https://flutter.dev/to/resolution-aware-images
 

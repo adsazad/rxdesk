@@ -1459,7 +1459,7 @@ class MyBigGraphV2State extends State<MyBigGraphV2> {
   Widget build(BuildContext context) {
     return Row(
       children: [
-        // _leftConsole(), // ✅ Left panel with controls (commented per request)
+        _leftConsole(), // ✅ Left panel with controls (commented per request)
         Expanded(
           child: ValueListenableBuilder<List<List<FlSpot>>>(
             valueListenable: plotNotifier,
