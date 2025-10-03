@@ -167,13 +167,16 @@ class HolterReportGenerator {
   }
 
   aiReporter() async {
+    print("running ai reporter");
     aiClasser = await ECGClassv1.create();
     Interpreter interpreter = aiClasser!.interpreter;
     StandardScaler scalerTwo = aiClasser!.scalerTwo;
     processedIndex = 0;
+    print("allRrIndexes length: ${allRrIndexes.length}");
     for (int i = 0; i < allRrIndexes.length; i++) {
       int index = allRrIndexes[i];
       List<double> slice = await getSlice200(index);
+      print("SLICELEN: ${slice.length}");
       if (slice.length == 200) {
         slice = filterData(slice);
         slice = aiClasser!.movingAverage(slice);

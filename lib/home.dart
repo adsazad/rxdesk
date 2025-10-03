@@ -8,6 +8,7 @@ import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:holtersync/Pages/GlobalSettings.dart';
+import 'package:holtersync/Pages/AI/AiInterpretationTab.dart';
 import 'package:holtersync/Pages/RecordingsListPage.dart';
 import 'package:holtersync/Pages/patient/list.dart';
 import 'package:holtersync/Pages/patient/patientAdd.dart';
@@ -124,7 +125,7 @@ class _HomeState extends State<Home> {
   bool isImported = false;
   double importProgressPercent = 0.0;
   double currentImportDisplayIndex = 0;
-  bool _isRunningAi = false;
+  // AI running state now managed inside AiInterpretationTab
 
   @override
   void didChangeDependencies() {
@@ -463,18 +464,7 @@ class _HomeState extends State<Home> {
     }
   }
 
-  Future<void> _runAiInterpretation() async {
-    if (_isRunningAi) return;
-    if (_holter.fileName == null || (_holter.fileName?.isEmpty ?? true)) return;
-    setState(() => _isRunningAi = true);
-    try {
-      await _holter.aiReporter();
-    } catch (_) {
-      // ignore errors for now, could surface to UI if needed
-    } finally {
-      if (mounted) setState(() => _isRunningAi = false);
-    }
-  }
+  // AI run logic moved into AiInterpretationTab
 
   Widget _buildTopToolbar() {
     return Container(
@@ -720,97 +710,7 @@ class _HomeState extends State<Home> {
     );
   }
 
-  Widget _buildAiTab() {
-    final hasData =
-        _totalSamples > 0 || (_holter.fileName?.isNotEmpty ?? false);
-    return Padding(
-      padding: const EdgeInsets.all(12.0),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            children: [
-              ElevatedButton.icon(
-                onPressed:
-                    hasData && !_isRunningAi ? _runAiInterpretation : null,
-                icon: const Icon(Icons.bolt),
-                label: Text(
-                  _isRunningAi ? 'Running…' : 'Run AI interpretation',
-                ),
-              ),
-              const SizedBox(width: 12),
-              if (_isRunningAi)
-                ValueListenableBuilder<String>(
-                  valueListenable: _holter.progress,
-                  builder: (_, value, __) => Text('Progress: $value'),
-                ),
-            ],
-          ),
-          const SizedBox(height: 16),
-          Wrap(
-            spacing: 8,
-            runSpacing: 8,
-            children: [
-              _statBox(
-                'Avg BPM',
-                (_holter.avrBpm > 0) ? _holter.avrBpm.toStringAsFixed(1) : '--',
-              ),
-              _statBox(
-                'Min BPM',
-                (_holter.minBpm > 0) ? _holter.minBpm.toStringAsFixed(1) : '--',
-              ),
-              _statBox(
-                'Max BPM',
-                (_holter.maxBpm > 0) ? _holter.maxBpm.toStringAsFixed(1) : '--',
-              ),
-              _statBox(
-                'R-peaks',
-                (_holter.allRrIndexes.isNotEmpty)
-                    ? _holter.allRrIndexes.length.toString()
-                    : '--',
-              ),
-            ],
-          ),
-          const SizedBox(height: 16),
-          const Text(
-            'Detected conditions',
-            style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
-          ),
-          const SizedBox(height: 8),
-          Expanded(
-            child:
-                hasData
-                    ? (_holter.conditions is List &&
-                            (_holter.conditions as List).isNotEmpty)
-                        ? ListView.builder(
-                          itemCount: (_holter.conditions as List).length,
-                          itemBuilder: (_, idx) {
-                            final cond = (_holter.conditions as List)[idx];
-                            final name = cond['name']?.toString() ?? 'Unknown';
-                            final count =
-                                (cond['index'] is List)
-                                    ? (cond['index'] as List).length
-                                    : 0;
-                            return Card(
-                              child: ListTile(
-                                leading: const Icon(Icons.analytics),
-                                title: Text(name),
-                                subtitle: Text('Occurrences: $count'),
-                              ),
-                            );
-                          },
-                        )
-                        : const Center(
-                          child: Text(
-                            'No conditions detected yet. Run AI interpretation.',
-                          ),
-                        )
-                    : const Center(child: Text('Load a recording first.')),
-          ),
-        ],
-      ),
-    );
-  }
+  Widget _buildAiTab() => AiInterpretationTab(holter: _holter);
 
   Future<void> _loadPage(int pageIndex) async {
     if (_totalSamples <= 0) return;

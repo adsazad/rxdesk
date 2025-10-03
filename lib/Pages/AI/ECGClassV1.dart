@@ -43,15 +43,20 @@ class ECGClassv1 {
   ECGClassv1._();
 
   static Future<ECGClassv1> create() async {
+    print("Creating ECGClassv1 instance");
     final instance = ECGClassv1._();
     await instance._initialize();
+    print("ECGClassv1 instance created");
     return instance;
   }
 
   Future<void> _initialize() async {
+    print("MODEL LOADER STARTING");
     interpreter = await tfl.Interpreter.fromAsset('assets/model.tflite');
-    print("SCALE LOADER START");
+    print("MODEL LOADER DONE");
+    print("SCALER LOADER STARTING");
     scalerTwo = await StandardScaler.fromJsonFile("assets/scaler_params.json");
+    print("SCALER LOADER DONE");
     scalerOne = await StandardScaler.fromJsonFile(
       "assets/areaofinterestscaler.json",
     );
