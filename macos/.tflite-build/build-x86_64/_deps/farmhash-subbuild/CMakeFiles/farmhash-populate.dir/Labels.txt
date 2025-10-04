@@ -1,0 +1,14 @@
+# Target labels
+ farmhash-populate
+# Source files and their labels
+/Users/arashdeep/StudioProjects/holtersync/macos/.tflite-build/build-x86_64/_deps/farmhash-subbuild/CMakeFiles/farmhash-populate
+/Users/arashdeep/StudioProjects/holtersync/macos/.tflite-build/build-x86_64/_deps/farmhash-subbuild/CMakeFiles/farmhash-populate.rule
+/Users/arashdeep/StudioProjects/holtersync/macos/.tflite-build/build-x86_64/_deps/farmhash-subbuild/CMakeFiles/farmhash-populate-complete.rule
+/Users/arashdeep/StudioProjects/holtersync/macos/.tflite-build/build-x86_64/_deps/farmhash-subbuild/farmhash-populate-prefix/src/farmhash-populate-stamp/farmhash-populate-build.rule
+/Users/arashdeep/StudioProjects/holtersync/macos/.tflite-build/build-x86_64/_deps/farmhash-subbuild/farmhash-populate-prefix/src/farmhash-populate-stamp/farmhash-populate-configure.rule
+/Users/arashdeep/StudioProjects/holtersync/macos/.tflite-build/build-x86_64/_deps/farmhash-subbuild/farmhash-populate-prefix/src/farmhash-populate-stamp/farmhash-populate-download.rule
+/Users/arashdeep/StudioProjects/holtersync/macos/.tflite-build/build-x86_64/_deps/farmhash-subbuild/farmhash-populate-prefix/src/farmhash-populate-stamp/farmhash-populate-install.rule
+/Users/arashdeep/StudioProjects/holtersync/macos/.tflite-build/build-x86_64/_deps/farmhash-subbuild/farmhash-populate-prefix/src/farmhash-populate-stamp/farmhash-populate-mkdir.rule
+/Users/arashdeep/StudioProjects/holtersync/macos/.tflite-build/build-x86_64/_deps/farmhash-subbuild/farmhash-populate-prefix/src/farmhash-populate-stamp/farmhash-populate-patch.rule
+/Users/arashdeep/StudioProjects/holtersync/macos/.tflite-build/build-x86_64/_deps/farmhash-subbuild/farmhash-populate-prefix/src/farmhash-populate-stamp/farmhash-populate-test.rule
+/Users/arashdeep/StudioProjects/holtersync/macos/.tflite-build/build-x86_64/_deps/farmhash-subbuild/farmhash-populate-prefix/src/farmhash-populate-stamp/farmhash-populate-update.rule

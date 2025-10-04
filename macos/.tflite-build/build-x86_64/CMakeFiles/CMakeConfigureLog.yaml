@@ -1,0 +1,1812 @@
+
+---
+events:
+  -
+    kind: "message-v1"
+    backtrace:
+      - "/opt/homebrew/Cellar/cmake/3.29.6/share/cmake/Modules/CMakeDetermineSystem.cmake:205 (message)"
+      - "CMakeLists.txt:17 (project)"
+    message: |
+      The system is: Darwin - 23.5.0 - x86_64
+  -
+    kind: "message-v1"
+    backtrace:
+      - "/opt/homebrew/Cellar/cmake/3.29.6/share/cmake/Modules/CMakeDetermineCompilerId.cmake:17 (message)"
+      - "/opt/homebrew/Cellar/cmake/3.29.6/share/cmake/Modules/CMakeDetermineCompilerId.cmake:64 (__determine_compiler_id_test)"
+      - "/opt/homebrew/Cellar/cmake/3.29.6/share/cmake/Modules/CMakeDetermineCCompiler.cmake:123 (CMAKE_DETERMINE_COMPILER_ID)"
+      - "CMakeLists.txt:17 (project)"
+    message: |
+      Compiling the C compiler identification source file "CMakeCCompilerId.c" failed.
+      Compiler: /Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/cc 
+      Build flags: 
+      Id flags:  
+      
+      The output was:
+      1
+      ld: library 'System' not found
+      cc: error: linker command failed with exit code 1 (use -v to see invocation)
+      
+      
+  -
+    kind: "message-v1"
+    backtrace:
+      - "/opt/homebrew/Cellar/cmake/3.29.6/share/cmake/Modules/CMakeDetermineCompilerId.cmake:17 (message)"
+      - "/opt/homebrew/Cellar/cmake/3.29.6/share/cmake/Modules/CMakeDetermineCompilerId.cmake:64 (__determine_compiler_id_test)"
+      - "/opt/homebrew/Cellar/cmake/3.29.6/share/cmake/Modules/CMakeDetermineCCompiler.cmake:123 (CMAKE_DETERMINE_COMPILER_ID)"
+      - "CMakeLists.txt:17 (project)"
+    message: |
+      Compiling the C compiler identification source file "CMakeCCompilerId.c" succeeded.
+      Compiler: /Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/cc 
+      Build flags: 
+      Id flags: -c 
+      
+      The output was:
+      0
+      
+      
+      Compilation of the C compiler identification source "CMakeCCompilerId.c" produced "CMakeCCompilerId.o"
+      
+      The C compiler identification is AppleClang, found in:
+        /Users/arashdeep/StudioProjects/holtersync/macos/.tflite-build/build-x86_64/CMakeFiles/3.29.6/CompilerIdC/CMakeCCompilerId.o
+      
+  -
+    kind: "message-v1"
+    backtrace:
+      - "/opt/homebrew/Cellar/cmake/3.29.6/share/cmake/Modules/CMakeDetermineCompilerId.cmake:17 (message)"
+      - "/opt/homebrew/Cellar/cmake/3.29.6/share/cmake/Modules/CMakeDetermineCompilerId.cmake:64 (__determine_compiler_id_test)"
+      - "/opt/homebrew/Cellar/cmake/3.29.6/share/cmake/Modules/CMakeDetermineCXXCompiler.cmake:126 (CMAKE_DETERMINE_COMPILER_ID)"
+      - "CMakeLists.txt:17 (project)"
+    message: |
+      Compiling the CXX compiler identification source file "CMakeCXXCompilerId.cpp" failed.
+      Compiler: /Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/c++ 
+      Build flags: 
+      Id flags:  
+      
+      The output was:
+      1
+      ld: library 'c++' not found
+      c++: error: linker command failed with exit code 1 (use -v to see invocation)
+      
+      
+  -
+    kind: "message-v1"
+    backtrace:
+      - "/opt/homebrew/Cellar/cmake/3.29.6/share/cmake/Modules/CMakeDetermineCompilerId.cmake:17 (message)"
+      - "/opt/homebrew/Cellar/cmake/3.29.6/share/cmake/Modules/CMakeDetermineCompilerId.cmake:64 (__determine_compiler_id_test)"
+      - "/opt/homebrew/Cellar/cmake/3.29.6/share/cmake/Modules/CMakeDetermineCXXCompiler.cmake:126 (CMAKE_DETERMINE_COMPILER_ID)"
+      - "CMakeLists.txt:17 (project)"
+    message: |
+      Compiling the CXX compiler identification source file "CMakeCXXCompilerId.cpp" succeeded.
+      Compiler: /Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/c++ 
+      Build flags: 
+      Id flags: -c 
+      
+      The output was:
+      0
+      
+      
+      Compilation of the CXX compiler identification source "CMakeCXXCompilerId.cpp" produced "CMakeCXXCompilerId.o"
+      
+      The CXX compiler identification is AppleClang, found in:
+        /Users/arashdeep/StudioProjects/holtersync/macos/.tflite-build/build-x86_64/CMakeFiles/3.29.6/CompilerIdCXX/CMakeCXXCompilerId.o
+      
+  -
+    kind: "try_compile-v1"
+    backtrace:
+      - "/opt/homebrew/Cellar/cmake/3.29.6/share/cmake/Modules/CMakeDetermineCompilerABI.cmake:67 (try_compile)"
+      - "/opt/homebrew/Cellar/cmake/3.29.6/share/cmake/Modules/CMakeTestCCompiler.cmake:26 (CMAKE_DETERMINE_COMPILER_ABI)"
+      - "CMakeLists.txt:17 (project)"
+    checks:
+      - "Detecting C compiler ABI info"
+    directories:
+      source: "/Users/arashdeep/StudioProjects/holtersync/macos/.tflite-build/build-x86_64/CMakeFiles/CMakeScratch/TryCompile-kJqSXX"
+      binary: "/Users/arashdeep/StudioProjects/holtersync/macos/.tflite-build/build-x86_64/CMakeFiles/CMakeScratch/TryCompile-kJqSXX"
+    cmakeVariables:
+      CMAKE_C_FLAGS: ""
+      CMAKE_C_FLAGS_DEBUG: "-g"
+      CMAKE_EXE_LINKER_FLAGS: "-L/opt/homebrew/opt/php@8.2/lib"
+      CMAKE_OSX_ARCHITECTURES: "x86_64"
+      CMAKE_OSX_DEPLOYMENT_TARGET: "14.5"
+      CMAKE_OSX_SYSROOT: "/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX15.2.sdk"
+    buildResult:
+      variable: "CMAKE_C_ABI_COMPILED"
+      cached: true
+      stdout: |
+        Change Dir: '/Users/arashdeep/StudioProjects/holtersync/macos/.tflite-build/build-x86_64/CMakeFiles/CMakeScratch/TryCompile-kJqSXX'
+        
+        Run Build Command(s): /opt/homebrew/Cellar/cmake/3.29.6/bin/cmake -E env VERBOSE=1 /usr/bin/make -f Makefile cmTC_3ff9a/fast
+        /Applications/Xcode.app/Contents/Developer/usr/bin/make  -f CMakeFiles/cmTC_3ff9a.dir/build.make CMakeFiles/cmTC_3ff9a.dir/build
+        Building C object CMakeFiles/cmTC_3ff9a.dir/CMakeCCompilerABI.c.o
+        /Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/cc   -arch x86_64 -isysroot /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX15.2.sdk -mmacosx-version-min=14.5   -v -Wl,-v -MD -MT CMakeFiles/cmTC_3ff9a.dir/CMakeCCompilerABI.c.o -MF CMakeFiles/cmTC_3ff9a.dir/CMakeCCompilerABI.c.o.d -o CMakeFiles/cmTC_3ff9a.dir/CMakeCCompilerABI.c.o -c /opt/homebrew/Cellar/cmake/3.29.6/share/cmake/Modules/CMakeCCompilerABI.c
+        Apple clang version 16.0.0 (clang-1600.0.26.6)
+        Target: x86_64-apple-darwin23.5.0
+        Thread model: posix
+        InstalledDir: /Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin
+        cc: warning: -Wl,-v: 'linker' input unused [-Wunused-command-line-argument]
+         "/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/clang" -cc1 -triple x86_64-apple-macosx14.5.0 -Wundef-prefix=TARGET_OS_ -Wdeprecated-objc-isa-usage -Werror=deprecated-objc-isa-usage -Werror=implicit-function-declaration -emit-obj -mrelax-all -disable-free -clear-ast-before-backend -disable-llvm-verifier -discard-value-names -main-file-name CMakeCCompilerABI.c -mrelocation-model pic -pic-level 2 -mframe-pointer=all -fno-strict-return -ffp-contract=on -fno-rounding-math -funwind-tables=2 -target-sdk-version=15.2 -fvisibility-inlines-hidden-static-local-var -fno-modulemap-allow-subdirectory-search -target-cpu penryn -tune-cpu generic -debugger-tuning=lldb -target-linker-version 1115.7.3 -v -fcoverage-compilation-dir=/Users/arashdeep/StudioProjects/holtersync/macos/.tflite-build/build-x86_64/CMakeFiles/CMakeScratch/TryCompile-kJqSXX -resource-dir /Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/lib/clang/16 -dependency-file CMakeFiles/cmTC_3ff9a.dir/CMakeCCompilerABI.c.o.d -skip-unused-modulemap-deps -MT CMakeFiles/cmTC_3ff9a.dir/CMakeCCompilerABI.c.o -sys-header-deps -isysroot /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX15.2.sdk -internal-isystem /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX15.2.sdk/usr/local/include -internal-isystem /Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/lib/clang/16/include -internal-externc-isystem /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX15.2.sdk/usr/include -internal-externc-isystem /Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/include -Wno-reorder-init-list -Wno-implicit-int-float-conversion -Wno-c99-designator -Wno-final-dtor-non-final-class -Wno-extra-semi-stmt -Wno-misleading-indentation -Wno-quoted-include-in-framework-header -Wno-implicit-fallthrough -Wno-enum-enum-conversion -Wno-enum-float-conversion -Wno-elaborated-enum-base -Wno-reserved-identifier -Wno-gnu-folding-constant -fdebug-compilation-dir=/Users/arashdeep/StudioProjects/holtersync/macos/.tflite-build/build-x86_64/CMakeFiles/CMakeScratch/TryCompile-kJqSXX -ferror-limit 19 -stack-protector 1 -fstack-check -mdarwin-stkchk-strong-link -fblocks -fencode-extended-block-signature -fregister-global-dtors-with-atexit -fgnuc-version=4.2.1 -fmax-type-align=16 -fcommon -clang-vendor-feature=+disableNonDependentMemberExprInCurrentInstantiation -fno-odr-hash-protocols -clang-vendor-feature=+enableAggressiveVLAFolding -clang-vendor-feature=+revert09abecef7bbf -clang-vendor-feature=+thisNoAlignAttr -clang-vendor-feature=+thisNoNullAttr -clang-vendor-feature=+disableAtImportPrivateFrameworkInImplementationError -D__GCC_HAVE_DWARF2_CFI_ASM=1 -o CMakeFiles/cmTC_3ff9a.dir/CMakeCCompilerABI.c.o -x c /opt/homebrew/Cellar/cmake/3.29.6/share/cmake/Modules/CMakeCCompilerABI.c
+        clang -cc1 version 16.0.0 (clang-1600.0.26.6) default target x86_64-apple-darwin23.5.0
+        ignoring nonexistent directory "/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX15.2.sdk/usr/local/include"
+        ignoring nonexistent directory "/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX15.2.sdk/Library/Frameworks"
+        #include "..." search starts here:
+        #include <...> search starts here:
+         /Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/lib/clang/16/include
+         /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX15.2.sdk/usr/include
+         /Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/include
+         /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX15.2.sdk/System/Library/Frameworks (framework directory)
+        End of search list.
+        Linking C executable cmTC_3ff9a
+        /opt/homebrew/Cellar/cmake/3.29.6/bin/cmake -E cmake_link_script CMakeFiles/cmTC_3ff9a.dir/link.txt --verbose=1
+        /Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/cc  -arch x86_64 -isysroot /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX15.2.sdk -mmacosx-version-min=14.5 -Wl,-search_paths_first -Wl,-headerpad_max_install_names -L/opt/homebrew/opt/php@8.2/lib -v -Wl,-v CMakeFiles/cmTC_3ff9a.dir/CMakeCCompilerABI.c.o -o cmTC_3ff9a
+        Apple clang version 16.0.0 (clang-1600.0.26.6)
+        Target: x86_64-apple-darwin23.5.0
+        Thread model: posix
+        InstalledDir: /Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin
+         "/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/ld" -demangle -lto_library /Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/lib/libLTO.dylib -dynamic -arch x86_64 -platform_version macos 14.5.0 15.2 -syslibroot /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX15.2.sdk -mllvm -enable-linkonceodr-outlining -o cmTC_3ff9a -L/opt/homebrew/opt/php@8.2/lib -search_paths_first -headerpad_max_install_names -v CMakeFiles/cmTC_3ff9a.dir/CMakeCCompilerABI.c.o -lSystem /Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/lib/clang/16/lib/darwin/libclang_rt.osx.a
+        @(#)PROGRAM:ld PROJECT:ld-1115.7.3
+        BUILD 23:50:35 Dec  5 2024
+        configured to support archs: armv6 armv7 armv7s arm64 arm64e arm64_32 i386 x86_64 x86_64h armv6m armv7k armv7m armv7em
+        will use ld-classic for: armv6 armv7 armv7s i386 armv6m armv7k armv7m armv7em
+        LTO support using: LLVM version 16.0.0 (static support for 29, runtime is 29)
+        TAPI support using: Apple TAPI version 16.0.0 (tapi-1600.0.11.9)
+        Library search paths:
+        	/opt/homebrew/opt/php@8.2/lib
+        	/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX15.2.sdk/usr/lib
+        	/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX15.2.sdk/usr/lib/swift
+        Framework search paths:
+        	/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX15.2.sdk/System/Library/Frameworks
+        
+      exitCode: 0
+  -
+    kind: "message-v1"
+    backtrace:
+      - "/opt/homebrew/Cellar/cmake/3.29.6/share/cmake/Modules/CMakeDetermineCompilerABI.cmake:137 (message)"
+      - "/opt/homebrew/Cellar/cmake/3.29.6/share/cmake/Modules/CMakeTestCCompiler.cmake:26 (CMAKE_DETERMINE_COMPILER_ABI)"
+      - "CMakeLists.txt:17 (project)"
+    message: |
+      Parsed C implicit include dir info: rv=done
+        found start of include info
+        found start of implicit include info
+          add: [/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/lib/clang/16/include]
+          add: [/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX15.2.sdk/usr/include]
+          add: [/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/include]
+        end of search list found
+        collapse include dir [/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/lib/clang/16/include] ==> [/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/lib/clang/16/include]
+        collapse include dir [/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX15.2.sdk/usr/include] ==> [/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX15.2.sdk/usr/include]
+        collapse include dir [/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/include] ==> [/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/include]
+        implicit include dirs: [/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/lib/clang/16/include;/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX15.2.sdk/usr/include;/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/include]
+      
+      
+  -
+    kind: "message-v1"
+    backtrace:
+      - "/opt/homebrew/Cellar/cmake/3.29.6/share/cmake/Modules/CMakeDetermineCompilerABI.cmake:173 (message)"
+      - "/opt/homebrew/Cellar/cmake/3.29.6/share/cmake/Modules/CMakeTestCCompiler.cmake:26 (CMAKE_DETERMINE_COMPILER_ABI)"
+      - "CMakeLists.txt:17 (project)"
+    message: |
+      Parsed C implicit link information:
+        link line regex: [^( *|.*[/\\])(ld[0-9]*(\\.[a-z]+)?|CMAKE_LINK_STARTFILE-NOTFOUND|([^/\\]+-)?ld|collect2)[^/\\]*( |$)]
+        linker tool regex: [^[ 	]*(->|")?[ 	]*(([^"]*[/\\])?(ld[0-9]*(\\.[a-z]+)?))("|,| |$)]
+        ignore line: [Change Dir: '/Users/arashdeep/StudioProjects/holtersync/macos/.tflite-build/build-x86_64/CMakeFiles/CMakeScratch/TryCompile-kJqSXX']
+        ignore line: []
+        ignore line: [Run Build Command(s): /opt/homebrew/Cellar/cmake/3.29.6/bin/cmake -E env VERBOSE=1 /usr/bin/make -f Makefile cmTC_3ff9a/fast]
+        ignore line: [/Applications/Xcode.app/Contents/Developer/usr/bin/make  -f CMakeFiles/cmTC_3ff9a.dir/build.make CMakeFiles/cmTC_3ff9a.dir/build]
+        ignore line: [Building C object CMakeFiles/cmTC_3ff9a.dir/CMakeCCompilerABI.c.o]
+        ignore line: [/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/cc   -arch x86_64 -isysroot /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX15.2.sdk -mmacosx-version-min=14.5   -v -Wl -v -MD -MT CMakeFiles/cmTC_3ff9a.dir/CMakeCCompilerABI.c.o -MF CMakeFiles/cmTC_3ff9a.dir/CMakeCCompilerABI.c.o.d -o CMakeFiles/cmTC_3ff9a.dir/CMakeCCompilerABI.c.o -c /opt/homebrew/Cellar/cmake/3.29.6/share/cmake/Modules/CMakeCCompilerABI.c]
+        ignore line: [Apple clang version 16.0.0 (clang-1600.0.26.6)]
+        ignore line: [Target: x86_64-apple-darwin23.5.0]
+        ignore line: [Thread model: posix]
+        ignore line: [InstalledDir: /Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin]
+        ignore line: [cc: warning: -Wl -v: 'linker' input unused [-Wunused-command-line-argument]]
+        ignore line: [ "/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/clang" -cc1 -triple x86_64-apple-macosx14.5.0 -Wundef-prefix=TARGET_OS_ -Wdeprecated-objc-isa-usage -Werror=deprecated-objc-isa-usage -Werror=implicit-function-declaration -emit-obj -mrelax-all -disable-free -clear-ast-before-backend -disable-llvm-verifier -discard-value-names -main-file-name CMakeCCompilerABI.c -mrelocation-model pic -pic-level 2 -mframe-pointer=all -fno-strict-return -ffp-contract=on -fno-rounding-math -funwind-tables=2 -target-sdk-version=15.2 -fvisibility-inlines-hidden-static-local-var -fno-modulemap-allow-subdirectory-search -target-cpu penryn -tune-cpu generic -debugger-tuning=lldb -target-linker-version 1115.7.3 -v -fcoverage-compilation-dir=/Users/arashdeep/StudioProjects/holtersync/macos/.tflite-build/build-x86_64/CMakeFiles/CMakeScratch/TryCompile-kJqSXX -resource-dir /Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/lib/clang/16 -dependency-file CMakeFiles/cmTC_3ff9a.dir/CMakeCCompilerABI.c.o.d -skip-unused-modulemap-deps -MT CMakeFiles/cmTC_3ff9a.dir/CMakeCCompilerABI.c.o -sys-header-deps -isysroot /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX15.2.sdk -internal-isystem /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX15.2.sdk/usr/local/include -internal-isystem /Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/lib/clang/16/include -internal-externc-isystem /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX15.2.sdk/usr/include -internal-externc-isystem /Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/include -Wno-reorder-init-list -Wno-implicit-int-float-conversion -Wno-c99-designator -Wno-final-dtor-non-final-class -Wno-extra-semi-stmt -Wno-misleading-indentation -Wno-quoted-include-in-framework-header -Wno-implicit-fallthrough -Wno-enum-enum-conversion -Wno-enum-float-conversion -Wno-elaborated-enum-base -Wno-reserved-identifier -Wno-gnu-folding-constant -fdebug-compilation-dir=/Users/arashdeep/StudioProjects/holtersync/macos/.tflite-build/build-x86_64/CMakeFiles/CMakeScratch/TryCompile-kJqSXX -ferror-limit 19 -stack-protector 1 -fstack-check -mdarwin-stkchk-strong-link -fblocks -fencode-extended-block-signature -fregister-global-dtors-with-atexit -fgnuc-version=4.2.1 -fmax-type-align=16 -fcommon -clang-vendor-feature=+disableNonDependentMemberExprInCurrentInstantiation -fno-odr-hash-protocols -clang-vendor-feature=+enableAggressiveVLAFolding -clang-vendor-feature=+revert09abecef7bbf -clang-vendor-feature=+thisNoAlignAttr -clang-vendor-feature=+thisNoNullAttr -clang-vendor-feature=+disableAtImportPrivateFrameworkInImplementationError -D__GCC_HAVE_DWARF2_CFI_ASM=1 -o CMakeFiles/cmTC_3ff9a.dir/CMakeCCompilerABI.c.o -x c /opt/homebrew/Cellar/cmake/3.29.6/share/cmake/Modules/CMakeCCompilerABI.c]
+        ignore line: [clang -cc1 version 16.0.0 (clang-1600.0.26.6) default target x86_64-apple-darwin23.5.0]
+        ignore line: [ignoring nonexistent directory "/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX15.2.sdk/usr/local/include"]
+        ignore line: [ignoring nonexistent directory "/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX15.2.sdk/Library/Frameworks"]
+        ignore line: [#include "..." search starts here:]
+        ignore line: [#include <...> search starts here:]
+        ignore line: [ /Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/lib/clang/16/include]
+        ignore line: [ /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX15.2.sdk/usr/include]
+        ignore line: [ /Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/include]
+        ignore line: [ /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX15.2.sdk/System/Library/Frameworks (framework directory)]
+        ignore line: [End of search list.]
+        ignore line: [Linking C executable cmTC_3ff9a]
+        ignore line: [/opt/homebrew/Cellar/cmake/3.29.6/bin/cmake -E cmake_link_script CMakeFiles/cmTC_3ff9a.dir/link.txt --verbose=1]
+        ignore line: [/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/cc  -arch x86_64 -isysroot /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX15.2.sdk -mmacosx-version-min=14.5 -Wl -search_paths_first -Wl -headerpad_max_install_names -L/opt/homebrew/opt/php@8.2/lib -v -Wl -v CMakeFiles/cmTC_3ff9a.dir/CMakeCCompilerABI.c.o -o cmTC_3ff9a]
+        ignore line: [Apple clang version 16.0.0 (clang-1600.0.26.6)]
+        ignore line: [Target: x86_64-apple-darwin23.5.0]
+        ignore line: [Thread model: posix]
+        ignore line: [InstalledDir: /Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin]
+        link line: [ "/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/ld" -demangle -lto_library /Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/lib/libLTO.dylib -dynamic -arch x86_64 -platform_version macos 14.5.0 15.2 -syslibroot /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX15.2.sdk -mllvm -enable-linkonceodr-outlining -o cmTC_3ff9a -L/opt/homebrew/opt/php@8.2/lib -search_paths_first -headerpad_max_install_names -v CMakeFiles/cmTC_3ff9a.dir/CMakeCCompilerABI.c.o -lSystem /Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/lib/clang/16/lib/darwin/libclang_rt.osx.a]
+          arg [/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/ld] ==> ignore
+          arg [-demangle] ==> ignore
+          arg [-lto_library] ==> ignore, skip following value
+          arg [/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/lib/libLTO.dylib] ==> skip value of -lto_library
+          arg [-dynamic] ==> ignore
+          arg [-arch] ==> ignore
+          arg [x86_64] ==> ignore
+          arg [-platform_version] ==> ignore
+          arg [macos] ==> ignore
+          arg [14.5.0] ==> ignore
+          arg [15.2] ==> ignore
+          arg [-syslibroot] ==> ignore
+          arg [/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX15.2.sdk] ==> ignore
+          arg [-mllvm] ==> ignore
+          arg [-enable-linkonceodr-outlining] ==> ignore
+          arg [-o] ==> ignore
+          arg [cmTC_3ff9a] ==> ignore
+          arg [-L/opt/homebrew/opt/php@8.2/lib] ==> dir [/opt/homebrew/opt/php@8.2/lib]
+          arg [-search_paths_first] ==> ignore
+          arg [-headerpad_max_install_names] ==> ignore
+          arg [-v] ==> ignore
+          arg [CMakeFiles/cmTC_3ff9a.dir/CMakeCCompilerABI.c.o] ==> ignore
+          arg [-lSystem] ==> lib [System]
+          arg [/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/lib/clang/16/lib/darwin/libclang_rt.osx.a] ==> lib [/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/lib/clang/16/lib/darwin/libclang_rt.osx.a]
+        linker tool for 'C': /Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/ld
+        Library search paths: [;/opt/homebrew/opt/php@8.2/lib;/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX15.2.sdk/usr/lib;/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX15.2.sdk/usr/lib/swift]
+        Framework search paths: [;/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX15.2.sdk/System/Library/Frameworks]
+        remove lib [System]
+        remove lib [/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/lib/clang/16/lib/darwin/libclang_rt.osx.a]
+        collapse library dir [/opt/homebrew/opt/php@8.2/lib] ==> [/opt/homebrew/opt/php@8.2/lib]
+        collapse library dir [/opt/homebrew/opt/php@8.2/lib] ==> [/opt/homebrew/opt/php@8.2/lib]
+        collapse library dir [/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX15.2.sdk/usr/lib] ==> [/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX15.2.sdk/usr/lib]
+        collapse library dir [/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX15.2.sdk/usr/lib/swift] ==> [/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX15.2.sdk/usr/lib/swift]
+        collapse framework dir [/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX15.2.sdk/System/Library/Frameworks] ==> [/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX15.2.sdk/System/Library/Frameworks]
+        implicit libs: []
+        implicit objs: []
+        implicit dirs: [/opt/homebrew/opt/php@8.2/lib;/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX15.2.sdk/usr/lib;/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX15.2.sdk/usr/lib/swift]
+        implicit fwks: [/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX15.2.sdk/System/Library/Frameworks]
+      
+      
+  -
+    kind: "message-v1"
+    backtrace:
+      - "/opt/homebrew/Cellar/cmake/3.29.6/share/cmake/Modules/Internal/CMakeDetermineLinkerId.cmake:40 (message)"
+      - "/opt/homebrew/Cellar/cmake/3.29.6/share/cmake/Modules/CMakeDetermineCompilerABI.cmake:210 (cmake_determine_linker_id)"
+      - "/opt/homebrew/Cellar/cmake/3.29.6/share/cmake/Modules/CMakeTestCCompiler.cmake:26 (CMAKE_DETERMINE_COMPILER_ABI)"
+      - "CMakeLists.txt:17 (project)"
+    message: |
+      Running the C compiler's linker: "/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/ld" "-v"
+      @(#)PROGRAM:ld PROJECT:ld-1115.7.3
+      BUILD 23:50:35 Dec  5 2024
+      configured to support archs: armv6 armv7 armv7s arm64 arm64e arm64_32 i386 x86_64 x86_64h armv6m armv7k armv7m armv7em
+      will use ld-classic for: armv6 armv7 armv7s i386 armv6m armv7k armv7m armv7em
+      LTO support using: LLVM version 16.0.0 (static support for 29, runtime is 29)
+      TAPI support using: Apple TAPI version 16.0.0 (tapi-1600.0.11.9)
+  -
+    kind: "try_compile-v1"
+    backtrace:
+      - "/opt/homebrew/Cellar/cmake/3.29.6/share/cmake/Modules/CMakeDetermineCompilerABI.cmake:67 (try_compile)"
+      - "/opt/homebrew/Cellar/cmake/3.29.6/share/cmake/Modules/CMakeTestCXXCompiler.cmake:26 (CMAKE_DETERMINE_COMPILER_ABI)"
+      - "CMakeLists.txt:17 (project)"
+    checks:
+      - "Detecting CXX compiler ABI info"
+    directories:
+      source: "/Users/arashdeep/StudioProjects/holtersync/macos/.tflite-build/build-x86_64/CMakeFiles/CMakeScratch/TryCompile-dGBEsQ"
+      binary: "/Users/arashdeep/StudioProjects/holtersync/macos/.tflite-build/build-x86_64/CMakeFiles/CMakeScratch/TryCompile-dGBEsQ"
+    cmakeVariables:
+      CMAKE_CXX_FLAGS: ""
+      CMAKE_CXX_FLAGS_DEBUG: "-g"
+      CMAKE_CXX_SCAN_FOR_MODULES: "OFF"
+      CMAKE_EXE_LINKER_FLAGS: "-L/opt/homebrew/opt/php@8.2/lib"
+      CMAKE_OSX_ARCHITECTURES: "x86_64"
+      CMAKE_OSX_DEPLOYMENT_TARGET: "14.5"
+      CMAKE_OSX_SYSROOT: "/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX15.2.sdk"
+    buildResult:
+      variable: "CMAKE_CXX_ABI_COMPILED"
+      cached: true
+      stdout: |
+        Change Dir: '/Users/arashdeep/StudioProjects/holtersync/macos/.tflite-build/build-x86_64/CMakeFiles/CMakeScratch/TryCompile-dGBEsQ'
+        
+        Run Build Command(s): /opt/homebrew/Cellar/cmake/3.29.6/bin/cmake -E env VERBOSE=1 /usr/bin/make -f Makefile cmTC_dfa83/fast
+        /Applications/Xcode.app/Contents/Developer/usr/bin/make  -f CMakeFiles/cmTC_dfa83.dir/build.make CMakeFiles/cmTC_dfa83.dir/build
+        Building CXX object CMakeFiles/cmTC_dfa83.dir/CMakeCXXCompilerABI.cpp.o
+        /Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/c++   -arch x86_64 -isysroot /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX15.2.sdk -mmacosx-version-min=14.5   -v -Wl,-v -MD -MT CMakeFiles/cmTC_dfa83.dir/CMakeCXXCompilerABI.cpp.o -MF CMakeFiles/cmTC_dfa83.dir/CMakeCXXCompilerABI.cpp.o.d -o CMakeFiles/cmTC_dfa83.dir/CMakeCXXCompilerABI.cpp.o -c /opt/homebrew/Cellar/cmake/3.29.6/share/cmake/Modules/CMakeCXXCompilerABI.cpp
+        Apple clang version 16.0.0 (clang-1600.0.26.6)
+        Target: x86_64-apple-darwin23.5.0
+        Thread model: posix
+        InstalledDir: /Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin
+        c++: warning: -Wl,-v: 'linker' input unused [-Wunused-command-line-argument]
+        ignoring nonexistent directory "/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/../include/c++/v1"
+         "/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/clang" -cc1 -triple x86_64-apple-macosx14.5.0 -Wundef-prefix=TARGET_OS_ -Wdeprecated-objc-isa-usage -Werror=deprecated-objc-isa-usage -Werror=implicit-function-declaration -emit-obj -mrelax-all -disable-free -clear-ast-before-backend -disable-llvm-verifier -discard-value-names -main-file-name CMakeCXXCompilerABI.cpp -mrelocation-model pic -pic-level 2 -mframe-pointer=all -fno-strict-return -ffp-contract=on -fno-rounding-math -funwind-tables=2 -target-sdk-version=15.2 -fvisibility-inlines-hidden-static-local-var -fno-modulemap-allow-subdirectory-search -target-cpu penryn -tune-cpu generic -debugger-tuning=lldb -target-linker-version 1115.7.3 -v -fcoverage-compilation-dir=/Users/arashdeep/StudioProjects/holtersync/macos/.tflite-build/build-x86_64/CMakeFiles/CMakeScratch/TryCompile-dGBEsQ -resource-dir /Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/lib/clang/16 -dependency-file CMakeFiles/cmTC_dfa83.dir/CMakeCXXCompilerABI.cpp.o.d -skip-unused-modulemap-deps -MT CMakeFiles/cmTC_dfa83.dir/CMakeCXXCompilerABI.cpp.o -sys-header-deps -isysroot /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX15.2.sdk -internal-isystem /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX15.2.sdk/usr/include/c++/v1 -internal-isystem /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX15.2.sdk/usr/local/include -internal-isystem /Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/lib/clang/16/include -internal-externc-isystem /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX15.2.sdk/usr/include -internal-externc-isystem /Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/include -Wno-reorder-init-list -Wno-implicit-int-float-conversion -Wno-c99-designator -Wno-final-dtor-non-final-class -Wno-extra-semi-stmt -Wno-misleading-indentation -Wno-quoted-include-in-framework-header -Wno-implicit-fallthrough -Wno-enum-enum-conversion -Wno-enum-float-conversion -Wno-elaborated-enum-base -Wno-reserved-identifier -Wno-gnu-folding-constant -fdeprecated-macro -fdebug-compilation-dir=/Users/arashdeep/StudioProjects/holtersync/macos/.tflite-build/build-x86_64/CMakeFiles/CMakeScratch/TryCompile-dGBEsQ -ferror-limit 19 -stack-protector 1 -fstack-check -mdarwin-stkchk-strong-link -fblocks -fencode-extended-block-signature -fregister-global-dtors-with-atexit -fgnuc-version=4.2.1 -fno-cxx-modules -fcxx-exceptions -fexceptions -fmax-type-align=16 -fcommon -clang-vendor-feature=+disableNonDependentMemberExprInCurrentInstantiation -fno-odr-hash-protocols -clang-vendor-feature=+enableAggressiveVLAFolding -clang-vendor-feature=+revert09abecef7bbf -clang-vendor-feature=+thisNoAlignAttr -clang-vendor-feature=+thisNoNullAttr -clang-vendor-feature=+disableAtImportPrivateFrameworkInImplementationError -D__GCC_HAVE_DWARF2_CFI_ASM=1 -o CMakeFiles/cmTC_dfa83.dir/CMakeCXXCompilerABI.cpp.o -x c++ /opt/homebrew/Cellar/cmake/3.29.6/share/cmake/Modules/CMakeCXXCompilerABI.cpp
+        clang -cc1 version 16.0.0 (clang-1600.0.26.6) default target x86_64-apple-darwin23.5.0
+        ignoring nonexistent directory "/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX15.2.sdk/usr/local/include"
+        ignoring nonexistent directory "/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX15.2.sdk/Library/Frameworks"
+        #include "..." search starts here:
+        #include <...> search starts here:
+         /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX15.2.sdk/usr/include/c++/v1
+         /Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/lib/clang/16/include
+         /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX15.2.sdk/usr/include
+         /Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/include
+         /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX15.2.sdk/System/Library/Frameworks (framework directory)
+        End of search list.
+        Linking CXX executable cmTC_dfa83
+        /opt/homebrew/Cellar/cmake/3.29.6/bin/cmake -E cmake_link_script CMakeFiles/cmTC_dfa83.dir/link.txt --verbose=1
+        /Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/c++  -arch x86_64 -isysroot /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX15.2.sdk -mmacosx-version-min=14.5 -Wl,-search_paths_first -Wl,-headerpad_max_install_names -L/opt/homebrew/opt/php@8.2/lib -v -Wl,-v CMakeFiles/cmTC_dfa83.dir/CMakeCXXCompilerABI.cpp.o -o cmTC_dfa83
+        Apple clang version 16.0.0 (clang-1600.0.26.6)
+        Target: x86_64-apple-darwin23.5.0
+        Thread model: posix
+        InstalledDir: /Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin
+         "/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/ld" -demangle -lto_library /Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/lib/libLTO.dylib -dynamic -arch x86_64 -platform_version macos 14.5.0 15.2 -syslibroot /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX15.2.sdk -mllvm -enable-linkonceodr-outlining -o cmTC_dfa83 -L/opt/homebrew/opt/php@8.2/lib -search_paths_first -headerpad_max_install_names -v CMakeFiles/cmTC_dfa83.dir/CMakeCXXCompilerABI.cpp.o -lc++ -lSystem /Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/lib/clang/16/lib/darwin/libclang_rt.osx.a
+        @(#)PROGRAM:ld PROJECT:ld-1115.7.3
+        BUILD 23:50:35 Dec  5 2024
+        configured to support archs: armv6 armv7 armv7s arm64 arm64e arm64_32 i386 x86_64 x86_64h armv6m armv7k armv7m armv7em
+        will use ld-classic for: armv6 armv7 armv7s i386 armv6m armv7k armv7m armv7em
+        LTO support using: LLVM version 16.0.0 (static support for 29, runtime is 29)
+        TAPI support using: Apple TAPI version 16.0.0 (tapi-1600.0.11.9)
+        Library search paths:
+        	/opt/homebrew/opt/php@8.2/lib
+        	/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX15.2.sdk/usr/lib
+        	/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX15.2.sdk/usr/lib/swift
+        Framework search paths:
+        	/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX15.2.sdk/System/Library/Frameworks
+        
+      exitCode: 0
+  -
+    kind: "message-v1"
+    backtrace:
+      - "/opt/homebrew/Cellar/cmake/3.29.6/share/cmake/Modules/CMakeDetermineCompilerABI.cmake:137 (message)"
+      - "/opt/homebrew/Cellar/cmake/3.29.6/share/cmake/Modules/CMakeTestCXXCompiler.cmake:26 (CMAKE_DETERMINE_COMPILER_ABI)"
+      - "CMakeLists.txt:17 (project)"
+    message: |
+      Parsed CXX implicit include dir info: rv=done
+        found start of include info
+        found start of implicit include info
+          add: [/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX15.2.sdk/usr/include/c++/v1]
+          add: [/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/lib/clang/16/include]
+          add: [/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX15.2.sdk/usr/include]
+          add: [/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/include]
+        end of search list found
+        collapse include dir [/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX15.2.sdk/usr/include/c++/v1] ==> [/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX15.2.sdk/usr/include/c++/v1]
+        collapse include dir [/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/lib/clang/16/include] ==> [/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/lib/clang/16/include]
+        collapse include dir [/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX15.2.sdk/usr/include] ==> [/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX15.2.sdk/usr/include]
+        collapse include dir [/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/include] ==> [/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/include]
+        implicit include dirs: [/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX15.2.sdk/usr/include/c++/v1;/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/lib/clang/16/include;/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX15.2.sdk/usr/include;/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/include]
+      
+      
+  -
+    kind: "message-v1"
+    backtrace:
+      - "/opt/homebrew/Cellar/cmake/3.29.6/share/cmake/Modules/CMakeDetermineCompilerABI.cmake:173 (message)"
+      - "/opt/homebrew/Cellar/cmake/3.29.6/share/cmake/Modules/CMakeTestCXXCompiler.cmake:26 (CMAKE_DETERMINE_COMPILER_ABI)"
+      - "CMakeLists.txt:17 (project)"
+    message: |
+      Parsed CXX implicit link information:
+        link line regex: [^( *|.*[/\\])(ld[0-9]*(\\.[a-z]+)?|CMAKE_LINK_STARTFILE-NOTFOUND|([^/\\]+-)?ld|collect2)[^/\\]*( |$)]
+        linker tool regex: [^[ 	]*(->|")?[ 	]*(([^"]*[/\\])?(ld[0-9]*(\\.[a-z]+)?))("|,| |$)]
+        ignore line: [Change Dir: '/Users/arashdeep/StudioProjects/holtersync/macos/.tflite-build/build-x86_64/CMakeFiles/CMakeScratch/TryCompile-dGBEsQ']
+        ignore line: []
+        ignore line: [Run Build Command(s): /opt/homebrew/Cellar/cmake/3.29.6/bin/cmake -E env VERBOSE=1 /usr/bin/make -f Makefile cmTC_dfa83/fast]
+        ignore line: [/Applications/Xcode.app/Contents/Developer/usr/bin/make  -f CMakeFiles/cmTC_dfa83.dir/build.make CMakeFiles/cmTC_dfa83.dir/build]
+        ignore line: [Building CXX object CMakeFiles/cmTC_dfa83.dir/CMakeCXXCompilerABI.cpp.o]
+        ignore line: [/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/c++   -arch x86_64 -isysroot /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX15.2.sdk -mmacosx-version-min=14.5   -v -Wl -v -MD -MT CMakeFiles/cmTC_dfa83.dir/CMakeCXXCompilerABI.cpp.o -MF CMakeFiles/cmTC_dfa83.dir/CMakeCXXCompilerABI.cpp.o.d -o CMakeFiles/cmTC_dfa83.dir/CMakeCXXCompilerABI.cpp.o -c /opt/homebrew/Cellar/cmake/3.29.6/share/cmake/Modules/CMakeCXXCompilerABI.cpp]
+        ignore line: [Apple clang version 16.0.0 (clang-1600.0.26.6)]
+        ignore line: [Target: x86_64-apple-darwin23.5.0]
+        ignore line: [Thread model: posix]
+        ignore line: [InstalledDir: /Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin]
+        ignore line: [c++: warning: -Wl -v: 'linker' input unused [-Wunused-command-line-argument]]
+        ignore line: [ignoring nonexistent directory "/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/../include/c++/v1"]
+        ignore line: [ "/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/clang" -cc1 -triple x86_64-apple-macosx14.5.0 -Wundef-prefix=TARGET_OS_ -Wdeprecated-objc-isa-usage -Werror=deprecated-objc-isa-usage -Werror=implicit-function-declaration -emit-obj -mrelax-all -disable-free -clear-ast-before-backend -disable-llvm-verifier -discard-value-names -main-file-name CMakeCXXCompilerABI.cpp -mrelocation-model pic -pic-level 2 -mframe-pointer=all -fno-strict-return -ffp-contract=on -fno-rounding-math -funwind-tables=2 -target-sdk-version=15.2 -fvisibility-inlines-hidden-static-local-var -fno-modulemap-allow-subdirectory-search -target-cpu penryn -tune-cpu generic -debugger-tuning=lldb -target-linker-version 1115.7.3 -v -fcoverage-compilation-dir=/Users/arashdeep/StudioProjects/holtersync/macos/.tflite-build/build-x86_64/CMakeFiles/CMakeScratch/TryCompile-dGBEsQ -resource-dir /Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/lib/clang/16 -dependency-file CMakeFiles/cmTC_dfa83.dir/CMakeCXXCompilerABI.cpp.o.d -skip-unused-modulemap-deps -MT CMakeFiles/cmTC_dfa83.dir/CMakeCXXCompilerABI.cpp.o -sys-header-deps -isysroot /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX15.2.sdk -internal-isystem /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX15.2.sdk/usr/include/c++/v1 -internal-isystem /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX15.2.sdk/usr/local/include -internal-isystem /Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/lib/clang/16/include -internal-externc-isystem /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX15.2.sdk/usr/include -internal-externc-isystem /Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/include -Wno-reorder-init-list -Wno-implicit-int-float-conversion -Wno-c99-designator -Wno-final-dtor-non-final-class -Wno-extra-semi-stmt -Wno-misleading-indentation -Wno-quoted-include-in-framework-header -Wno-implicit-fallthrough -Wno-enum-enum-conversion -Wno-enum-float-conversion -Wno-elaborated-enum-base -Wno-reserved-identifier -Wno-gnu-folding-constant -fdeprecated-macro -fdebug-compilation-dir=/Users/arashdeep/StudioProjects/holtersync/macos/.tflite-build/build-x86_64/CMakeFiles/CMakeScratch/TryCompile-dGBEsQ -ferror-limit 19 -stack-protector 1 -fstack-check -mdarwin-stkchk-strong-link -fblocks -fencode-extended-block-signature -fregister-global-dtors-with-atexit -fgnuc-version=4.2.1 -fno-cxx-modules -fcxx-exceptions -fexceptions -fmax-type-align=16 -fcommon -clang-vendor-feature=+disableNonDependentMemberExprInCurrentInstantiation -fno-odr-hash-protocols -clang-vendor-feature=+enableAggressiveVLAFolding -clang-vendor-feature=+revert09abecef7bbf -clang-vendor-feature=+thisNoAlignAttr -clang-vendor-feature=+thisNoNullAttr -clang-vendor-feature=+disableAtImportPrivateFrameworkInImplementationError -D__GCC_HAVE_DWARF2_CFI_ASM=1 -o CMakeFiles/cmTC_dfa83.dir/CMakeCXXCompilerABI.cpp.o -x c++ /opt/homebrew/Cellar/cmake/3.29.6/share/cmake/Modules/CMakeCXXCompilerABI.cpp]
+        ignore line: [clang -cc1 version 16.0.0 (clang-1600.0.26.6) default target x86_64-apple-darwin23.5.0]
+        ignore line: [ignoring nonexistent directory "/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX15.2.sdk/usr/local/include"]
+        ignore line: [ignoring nonexistent directory "/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX15.2.sdk/Library/Frameworks"]
+        ignore line: [#include "..." search starts here:]
+        ignore line: [#include <...> search starts here:]
+        ignore line: [ /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX15.2.sdk/usr/include/c++/v1]
+        ignore line: [ /Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/lib/clang/16/include]
+        ignore line: [ /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX15.2.sdk/usr/include]
+        ignore line: [ /Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/include]
+        ignore line: [ /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX15.2.sdk/System/Library/Frameworks (framework directory)]
+        ignore line: [End of search list.]
+        ignore line: [Linking CXX executable cmTC_dfa83]
+        ignore line: [/opt/homebrew/Cellar/cmake/3.29.6/bin/cmake -E cmake_link_script CMakeFiles/cmTC_dfa83.dir/link.txt --verbose=1]
+        ignore line: [/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/c++  -arch x86_64 -isysroot /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX15.2.sdk -mmacosx-version-min=14.5 -Wl -search_paths_first -Wl -headerpad_max_install_names -L/opt/homebrew/opt/php@8.2/lib -v -Wl -v CMakeFiles/cmTC_dfa83.dir/CMakeCXXCompilerABI.cpp.o -o cmTC_dfa83]
+        ignore line: [Apple clang version 16.0.0 (clang-1600.0.26.6)]
+        ignore line: [Target: x86_64-apple-darwin23.5.0]
+        ignore line: [Thread model: posix]
+        ignore line: [InstalledDir: /Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin]
+        link line: [ "/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/ld" -demangle -lto_library /Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/lib/libLTO.dylib -dynamic -arch x86_64 -platform_version macos 14.5.0 15.2 -syslibroot /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX15.2.sdk -mllvm -enable-linkonceodr-outlining -o cmTC_dfa83 -L/opt/homebrew/opt/php@8.2/lib -search_paths_first -headerpad_max_install_names -v CMakeFiles/cmTC_dfa83.dir/CMakeCXXCompilerABI.cpp.o -lc++ -lSystem /Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/lib/clang/16/lib/darwin/libclang_rt.osx.a]
+          arg [/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/ld] ==> ignore
+          arg [-demangle] ==> ignore
+          arg [-lto_library] ==> ignore, skip following value
+          arg [/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/lib/libLTO.dylib] ==> skip value of -lto_library
+          arg [-dynamic] ==> ignore
+          arg [-arch] ==> ignore
+          arg [x86_64] ==> ignore
+          arg [-platform_version] ==> ignore
+          arg [macos] ==> ignore
+          arg [14.5.0] ==> ignore
+          arg [15.2] ==> ignore
+          arg [-syslibroot] ==> ignore
+          arg [/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX15.2.sdk] ==> ignore
+          arg [-mllvm] ==> ignore
+          arg [-enable-linkonceodr-outlining] ==> ignore
+          arg [-o] ==> ignore
+          arg [cmTC_dfa83] ==> ignore
+          arg [-L/opt/homebrew/opt/php@8.2/lib] ==> dir [/opt/homebrew/opt/php@8.2/lib]
+          arg [-search_paths_first] ==> ignore
+          arg [-headerpad_max_install_names] ==> ignore
+          arg [-v] ==> ignore
+          arg [CMakeFiles/cmTC_dfa83.dir/CMakeCXXCompilerABI.cpp.o] ==> ignore
+          arg [-lc++] ==> lib [c++]
+          arg [-lSystem] ==> lib [System]
+          arg [/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/lib/clang/16/lib/darwin/libclang_rt.osx.a] ==> lib [/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/lib/clang/16/lib/darwin/libclang_rt.osx.a]
+        linker tool for 'CXX': /Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/ld
+        Library search paths: [;/opt/homebrew/opt/php@8.2/lib;/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX15.2.sdk/usr/lib;/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX15.2.sdk/usr/lib/swift]
+        Framework search paths: [;/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX15.2.sdk/System/Library/Frameworks]
+        remove lib [System]
+        remove lib [/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/lib/clang/16/lib/darwin/libclang_rt.osx.a]
+        collapse library dir [/opt/homebrew/opt/php@8.2/lib] ==> [/opt/homebrew/opt/php@8.2/lib]
+        collapse library dir [/opt/homebrew/opt/php@8.2/lib] ==> [/opt/homebrew/opt/php@8.2/lib]
+        collapse library dir [/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX15.2.sdk/usr/lib] ==> [/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX15.2.sdk/usr/lib]
+        collapse library dir [/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX15.2.sdk/usr/lib/swift] ==> [/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX15.2.sdk/usr/lib/swift]
+        collapse framework dir [/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX15.2.sdk/System/Library/Frameworks] ==> [/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX15.2.sdk/System/Library/Frameworks]
+        implicit libs: [c++]
+        implicit objs: []
+        implicit dirs: [/opt/homebrew/opt/php@8.2/lib;/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX15.2.sdk/usr/lib;/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX15.2.sdk/usr/lib/swift]
+        implicit fwks: [/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX15.2.sdk/System/Library/Frameworks]
+      
+      
+  -
+    kind: "message-v1"
+    backtrace:
+      - "/opt/homebrew/Cellar/cmake/3.29.6/share/cmake/Modules/Internal/CMakeDetermineLinkerId.cmake:40 (message)"
+      - "/opt/homebrew/Cellar/cmake/3.29.6/share/cmake/Modules/CMakeDetermineCompilerABI.cmake:210 (cmake_determine_linker_id)"
+      - "/opt/homebrew/Cellar/cmake/3.29.6/share/cmake/Modules/CMakeTestCXXCompiler.cmake:26 (CMAKE_DETERMINE_COMPILER_ABI)"
+      - "CMakeLists.txt:17 (project)"
+    message: |
+      Running the CXX compiler's linker: "/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/ld" "-v"
+      @(#)PROGRAM:ld PROJECT:ld-1115.7.3
+      BUILD 23:50:35 Dec  5 2024
+      configured to support archs: armv6 armv7 armv7s arm64 arm64e arm64_32 i386 x86_64 x86_64h armv6m armv7k armv7m armv7em
+      will use ld-classic for: armv6 armv7 armv7s i386 armv6m armv7k armv7m armv7em
+      LTO support using: LLVM version 16.0.0 (static support for 29, runtime is 29)
+      TAPI support using: Apple TAPI version 16.0.0 (tapi-1600.0.11.9)
+  -
+    kind: "try_compile-v1"
+    backtrace:
+      - "/opt/homebrew/Cellar/cmake/3.29.6/share/cmake/Modules/Internal/CheckSourceCompiles.cmake:101 (try_compile)"
+      - "/opt/homebrew/Cellar/cmake/3.29.6/share/cmake/Modules/CheckCXXSourceCompiles.cmake:52 (cmake_check_source_compiles)"
+      - "/Users/arashdeep/StudioProjects/holtersync/macos/.tflite-build/build-x86_64/abseil-cpp/CMake/AbseilDll.cmake:605 (check_cxx_source_compiles)"
+      - "/Users/arashdeep/StudioProjects/holtersync/macos/.tflite-build/build-x86_64/abseil-cpp/CMakeLists.txt:86 (include)"
+    checks:
+      - "Performing Test ABSL_INTERNAL_AT_LEAST_CXX17"
+    directories:
+      source: "/Users/arashdeep/StudioProjects/holtersync/macos/.tflite-build/build-x86_64/CMakeFiles/CMakeScratch/TryCompile-DZOVk2"
+      binary: "/Users/arashdeep/StudioProjects/holtersync/macos/.tflite-build/build-x86_64/CMakeFiles/CMakeScratch/TryCompile-DZOVk2"
+    cmakeVariables:
+      CMAKE_CXX_FLAGS: ""
+      CMAKE_CXX_FLAGS_DEBUG: "-g"
+      CMAKE_EXE_LINKER_FLAGS: "-L/opt/homebrew/opt/php@8.2/lib"
+      CMAKE_MODULE_PATH: "/Users/arashdeep/StudioProjects/holtersync/macos/.tflite-build/tensorflow/tensorflow/lite/tools/cmake/modules;/Users/arashdeep/StudioProjects/holtersync/macos/.tflite-build/build-x86_64/abseil-cpp/CMake;/Users/arashdeep/StudioProjects/holtersync/macos/.tflite-build/build-x86_64/abseil-cpp/absl/copts"
+      CMAKE_OSX_ARCHITECTURES: "x86_64"
+      CMAKE_OSX_DEPLOYMENT_TARGET: "14.5"
+      CMAKE_OSX_SYSROOT: "/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX15.2.sdk"
+      CMAKE_POSITION_INDEPENDENT_CODE: "ON"
+    buildResult:
+      variable: "ABSL_INTERNAL_AT_LEAST_CXX17"
+      cached: true
+      stdout: |
+        Change Dir: '/Users/arashdeep/StudioProjects/holtersync/macos/.tflite-build/build-x86_64/CMakeFiles/CMakeScratch/TryCompile-DZOVk2'
+        
+        Run Build Command(s): /opt/homebrew/Cellar/cmake/3.29.6/bin/cmake -E env VERBOSE=1 /usr/bin/make -f Makefile cmTC_a2f6c/fast
+        /Applications/Xcode.app/Contents/Developer/usr/bin/make  -f CMakeFiles/cmTC_a2f6c.dir/build.make CMakeFiles/cmTC_a2f6c.dir/build
+        Building CXX object CMakeFiles/cmTC_a2f6c.dir/src.cxx.o
+        /Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/c++ -DABSL_INTERNAL_AT_LEAST_CXX17  -std=gnu++17 -arch x86_64 -isysroot /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX15.2.sdk -mmacosx-version-min=14.5 -fPIE -MD -MT CMakeFiles/cmTC_a2f6c.dir/src.cxx.o -MF CMakeFiles/cmTC_a2f6c.dir/src.cxx.o.d -o CMakeFiles/cmTC_a2f6c.dir/src.cxx.o -c /Users/arashdeep/StudioProjects/holtersync/macos/.tflite-build/build-x86_64/CMakeFiles/CMakeScratch/TryCompile-DZOVk2/src.cxx
+        Linking CXX executable cmTC_a2f6c
+        /opt/homebrew/Cellar/cmake/3.29.6/bin/cmake -E cmake_link_script CMakeFiles/cmTC_a2f6c.dir/link.txt --verbose=1
+        /Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/c++  -arch x86_64 -isysroot /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX15.2.sdk -mmacosx-version-min=14.5 -Wl,-search_paths_first -Wl,-headerpad_max_install_names -L/opt/homebrew/opt/php@8.2/lib  CMakeFiles/cmTC_a2f6c.dir/src.cxx.o -o cmTC_a2f6c
+        
+      exitCode: 0
+  -
+    kind: "try_compile-v1"
+    backtrace:
+      - "/opt/homebrew/Cellar/cmake/3.29.6/share/cmake/Modules/Internal/CheckSourceCompiles.cmake:101 (try_compile)"
+      - "/opt/homebrew/Cellar/cmake/3.29.6/share/cmake/Modules/CheckCSourceCompiles.cmake:52 (cmake_check_source_compiles)"
+      - "/opt/homebrew/Cellar/cmake/3.29.6/share/cmake/Modules/FindThreads.cmake:97 (CHECK_C_SOURCE_COMPILES)"
+      - "/opt/homebrew/Cellar/cmake/3.29.6/share/cmake/Modules/FindThreads.cmake:163 (_threads_check_libc)"
+      - "/Users/arashdeep/StudioProjects/holtersync/macos/.tflite-build/build-x86_64/abseil-cpp/CMakeLists.txt:112 (find_package)"
+    checks:
+      - "Performing Test CMAKE_HAVE_LIBC_PTHREAD"
+    directories:
+      source: "/Users/arashdeep/StudioProjects/holtersync/macos/.tflite-build/build-x86_64/CMakeFiles/CMakeScratch/TryCompile-RvanZE"
+      binary: "/Users/arashdeep/StudioProjects/holtersync/macos/.tflite-build/build-x86_64/CMakeFiles/CMakeScratch/TryCompile-RvanZE"
+    cmakeVariables:
+      CMAKE_C_FLAGS: ""
+      CMAKE_C_FLAGS_DEBUG: "-g"
+      CMAKE_EXE_LINKER_FLAGS: "-L/opt/homebrew/opt/php@8.2/lib"
+      CMAKE_MODULE_PATH: "/Users/arashdeep/StudioProjects/holtersync/macos/.tflite-build/tensorflow/tensorflow/lite/tools/cmake/modules;/Users/arashdeep/StudioProjects/holtersync/macos/.tflite-build/build-x86_64/abseil-cpp/CMake;/Users/arashdeep/StudioProjects/holtersync/macos/.tflite-build/build-x86_64/abseil-cpp/absl/copts"
+      CMAKE_OSX_ARCHITECTURES: "x86_64"
+      CMAKE_OSX_DEPLOYMENT_TARGET: "14.5"
+      CMAKE_OSX_SYSROOT: "/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX15.2.sdk"
+      CMAKE_POSITION_INDEPENDENT_CODE: "ON"
+    buildResult:
+      variable: "CMAKE_HAVE_LIBC_PTHREAD"
+      cached: true
+      stdout: |
+        Change Dir: '/Users/arashdeep/StudioProjects/holtersync/macos/.tflite-build/build-x86_64/CMakeFiles/CMakeScratch/TryCompile-RvanZE'
+        
+        Run Build Command(s): /opt/homebrew/Cellar/cmake/3.29.6/bin/cmake -E env VERBOSE=1 /usr/bin/make -f Makefile cmTC_6d475/fast
+        /Applications/Xcode.app/Contents/Developer/usr/bin/make  -f CMakeFiles/cmTC_6d475.dir/build.make CMakeFiles/cmTC_6d475.dir/build
+        Building C object CMakeFiles/cmTC_6d475.dir/src.c.o
+        /Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/cc -DCMAKE_HAVE_LIBC_PTHREAD  -arch x86_64 -isysroot /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX15.2.sdk -mmacosx-version-min=14.5 -fPIE -MD -MT CMakeFiles/cmTC_6d475.dir/src.c.o -MF CMakeFiles/cmTC_6d475.dir/src.c.o.d -o CMakeFiles/cmTC_6d475.dir/src.c.o -c /Users/arashdeep/StudioProjects/holtersync/macos/.tflite-build/build-x86_64/CMakeFiles/CMakeScratch/TryCompile-RvanZE/src.c
+        Linking C executable cmTC_6d475
+        /opt/homebrew/Cellar/cmake/3.29.6/bin/cmake -E cmake_link_script CMakeFiles/cmTC_6d475.dir/link.txt --verbose=1
+        /Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/cc  -arch x86_64 -isysroot /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX15.2.sdk -mmacosx-version-min=14.5 -Wl,-search_paths_first -Wl,-headerpad_max_install_names -L/opt/homebrew/opt/php@8.2/lib  CMakeFiles/cmTC_6d475.dir/src.c.o -o cmTC_6d475
+        
+      exitCode: 0
+  -
+    kind: "try_compile-v1"
+    backtrace:
+      - "/opt/homebrew/Cellar/cmake/3.29.6/share/cmake/Modules/Internal/CheckSourceCompiles.cmake:101 (try_compile)"
+      - "/opt/homebrew/Cellar/cmake/3.29.6/share/cmake/Modules/CheckCXXSourceCompiles.cmake:52 (cmake_check_source_compiles)"
+      - "/Users/arashdeep/StudioProjects/holtersync/macos/.tflite-build/build-x86_64/eigen/cmake/FindStandardMathLibrary.cmake:35 (CHECK_CXX_SOURCE_COMPILES)"
+      - "/Users/arashdeep/StudioProjects/holtersync/macos/.tflite-build/build-x86_64/eigen/CMakeLists.txt:123 (find_package)"
+    checks:
+      - "Performing Test standard_math_library_linked_to_automatically"
+    directories:
+      source: "/Users/arashdeep/StudioProjects/holtersync/macos/.tflite-build/build-x86_64/CMakeFiles/CMakeScratch/TryCompile-XMStST"
+      binary: "/Users/arashdeep/StudioProjects/holtersync/macos/.tflite-build/build-x86_64/CMakeFiles/CMakeScratch/TryCompile-XMStST"
+    cmakeVariables:
+      CMAKE_CXX_FLAGS: ""
+      CMAKE_CXX_FLAGS_DEBUG: "-g"
+      CMAKE_EXE_LINKER_FLAGS: "-L/opt/homebrew/opt/php@8.2/lib"
+      CMAKE_MODULE_PATH: "/Users/arashdeep/StudioProjects/holtersync/macos/.tflite-build/build-x86_64/eigen/cmake"
+      CMAKE_OSX_ARCHITECTURES: "x86_64"
+      CMAKE_OSX_DEPLOYMENT_TARGET: "14.5"
+      CMAKE_OSX_SYSROOT: "/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX15.2.sdk"
+      CMAKE_POSITION_INDEPENDENT_CODE: "ON"
+    buildResult:
+      variable: "standard_math_library_linked_to_automatically"
+      cached: true
+      stdout: |
+        Change Dir: '/Users/arashdeep/StudioProjects/holtersync/macos/.tflite-build/build-x86_64/CMakeFiles/CMakeScratch/TryCompile-XMStST'
+        
+        Run Build Command(s): /opt/homebrew/Cellar/cmake/3.29.6/bin/cmake -E env VERBOSE=1 /usr/bin/make -f Makefile cmTC_62f44/fast
+        /Applications/Xcode.app/Contents/Developer/usr/bin/make  -f CMakeFiles/cmTC_62f44.dir/build.make CMakeFiles/cmTC_62f44.dir/build
+        Building CXX object CMakeFiles/cmTC_62f44.dir/src.cxx.o
+        /Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/c++ -Dstandard_math_library_linked_to_automatically  -std=gnu++17 -arch x86_64 -isysroot /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX15.2.sdk -mmacosx-version-min=14.5 -fPIE -MD -MT CMakeFiles/cmTC_62f44.dir/src.cxx.o -MF CMakeFiles/cmTC_62f44.dir/src.cxx.o.d -o CMakeFiles/cmTC_62f44.dir/src.cxx.o -c /Users/arashdeep/StudioProjects/holtersync/macos/.tflite-build/build-x86_64/CMakeFiles/CMakeScratch/TryCompile-XMStST/src.cxx
+        Linking CXX executable cmTC_62f44
+        /opt/homebrew/Cellar/cmake/3.29.6/bin/cmake -E cmake_link_script CMakeFiles/cmTC_62f44.dir/link.txt --verbose=1
+        /Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/c++  -arch x86_64 -isysroot /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX15.2.sdk -mmacosx-version-min=14.5 -Wl,-search_paths_first -Wl,-headerpad_max_install_names -L/opt/homebrew/opt/php@8.2/lib  CMakeFiles/cmTC_62f44.dir/src.cxx.o -o cmTC_62f44
+        
+      exitCode: 0
+  -
+    kind: "try_compile-v1"
+    backtrace:
+      - "/opt/homebrew/Cellar/cmake/3.29.6/share/cmake/Modules/Internal/CheckSourceCompiles.cmake:101 (try_compile)"
+      - "/opt/homebrew/Cellar/cmake/3.29.6/share/cmake/Modules/Internal/CheckCompilerFlag.cmake:18 (cmake_check_source_compiles)"
+      - "/opt/homebrew/Cellar/cmake/3.29.6/share/cmake/Modules/CheckCXXCompilerFlag.cmake:34 (cmake_check_compiler_flag)"
+      - "/Users/arashdeep/StudioProjects/holtersync/macos/.tflite-build/build-x86_64/eigen/CMakeLists.txt:179 (check_cxx_compiler_flag)"
+    checks:
+      - "Performing Test COMPILER_SUPPORT_WERROR"
+    directories:
+      source: "/Users/arashdeep/StudioProjects/holtersync/macos/.tflite-build/build-x86_64/CMakeFiles/CMakeScratch/TryCompile-Ki9MQt"
+      binary: "/Users/arashdeep/StudioProjects/holtersync/macos/.tflite-build/build-x86_64/CMakeFiles/CMakeScratch/TryCompile-Ki9MQt"
+    cmakeVariables:
+      CMAKE_CXX_FLAGS: ""
+      CMAKE_CXX_FLAGS_DEBUG: "-g"
+      CMAKE_EXE_LINKER_FLAGS: "-L/opt/homebrew/opt/php@8.2/lib"
+      CMAKE_MODULE_PATH: "/Users/arashdeep/StudioProjects/holtersync/macos/.tflite-build/build-x86_64/eigen/cmake"
+      CMAKE_OSX_ARCHITECTURES: "x86_64"
+      CMAKE_OSX_DEPLOYMENT_TARGET: "14.5"
+      CMAKE_OSX_SYSROOT: "/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX15.2.sdk"
+      CMAKE_POSITION_INDEPENDENT_CODE: "ON"
+    buildResult:
+      variable: "COMPILER_SUPPORT_WERROR"
+      cached: true
+      stdout: |
+        Change Dir: '/Users/arashdeep/StudioProjects/holtersync/macos/.tflite-build/build-x86_64/CMakeFiles/CMakeScratch/TryCompile-Ki9MQt'
+        
+        Run Build Command(s): /opt/homebrew/Cellar/cmake/3.29.6/bin/cmake -E env VERBOSE=1 /usr/bin/make -f Makefile cmTC_b0941/fast
+        /Applications/Xcode.app/Contents/Developer/usr/bin/make  -f CMakeFiles/cmTC_b0941.dir/build.make CMakeFiles/cmTC_b0941.dir/build
+        Building CXX object CMakeFiles/cmTC_b0941.dir/src.cxx.o
+        /Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/c++ -DCOMPILER_SUPPORT_WERROR  -std=gnu++17 -arch x86_64 -isysroot /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX15.2.sdk -mmacosx-version-min=14.5 -fPIE   -Werror -MD -MT CMakeFiles/cmTC_b0941.dir/src.cxx.o -MF CMakeFiles/cmTC_b0941.dir/src.cxx.o.d -o CMakeFiles/cmTC_b0941.dir/src.cxx.o -c /Users/arashdeep/StudioProjects/holtersync/macos/.tflite-build/build-x86_64/CMakeFiles/CMakeScratch/TryCompile-Ki9MQt/src.cxx
+        Linking CXX executable cmTC_b0941
+        /opt/homebrew/Cellar/cmake/3.29.6/bin/cmake -E cmake_link_script CMakeFiles/cmTC_b0941.dir/link.txt --verbose=1
+        /Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/c++  -arch x86_64 -isysroot /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX15.2.sdk -mmacosx-version-min=14.5 -Wl,-search_paths_first -Wl,-headerpad_max_install_names -L/opt/homebrew/opt/php@8.2/lib  CMakeFiles/cmTC_b0941.dir/src.cxx.o -o cmTC_b0941
+        
+      exitCode: 0
+  -
+    kind: "try_compile-v1"
+    backtrace:
+      - "/opt/homebrew/Cellar/cmake/3.29.6/share/cmake/Modules/Internal/CheckSourceCompiles.cmake:101 (try_compile)"
+      - "/opt/homebrew/Cellar/cmake/3.29.6/share/cmake/Modules/Internal/CheckCompilerFlag.cmake:18 (cmake_check_source_compiles)"
+      - "/opt/homebrew/Cellar/cmake/3.29.6/share/cmake/Modules/CheckCXXCompilerFlag.cmake:34 (cmake_check_compiler_flag)"
+      - "/Users/arashdeep/StudioProjects/holtersync/macos/.tflite-build/build-x86_64/eigen/CMakeLists.txt:96 (check_cxx_compiler_flag)"
+      - "/Users/arashdeep/StudioProjects/holtersync/macos/.tflite-build/build-x86_64/eigen/CMakeLists.txt:183 (ei_add_cxx_compiler_flag)"
+    checks:
+      - "Performing Test COMPILER_SUPPORT_pedantic"
+    directories:
+      source: "/Users/arashdeep/StudioProjects/holtersync/macos/.tflite-build/build-x86_64/CMakeFiles/CMakeScratch/TryCompile-IytlJg"
+      binary: "/Users/arashdeep/StudioProjects/holtersync/macos/.tflite-build/build-x86_64/CMakeFiles/CMakeScratch/TryCompile-IytlJg"
+    cmakeVariables:
+      CMAKE_CXX_FLAGS: ""
+      CMAKE_CXX_FLAGS_DEBUG: "-g"
+      CMAKE_EXE_LINKER_FLAGS: "-L/opt/homebrew/opt/php@8.2/lib"
+      CMAKE_MODULE_PATH: "/Users/arashdeep/StudioProjects/holtersync/macos/.tflite-build/build-x86_64/eigen/cmake"
+      CMAKE_OSX_ARCHITECTURES: "x86_64"
+      CMAKE_OSX_DEPLOYMENT_TARGET: "14.5"
+      CMAKE_OSX_SYSROOT: "/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX15.2.sdk"
+      CMAKE_POSITION_INDEPENDENT_CODE: "ON"
+    buildResult:
+      variable: "COMPILER_SUPPORT_pedantic"
+      cached: true
+      stdout: |
+        Change Dir: '/Users/arashdeep/StudioProjects/holtersync/macos/.tflite-build/build-x86_64/CMakeFiles/CMakeScratch/TryCompile-IytlJg'
+        
+        Run Build Command(s): /opt/homebrew/Cellar/cmake/3.29.6/bin/cmake -E env VERBOSE=1 /usr/bin/make -f Makefile cmTC_fe6e2/fast
+        /Applications/Xcode.app/Contents/Developer/usr/bin/make  -f CMakeFiles/cmTC_fe6e2.dir/build.make CMakeFiles/cmTC_fe6e2.dir/build
+        Building CXX object CMakeFiles/cmTC_fe6e2.dir/src.cxx.o
+        /Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/c++ -DCOMPILER_SUPPORT_pedantic  -Werror -std=gnu++17 -arch x86_64 -isysroot /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX15.2.sdk -mmacosx-version-min=14.5 -fPIE   -pedantic -MD -MT CMakeFiles/cmTC_fe6e2.dir/src.cxx.o -MF CMakeFiles/cmTC_fe6e2.dir/src.cxx.o.d -o CMakeFiles/cmTC_fe6e2.dir/src.cxx.o -c /Users/arashdeep/StudioProjects/holtersync/macos/.tflite-build/build-x86_64/CMakeFiles/CMakeScratch/TryCompile-IytlJg/src.cxx
+        Linking CXX executable cmTC_fe6e2
+        /opt/homebrew/Cellar/cmake/3.29.6/bin/cmake -E cmake_link_script CMakeFiles/cmTC_fe6e2.dir/link.txt --verbose=1
+        /Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/c++  -Werror -arch x86_64 -isysroot /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX15.2.sdk -mmacosx-version-min=14.5 -Wl,-search_paths_first -Wl,-headerpad_max_install_names -L/opt/homebrew/opt/php@8.2/lib  CMakeFiles/cmTC_fe6e2.dir/src.cxx.o -o cmTC_fe6e2
+        
+      exitCode: 0
+  -
+    kind: "try_compile-v1"
+    backtrace:
+      - "/opt/homebrew/Cellar/cmake/3.29.6/share/cmake/Modules/Internal/CheckSourceCompiles.cmake:101 (try_compile)"
+      - "/opt/homebrew/Cellar/cmake/3.29.6/share/cmake/Modules/Internal/CheckCompilerFlag.cmake:18 (cmake_check_source_compiles)"
+      - "/opt/homebrew/Cellar/cmake/3.29.6/share/cmake/Modules/CheckCXXCompilerFlag.cmake:34 (cmake_check_compiler_flag)"
+      - "/Users/arashdeep/StudioProjects/holtersync/macos/.tflite-build/build-x86_64/eigen/CMakeLists.txt:96 (check_cxx_compiler_flag)"
+      - "/Users/arashdeep/StudioProjects/holtersync/macos/.tflite-build/build-x86_64/eigen/CMakeLists.txt:184 (ei_add_cxx_compiler_flag)"
+    checks:
+      - "Performing Test COMPILER_SUPPORT_Wall"
+    directories:
+      source: "/Users/arashdeep/StudioProjects/holtersync/macos/.tflite-build/build-x86_64/CMakeFiles/CMakeScratch/TryCompile-QWI7K0"
+      binary: "/Users/arashdeep/StudioProjects/holtersync/macos/.tflite-build/build-x86_64/CMakeFiles/CMakeScratch/TryCompile-QWI7K0"
+    cmakeVariables:
+      CMAKE_CXX_FLAGS: " -pedantic"
+      CMAKE_CXX_FLAGS_DEBUG: "-g"
+      CMAKE_EXE_LINKER_FLAGS: "-L/opt/homebrew/opt/php@8.2/lib"
+      CMAKE_MODULE_PATH: "/Users/arashdeep/StudioProjects/holtersync/macos/.tflite-build/build-x86_64/eigen/cmake"
+      CMAKE_OSX_ARCHITECTURES: "x86_64"
+      CMAKE_OSX_DEPLOYMENT_TARGET: "14.5"
+      CMAKE_OSX_SYSROOT: "/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX15.2.sdk"
+      CMAKE_POSITION_INDEPENDENT_CODE: "ON"
+    buildResult:
+      variable: "COMPILER_SUPPORT_Wall"
+      cached: true
+      stdout: |
+        Change Dir: '/Users/arashdeep/StudioProjects/holtersync/macos/.tflite-build/build-x86_64/CMakeFiles/CMakeScratch/TryCompile-QWI7K0'
+        
+        Run Build Command(s): /opt/homebrew/Cellar/cmake/3.29.6/bin/cmake -E env VERBOSE=1 /usr/bin/make -f Makefile cmTC_5f2fd/fast
+        /Applications/Xcode.app/Contents/Developer/usr/bin/make  -f CMakeFiles/cmTC_5f2fd.dir/build.make CMakeFiles/cmTC_5f2fd.dir/build
+        Building CXX object CMakeFiles/cmTC_5f2fd.dir/src.cxx.o
+        /Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/c++ -DCOMPILER_SUPPORT_Wall  -pedantic -Werror -std=gnu++17 -arch x86_64 -isysroot /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX15.2.sdk -mmacosx-version-min=14.5 -fPIE   -Wall -MD -MT CMakeFiles/cmTC_5f2fd.dir/src.cxx.o -MF CMakeFiles/cmTC_5f2fd.dir/src.cxx.o.d -o CMakeFiles/cmTC_5f2fd.dir/src.cxx.o -c /Users/arashdeep/StudioProjects/holtersync/macos/.tflite-build/build-x86_64/CMakeFiles/CMakeScratch/TryCompile-QWI7K0/src.cxx
+        Linking CXX executable cmTC_5f2fd
+        /opt/homebrew/Cellar/cmake/3.29.6/bin/cmake -E cmake_link_script CMakeFiles/cmTC_5f2fd.dir/link.txt --verbose=1
+        /Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/c++  -pedantic -Werror -arch x86_64 -isysroot /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX15.2.sdk -mmacosx-version-min=14.5 -Wl,-search_paths_first -Wl,-headerpad_max_install_names -L/opt/homebrew/opt/php@8.2/lib  CMakeFiles/cmTC_5f2fd.dir/src.cxx.o -o cmTC_5f2fd
+        
+      exitCode: 0
+  -
+    kind: "try_compile-v1"
+    backtrace:
+      - "/opt/homebrew/Cellar/cmake/3.29.6/share/cmake/Modules/Internal/CheckSourceCompiles.cmake:101 (try_compile)"
+      - "/opt/homebrew/Cellar/cmake/3.29.6/share/cmake/Modules/Internal/CheckCompilerFlag.cmake:18 (cmake_check_source_compiles)"
+      - "/opt/homebrew/Cellar/cmake/3.29.6/share/cmake/Modules/CheckCXXCompilerFlag.cmake:34 (cmake_check_compiler_flag)"
+      - "/Users/arashdeep/StudioProjects/holtersync/macos/.tflite-build/build-x86_64/eigen/CMakeLists.txt:96 (check_cxx_compiler_flag)"
+      - "/Users/arashdeep/StudioProjects/holtersync/macos/.tflite-build/build-x86_64/eigen/CMakeLists.txt:185 (ei_add_cxx_compiler_flag)"
+    checks:
+      - "Performing Test COMPILER_SUPPORT_Wextra"
+    directories:
+      source: "/Users/arashdeep/StudioProjects/holtersync/macos/.tflite-build/build-x86_64/CMakeFiles/CMakeScratch/TryCompile-1XgXEm"
+      binary: "/Users/arashdeep/StudioProjects/holtersync/macos/.tflite-build/build-x86_64/CMakeFiles/CMakeScratch/TryCompile-1XgXEm"
+    cmakeVariables:
+      CMAKE_CXX_FLAGS: " -pedantic -Wall"
+      CMAKE_CXX_FLAGS_DEBUG: "-g"
+      CMAKE_EXE_LINKER_FLAGS: "-L/opt/homebrew/opt/php@8.2/lib"
+      CMAKE_MODULE_PATH: "/Users/arashdeep/StudioProjects/holtersync/macos/.tflite-build/build-x86_64/eigen/cmake"
+      CMAKE_OSX_ARCHITECTURES: "x86_64"
+      CMAKE_OSX_DEPLOYMENT_TARGET: "14.5"
+      CMAKE_OSX_SYSROOT: "/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX15.2.sdk"
+      CMAKE_POSITION_INDEPENDENT_CODE: "ON"
+    buildResult:
+      variable: "COMPILER_SUPPORT_Wextra"
+      cached: true
+      stdout: |
+        Change Dir: '/Users/arashdeep/StudioProjects/holtersync/macos/.tflite-build/build-x86_64/CMakeFiles/CMakeScratch/TryCompile-1XgXEm'
+        
+        Run Build Command(s): /opt/homebrew/Cellar/cmake/3.29.6/bin/cmake -E env VERBOSE=1 /usr/bin/make -f Makefile cmTC_167d9/fast
+        /Applications/Xcode.app/Contents/Developer/usr/bin/make  -f CMakeFiles/cmTC_167d9.dir/build.make CMakeFiles/cmTC_167d9.dir/build
+        Building CXX object CMakeFiles/cmTC_167d9.dir/src.cxx.o
+        /Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/c++ -DCOMPILER_SUPPORT_Wextra  -pedantic -Wall -Werror -std=gnu++17 -arch x86_64 -isysroot /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX15.2.sdk -mmacosx-version-min=14.5 -fPIE   -Wextra -MD -MT CMakeFiles/cmTC_167d9.dir/src.cxx.o -MF CMakeFiles/cmTC_167d9.dir/src.cxx.o.d -o CMakeFiles/cmTC_167d9.dir/src.cxx.o -c /Users/arashdeep/StudioProjects/holtersync/macos/.tflite-build/build-x86_64/CMakeFiles/CMakeScratch/TryCompile-1XgXEm/src.cxx
+        Linking CXX executable cmTC_167d9
+        /opt/homebrew/Cellar/cmake/3.29.6/bin/cmake -E cmake_link_script CMakeFiles/cmTC_167d9.dir/link.txt --verbose=1
+        /Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/c++  -pedantic -Wall -Werror -arch x86_64 -isysroot /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX15.2.sdk -mmacosx-version-min=14.5 -Wl,-search_paths_first -Wl,-headerpad_max_install_names -L/opt/homebrew/opt/php@8.2/lib  CMakeFiles/cmTC_167d9.dir/src.cxx.o -o cmTC_167d9
+        
+      exitCode: 0
+  -
+    kind: "try_compile-v1"
+    backtrace:
+      - "/opt/homebrew/Cellar/cmake/3.29.6/share/cmake/Modules/Internal/CheckSourceCompiles.cmake:101 (try_compile)"
+      - "/opt/homebrew/Cellar/cmake/3.29.6/share/cmake/Modules/Internal/CheckCompilerFlag.cmake:18 (cmake_check_source_compiles)"
+      - "/opt/homebrew/Cellar/cmake/3.29.6/share/cmake/Modules/CheckCXXCompilerFlag.cmake:34 (cmake_check_compiler_flag)"
+      - "/Users/arashdeep/StudioProjects/holtersync/macos/.tflite-build/build-x86_64/eigen/CMakeLists.txt:96 (check_cxx_compiler_flag)"
+      - "/Users/arashdeep/StudioProjects/holtersync/macos/.tflite-build/build-x86_64/eigen/CMakeLists.txt:188 (ei_add_cxx_compiler_flag)"
+    checks:
+      - "Performing Test COMPILER_SUPPORT_Wundef"
+    directories:
+      source: "/Users/arashdeep/StudioProjects/holtersync/macos/.tflite-build/build-x86_64/CMakeFiles/CMakeScratch/TryCompile-jWU277"
+      binary: "/Users/arashdeep/StudioProjects/holtersync/macos/.tflite-build/build-x86_64/CMakeFiles/CMakeScratch/TryCompile-jWU277"
+    cmakeVariables:
+      CMAKE_CXX_FLAGS: " -pedantic -Wall -Wextra"
+      CMAKE_CXX_FLAGS_DEBUG: "-g"
+      CMAKE_EXE_LINKER_FLAGS: "-L/opt/homebrew/opt/php@8.2/lib"
+      CMAKE_MODULE_PATH: "/Users/arashdeep/StudioProjects/holtersync/macos/.tflite-build/build-x86_64/eigen/cmake"
+      CMAKE_OSX_ARCHITECTURES: "x86_64"
+      CMAKE_OSX_DEPLOYMENT_TARGET: "14.5"
+      CMAKE_OSX_SYSROOT: "/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX15.2.sdk"
+      CMAKE_POSITION_INDEPENDENT_CODE: "ON"
+    buildResult:
+      variable: "COMPILER_SUPPORT_Wundef"
+      cached: true
+      stdout: |
+        Change Dir: '/Users/arashdeep/StudioProjects/holtersync/macos/.tflite-build/build-x86_64/CMakeFiles/CMakeScratch/TryCompile-jWU277'
+        
+        Run Build Command(s): /opt/homebrew/Cellar/cmake/3.29.6/bin/cmake -E env VERBOSE=1 /usr/bin/make -f Makefile cmTC_a8e05/fast
+        /Applications/Xcode.app/Contents/Developer/usr/bin/make  -f CMakeFiles/cmTC_a8e05.dir/build.make CMakeFiles/cmTC_a8e05.dir/build
+        Building CXX object CMakeFiles/cmTC_a8e05.dir/src.cxx.o
+        /Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/c++ -DCOMPILER_SUPPORT_Wundef  -pedantic -Wall -Wextra -Werror -std=gnu++17 -arch x86_64 -isysroot /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX15.2.sdk -mmacosx-version-min=14.5 -fPIE   -Wundef -MD -MT CMakeFiles/cmTC_a8e05.dir/src.cxx.o -MF CMakeFiles/cmTC_a8e05.dir/src.cxx.o.d -o CMakeFiles/cmTC_a8e05.dir/src.cxx.o -c /Users/arashdeep/StudioProjects/holtersync/macos/.tflite-build/build-x86_64/CMakeFiles/CMakeScratch/TryCompile-jWU277/src.cxx
+        Linking CXX executable cmTC_a8e05
+        /opt/homebrew/Cellar/cmake/3.29.6/bin/cmake -E cmake_link_script CMakeFiles/cmTC_a8e05.dir/link.txt --verbose=1
+        /Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/c++  -pedantic -Wall -Wextra -Werror -arch x86_64 -isysroot /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX15.2.sdk -mmacosx-version-min=14.5 -Wl,-search_paths_first -Wl,-headerpad_max_install_names -L/opt/homebrew/opt/php@8.2/lib  CMakeFiles/cmTC_a8e05.dir/src.cxx.o -o cmTC_a8e05
+        
+      exitCode: 0
+  -
+    kind: "try_compile-v1"
+    backtrace:
+      - "/opt/homebrew/Cellar/cmake/3.29.6/share/cmake/Modules/Internal/CheckSourceCompiles.cmake:101 (try_compile)"
+      - "/opt/homebrew/Cellar/cmake/3.29.6/share/cmake/Modules/Internal/CheckCompilerFlag.cmake:18 (cmake_check_source_compiles)"
+      - "/opt/homebrew/Cellar/cmake/3.29.6/share/cmake/Modules/CheckCXXCompilerFlag.cmake:34 (cmake_check_compiler_flag)"
+      - "/Users/arashdeep/StudioProjects/holtersync/macos/.tflite-build/build-x86_64/eigen/CMakeLists.txt:96 (check_cxx_compiler_flag)"
+      - "/Users/arashdeep/StudioProjects/holtersync/macos/.tflite-build/build-x86_64/eigen/CMakeLists.txt:189 (ei_add_cxx_compiler_flag)"
+    checks:
+      - "Performing Test COMPILER_SUPPORT_Wcastalign"
+    directories:
+      source: "/Users/arashdeep/StudioProjects/holtersync/macos/.tflite-build/build-x86_64/CMakeFiles/CMakeScratch/TryCompile-HhCj4A"
+      binary: "/Users/arashdeep/StudioProjects/holtersync/macos/.tflite-build/build-x86_64/CMakeFiles/CMakeScratch/TryCompile-HhCj4A"
+    cmakeVariables:
+      CMAKE_CXX_FLAGS: " -pedantic -Wall -Wextra -Wundef"
+      CMAKE_CXX_FLAGS_DEBUG: "-g"
+      CMAKE_EXE_LINKER_FLAGS: "-L/opt/homebrew/opt/php@8.2/lib"
+      CMAKE_MODULE_PATH: "/Users/arashdeep/StudioProjects/holtersync/macos/.tflite-build/build-x86_64/eigen/cmake"
+      CMAKE_OSX_ARCHITECTURES: "x86_64"
+      CMAKE_OSX_DEPLOYMENT_TARGET: "14.5"
+      CMAKE_OSX_SYSROOT: "/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX15.2.sdk"
+      CMAKE_POSITION_INDEPENDENT_CODE: "ON"
+    buildResult:
+      variable: "COMPILER_SUPPORT_Wcastalign"
+      cached: true
+      stdout: |
+        Change Dir: '/Users/arashdeep/StudioProjects/holtersync/macos/.tflite-build/build-x86_64/CMakeFiles/CMakeScratch/TryCompile-HhCj4A'
+        
+        Run Build Command(s): /opt/homebrew/Cellar/cmake/3.29.6/bin/cmake -E env VERBOSE=1 /usr/bin/make -f Makefile cmTC_f4f09/fast
+        /Applications/Xcode.app/Contents/Developer/usr/bin/make  -f CMakeFiles/cmTC_f4f09.dir/build.make CMakeFiles/cmTC_f4f09.dir/build
+        Building CXX object CMakeFiles/cmTC_f4f09.dir/src.cxx.o
+        /Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/c++ -DCOMPILER_SUPPORT_Wcastalign  -pedantic -Wall -Wextra -Wundef -Werror -std=gnu++17 -arch x86_64 -isysroot /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX15.2.sdk -mmacosx-version-min=14.5 -fPIE   -Wcast-align -MD -MT CMakeFiles/cmTC_f4f09.dir/src.cxx.o -MF CMakeFiles/cmTC_f4f09.dir/src.cxx.o.d -o CMakeFiles/cmTC_f4f09.dir/src.cxx.o -c /Users/arashdeep/StudioProjects/holtersync/macos/.tflite-build/build-x86_64/CMakeFiles/CMakeScratch/TryCompile-HhCj4A/src.cxx
+        Linking CXX executable cmTC_f4f09
+        /opt/homebrew/Cellar/cmake/3.29.6/bin/cmake -E cmake_link_script CMakeFiles/cmTC_f4f09.dir/link.txt --verbose=1
+        /Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/c++  -pedantic -Wall -Wextra -Wundef -Werror -arch x86_64 -isysroot /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX15.2.sdk -mmacosx-version-min=14.5 -Wl,-search_paths_first -Wl,-headerpad_max_install_names -L/opt/homebrew/opt/php@8.2/lib  CMakeFiles/cmTC_f4f09.dir/src.cxx.o -o cmTC_f4f09
+        
+      exitCode: 0
+  -
+    kind: "try_compile-v1"
+    backtrace:
+      - "/opt/homebrew/Cellar/cmake/3.29.6/share/cmake/Modules/Internal/CheckSourceCompiles.cmake:101 (try_compile)"
+      - "/opt/homebrew/Cellar/cmake/3.29.6/share/cmake/Modules/Internal/CheckCompilerFlag.cmake:18 (cmake_check_source_compiles)"
+      - "/opt/homebrew/Cellar/cmake/3.29.6/share/cmake/Modules/CheckCXXCompilerFlag.cmake:34 (cmake_check_compiler_flag)"
+      - "/Users/arashdeep/StudioProjects/holtersync/macos/.tflite-build/build-x86_64/eigen/CMakeLists.txt:96 (check_cxx_compiler_flag)"
+      - "/Users/arashdeep/StudioProjects/holtersync/macos/.tflite-build/build-x86_64/eigen/CMakeLists.txt:190 (ei_add_cxx_compiler_flag)"
+    checks:
+      - "Performing Test COMPILER_SUPPORT_Wcharsubscripts"
+    directories:
+      source: "/Users/arashdeep/StudioProjects/holtersync/macos/.tflite-build/build-x86_64/CMakeFiles/CMakeScratch/TryCompile-yCEujE"
+      binary: "/Users/arashdeep/StudioProjects/holtersync/macos/.tflite-build/build-x86_64/CMakeFiles/CMakeScratch/TryCompile-yCEujE"
+    cmakeVariables:
+      CMAKE_CXX_FLAGS: " -pedantic -Wall -Wextra -Wundef -Wcast-align"
+      CMAKE_CXX_FLAGS_DEBUG: "-g"
+      CMAKE_EXE_LINKER_FLAGS: "-L/opt/homebrew/opt/php@8.2/lib"
+      CMAKE_MODULE_PATH: "/Users/arashdeep/StudioProjects/holtersync/macos/.tflite-build/build-x86_64/eigen/cmake"
+      CMAKE_OSX_ARCHITECTURES: "x86_64"
+      CMAKE_OSX_DEPLOYMENT_TARGET: "14.5"
+      CMAKE_OSX_SYSROOT: "/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX15.2.sdk"
+      CMAKE_POSITION_INDEPENDENT_CODE: "ON"
+    buildResult:
+      variable: "COMPILER_SUPPORT_Wcharsubscripts"
+      cached: true
+      stdout: |
+        Change Dir: '/Users/arashdeep/StudioProjects/holtersync/macos/.tflite-build/build-x86_64/CMakeFiles/CMakeScratch/TryCompile-yCEujE'
+        
+        Run Build Command(s): /opt/homebrew/Cellar/cmake/3.29.6/bin/cmake -E env VERBOSE=1 /usr/bin/make -f Makefile cmTC_097f5/fast
+        /Applications/Xcode.app/Contents/Developer/usr/bin/make  -f CMakeFiles/cmTC_097f5.dir/build.make CMakeFiles/cmTC_097f5.dir/build
+        Building CXX object CMakeFiles/cmTC_097f5.dir/src.cxx.o
+        /Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/c++ -DCOMPILER_SUPPORT_Wcharsubscripts  -pedantic -Wall -Wextra -Wundef -Wcast-align -Werror -std=gnu++17 -arch x86_64 -isysroot /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX15.2.sdk -mmacosx-version-min=14.5 -fPIE   -Wchar-subscripts -MD -MT CMakeFiles/cmTC_097f5.dir/src.cxx.o -MF CMakeFiles/cmTC_097f5.dir/src.cxx.o.d -o CMakeFiles/cmTC_097f5.dir/src.cxx.o -c /Users/arashdeep/StudioProjects/holtersync/macos/.tflite-build/build-x86_64/CMakeFiles/CMakeScratch/TryCompile-yCEujE/src.cxx
+        Linking CXX executable cmTC_097f5
+        /opt/homebrew/Cellar/cmake/3.29.6/bin/cmake -E cmake_link_script CMakeFiles/cmTC_097f5.dir/link.txt --verbose=1
+        /Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/c++  -pedantic -Wall -Wextra -Wundef -Wcast-align -Werror -arch x86_64 -isysroot /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX15.2.sdk -mmacosx-version-min=14.5 -Wl,-search_paths_first -Wl,-headerpad_max_install_names -L/opt/homebrew/opt/php@8.2/lib  CMakeFiles/cmTC_097f5.dir/src.cxx.o -o cmTC_097f5
+        
+      exitCode: 0
+  -
+    kind: "try_compile-v1"
+    backtrace:
+      - "/opt/homebrew/Cellar/cmake/3.29.6/share/cmake/Modules/Internal/CheckSourceCompiles.cmake:101 (try_compile)"
+      - "/opt/homebrew/Cellar/cmake/3.29.6/share/cmake/Modules/Internal/CheckCompilerFlag.cmake:18 (cmake_check_source_compiles)"
+      - "/opt/homebrew/Cellar/cmake/3.29.6/share/cmake/Modules/CheckCXXCompilerFlag.cmake:34 (cmake_check_compiler_flag)"
+      - "/Users/arashdeep/StudioProjects/holtersync/macos/.tflite-build/build-x86_64/eigen/CMakeLists.txt:96 (check_cxx_compiler_flag)"
+      - "/Users/arashdeep/StudioProjects/holtersync/macos/.tflite-build/build-x86_64/eigen/CMakeLists.txt:191 (ei_add_cxx_compiler_flag)"
+    checks:
+      - "Performing Test COMPILER_SUPPORT_Wnonvirtualdtor"
+    directories:
+      source: "/Users/arashdeep/StudioProjects/holtersync/macos/.tflite-build/build-x86_64/CMakeFiles/CMakeScratch/TryCompile-BIRxsT"
+      binary: "/Users/arashdeep/StudioProjects/holtersync/macos/.tflite-build/build-x86_64/CMakeFiles/CMakeScratch/TryCompile-BIRxsT"
+    cmakeVariables:
+      CMAKE_CXX_FLAGS: " -pedantic -Wall -Wextra -Wundef -Wcast-align -Wchar-subscripts"
+      CMAKE_CXX_FLAGS_DEBUG: "-g"
+      CMAKE_EXE_LINKER_FLAGS: "-L/opt/homebrew/opt/php@8.2/lib"
+      CMAKE_MODULE_PATH: "/Users/arashdeep/StudioProjects/holtersync/macos/.tflite-build/build-x86_64/eigen/cmake"
+      CMAKE_OSX_ARCHITECTURES: "x86_64"
+      CMAKE_OSX_DEPLOYMENT_TARGET: "14.5"
+      CMAKE_OSX_SYSROOT: "/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX15.2.sdk"
+      CMAKE_POSITION_INDEPENDENT_CODE: "ON"
+    buildResult:
+      variable: "COMPILER_SUPPORT_Wnonvirtualdtor"
+      cached: true
+      stdout: |
+        Change Dir: '/Users/arashdeep/StudioProjects/holtersync/macos/.tflite-build/build-x86_64/CMakeFiles/CMakeScratch/TryCompile-BIRxsT'
+        
+        Run Build Command(s): /opt/homebrew/Cellar/cmake/3.29.6/bin/cmake -E env VERBOSE=1 /usr/bin/make -f Makefile cmTC_04778/fast
+        /Applications/Xcode.app/Contents/Developer/usr/bin/make  -f CMakeFiles/cmTC_04778.dir/build.make CMakeFiles/cmTC_04778.dir/build
+        Building CXX object CMakeFiles/cmTC_04778.dir/src.cxx.o
+        /Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/c++ -DCOMPILER_SUPPORT_Wnonvirtualdtor  -pedantic -Wall -Wextra -Wundef -Wcast-align -Wchar-subscripts -Werror -std=gnu++17 -arch x86_64 -isysroot /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX15.2.sdk -mmacosx-version-min=14.5 -fPIE   -Wnon-virtual-dtor -MD -MT CMakeFiles/cmTC_04778.dir/src.cxx.o -MF CMakeFiles/cmTC_04778.dir/src.cxx.o.d -o CMakeFiles/cmTC_04778.dir/src.cxx.o -c /Users/arashdeep/StudioProjects/holtersync/macos/.tflite-build/build-x86_64/CMakeFiles/CMakeScratch/TryCompile-BIRxsT/src.cxx
+        Linking CXX executable cmTC_04778
+        /opt/homebrew/Cellar/cmake/3.29.6/bin/cmake -E cmake_link_script CMakeFiles/cmTC_04778.dir/link.txt --verbose=1
+        /Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/c++  -pedantic -Wall -Wextra -Wundef -Wcast-align -Wchar-subscripts -Werror -arch x86_64 -isysroot /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX15.2.sdk -mmacosx-version-min=14.5 -Wl,-search_paths_first -Wl,-headerpad_max_install_names -L/opt/homebrew/opt/php@8.2/lib  CMakeFiles/cmTC_04778.dir/src.cxx.o -o cmTC_04778
+        
+      exitCode: 0
+  -
+    kind: "try_compile-v1"
+    backtrace:
+      - "/opt/homebrew/Cellar/cmake/3.29.6/share/cmake/Modules/Internal/CheckSourceCompiles.cmake:101 (try_compile)"
+      - "/opt/homebrew/Cellar/cmake/3.29.6/share/cmake/Modules/Internal/CheckCompilerFlag.cmake:18 (cmake_check_source_compiles)"
+      - "/opt/homebrew/Cellar/cmake/3.29.6/share/cmake/Modules/CheckCXXCompilerFlag.cmake:34 (cmake_check_compiler_flag)"
+      - "/Users/arashdeep/StudioProjects/holtersync/macos/.tflite-build/build-x86_64/eigen/CMakeLists.txt:96 (check_cxx_compiler_flag)"
+      - "/Users/arashdeep/StudioProjects/holtersync/macos/.tflite-build/build-x86_64/eigen/CMakeLists.txt:192 (ei_add_cxx_compiler_flag)"
+    checks:
+      - "Performing Test COMPILER_SUPPORT_Wunusedlocaltypedefs"
+    directories:
+      source: "/Users/arashdeep/StudioProjects/holtersync/macos/.tflite-build/build-x86_64/CMakeFiles/CMakeScratch/TryCompile-qwxV7Z"
+      binary: "/Users/arashdeep/StudioProjects/holtersync/macos/.tflite-build/build-x86_64/CMakeFiles/CMakeScratch/TryCompile-qwxV7Z"
+    cmakeVariables:
+      CMAKE_CXX_FLAGS: " -pedantic -Wall -Wextra -Wundef -Wcast-align -Wchar-subscripts -Wnon-virtual-dtor"
+      CMAKE_CXX_FLAGS_DEBUG: "-g"
+      CMAKE_EXE_LINKER_FLAGS: "-L/opt/homebrew/opt/php@8.2/lib"
+      CMAKE_MODULE_PATH: "/Users/arashdeep/StudioProjects/holtersync/macos/.tflite-build/build-x86_64/eigen/cmake"
+      CMAKE_OSX_ARCHITECTURES: "x86_64"
+      CMAKE_OSX_DEPLOYMENT_TARGET: "14.5"
+      CMAKE_OSX_SYSROOT: "/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX15.2.sdk"
+      CMAKE_POSITION_INDEPENDENT_CODE: "ON"
+    buildResult:
+      variable: "COMPILER_SUPPORT_Wunusedlocaltypedefs"
+      cached: true
+      stdout: |
+        Change Dir: '/Users/arashdeep/StudioProjects/holtersync/macos/.tflite-build/build-x86_64/CMakeFiles/CMakeScratch/TryCompile-qwxV7Z'
+        
+        Run Build Command(s): /opt/homebrew/Cellar/cmake/3.29.6/bin/cmake -E env VERBOSE=1 /usr/bin/make -f Makefile cmTC_6b5f6/fast
+        /Applications/Xcode.app/Contents/Developer/usr/bin/make  -f CMakeFiles/cmTC_6b5f6.dir/build.make CMakeFiles/cmTC_6b5f6.dir/build
+        Building CXX object CMakeFiles/cmTC_6b5f6.dir/src.cxx.o
+        /Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/c++ -DCOMPILER_SUPPORT_Wunusedlocaltypedefs  -pedantic -Wall -Wextra -Wundef -Wcast-align -Wchar-subscripts -Wnon-virtual-dtor -Werror -std=gnu++17 -arch x86_64 -isysroot /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX15.2.sdk -mmacosx-version-min=14.5 -fPIE   -Wunused-local-typedefs -MD -MT CMakeFiles/cmTC_6b5f6.dir/src.cxx.o -MF CMakeFiles/cmTC_6b5f6.dir/src.cxx.o.d -o CMakeFiles/cmTC_6b5f6.dir/src.cxx.o -c /Users/arashdeep/StudioProjects/holtersync/macos/.tflite-build/build-x86_64/CMakeFiles/CMakeScratch/TryCompile-qwxV7Z/src.cxx
+        Linking CXX executable cmTC_6b5f6
+        /opt/homebrew/Cellar/cmake/3.29.6/bin/cmake -E cmake_link_script CMakeFiles/cmTC_6b5f6.dir/link.txt --verbose=1
+        /Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/c++  -pedantic -Wall -Wextra -Wundef -Wcast-align -Wchar-subscripts -Wnon-virtual-dtor -Werror -arch x86_64 -isysroot /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX15.2.sdk -mmacosx-version-min=14.5 -Wl,-search_paths_first -Wl,-headerpad_max_install_names -L/opt/homebrew/opt/php@8.2/lib  CMakeFiles/cmTC_6b5f6.dir/src.cxx.o -o cmTC_6b5f6
+        
+      exitCode: 0
+  -
+    kind: "try_compile-v1"
+    backtrace:
+      - "/opt/homebrew/Cellar/cmake/3.29.6/share/cmake/Modules/Internal/CheckSourceCompiles.cmake:101 (try_compile)"
+      - "/opt/homebrew/Cellar/cmake/3.29.6/share/cmake/Modules/Internal/CheckCompilerFlag.cmake:18 (cmake_check_source_compiles)"
+      - "/opt/homebrew/Cellar/cmake/3.29.6/share/cmake/Modules/CheckCXXCompilerFlag.cmake:34 (cmake_check_compiler_flag)"
+      - "/Users/arashdeep/StudioProjects/holtersync/macos/.tflite-build/build-x86_64/eigen/CMakeLists.txt:96 (check_cxx_compiler_flag)"
+      - "/Users/arashdeep/StudioProjects/holtersync/macos/.tflite-build/build-x86_64/eigen/CMakeLists.txt:193 (ei_add_cxx_compiler_flag)"
+    checks:
+      - "Performing Test COMPILER_SUPPORT_Wpointerarith"
+    directories:
+      source: "/Users/arashdeep/StudioProjects/holtersync/macos/.tflite-build/build-x86_64/CMakeFiles/CMakeScratch/TryCompile-ieeJL8"
+      binary: "/Users/arashdeep/StudioProjects/holtersync/macos/.tflite-build/build-x86_64/CMakeFiles/CMakeScratch/TryCompile-ieeJL8"
+    cmakeVariables:
+      CMAKE_CXX_FLAGS: " -pedantic -Wall -Wextra -Wundef -Wcast-align -Wchar-subscripts -Wnon-virtual-dtor -Wunused-local-typedefs"
+      CMAKE_CXX_FLAGS_DEBUG: "-g"
+      CMAKE_EXE_LINKER_FLAGS: "-L/opt/homebrew/opt/php@8.2/lib"
+      CMAKE_MODULE_PATH: "/Users/arashdeep/StudioProjects/holtersync/macos/.tflite-build/build-x86_64/eigen/cmake"
+      CMAKE_OSX_ARCHITECTURES: "x86_64"
+      CMAKE_OSX_DEPLOYMENT_TARGET: "14.5"
+      CMAKE_OSX_SYSROOT: "/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX15.2.sdk"
+      CMAKE_POSITION_INDEPENDENT_CODE: "ON"
+    buildResult:
+      variable: "COMPILER_SUPPORT_Wpointerarith"
+      cached: true
+      stdout: |
+        Change Dir: '/Users/arashdeep/StudioProjects/holtersync/macos/.tflite-build/build-x86_64/CMakeFiles/CMakeScratch/TryCompile-ieeJL8'
+        
+        Run Build Command(s): /opt/homebrew/Cellar/cmake/3.29.6/bin/cmake -E env VERBOSE=1 /usr/bin/make -f Makefile cmTC_4ad9d/fast
+        /Applications/Xcode.app/Contents/Developer/usr/bin/make  -f CMakeFiles/cmTC_4ad9d.dir/build.make CMakeFiles/cmTC_4ad9d.dir/build
+        Building CXX object CMakeFiles/cmTC_4ad9d.dir/src.cxx.o
+        /Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/c++ -DCOMPILER_SUPPORT_Wpointerarith  -pedantic -Wall -Wextra -Wundef -Wcast-align -Wchar-subscripts -Wnon-virtual-dtor -Wunused-local-typedefs -Werror -std=gnu++17 -arch x86_64 -isysroot /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX15.2.sdk -mmacosx-version-min=14.5 -fPIE   -Wpointer-arith -MD -MT CMakeFiles/cmTC_4ad9d.dir/src.cxx.o -MF CMakeFiles/cmTC_4ad9d.dir/src.cxx.o.d -o CMakeFiles/cmTC_4ad9d.dir/src.cxx.o -c /Users/arashdeep/StudioProjects/holtersync/macos/.tflite-build/build-x86_64/CMakeFiles/CMakeScratch/TryCompile-ieeJL8/src.cxx
+        Linking CXX executable cmTC_4ad9d
+        /opt/homebrew/Cellar/cmake/3.29.6/bin/cmake -E cmake_link_script CMakeFiles/cmTC_4ad9d.dir/link.txt --verbose=1
+        /Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/c++  -pedantic -Wall -Wextra -Wundef -Wcast-align -Wchar-subscripts -Wnon-virtual-dtor -Wunused-local-typedefs -Werror -arch x86_64 -isysroot /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX15.2.sdk -mmacosx-version-min=14.5 -Wl,-search_paths_first -Wl,-headerpad_max_install_names -L/opt/homebrew/opt/php@8.2/lib  CMakeFiles/cmTC_4ad9d.dir/src.cxx.o -o cmTC_4ad9d
+        
+      exitCode: 0
+  -
+    kind: "try_compile-v1"
+    backtrace:
+      - "/opt/homebrew/Cellar/cmake/3.29.6/share/cmake/Modules/Internal/CheckSourceCompiles.cmake:101 (try_compile)"
+      - "/opt/homebrew/Cellar/cmake/3.29.6/share/cmake/Modules/Internal/CheckCompilerFlag.cmake:18 (cmake_check_source_compiles)"
+      - "/opt/homebrew/Cellar/cmake/3.29.6/share/cmake/Modules/CheckCXXCompilerFlag.cmake:34 (cmake_check_compiler_flag)"
+      - "/Users/arashdeep/StudioProjects/holtersync/macos/.tflite-build/build-x86_64/eigen/CMakeLists.txt:96 (check_cxx_compiler_flag)"
+      - "/Users/arashdeep/StudioProjects/holtersync/macos/.tflite-build/build-x86_64/eigen/CMakeLists.txt:194 (ei_add_cxx_compiler_flag)"
+    checks:
+      - "Performing Test COMPILER_SUPPORT_Wwritestrings"
+    directories:
+      source: "/Users/arashdeep/StudioProjects/holtersync/macos/.tflite-build/build-x86_64/CMakeFiles/CMakeScratch/TryCompile-U5e9RD"
+      binary: "/Users/arashdeep/StudioProjects/holtersync/macos/.tflite-build/build-x86_64/CMakeFiles/CMakeScratch/TryCompile-U5e9RD"
+    cmakeVariables:
+      CMAKE_CXX_FLAGS: " -pedantic -Wall -Wextra -Wundef -Wcast-align -Wchar-subscripts -Wnon-virtual-dtor -Wunused-local-typedefs -Wpointer-arith"
+      CMAKE_CXX_FLAGS_DEBUG: "-g"
+      CMAKE_EXE_LINKER_FLAGS: "-L/opt/homebrew/opt/php@8.2/lib"
+      CMAKE_MODULE_PATH: "/Users/arashdeep/StudioProjects/holtersync/macos/.tflite-build/build-x86_64/eigen/cmake"
+      CMAKE_OSX_ARCHITECTURES: "x86_64"
+      CMAKE_OSX_DEPLOYMENT_TARGET: "14.5"
+      CMAKE_OSX_SYSROOT: "/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX15.2.sdk"
+      CMAKE_POSITION_INDEPENDENT_CODE: "ON"
+    buildResult:
+      variable: "COMPILER_SUPPORT_Wwritestrings"
+      cached: true
+      stdout: |
+        Change Dir: '/Users/arashdeep/StudioProjects/holtersync/macos/.tflite-build/build-x86_64/CMakeFiles/CMakeScratch/TryCompile-U5e9RD'
+        
+        Run Build Command(s): /opt/homebrew/Cellar/cmake/3.29.6/bin/cmake -E env VERBOSE=1 /usr/bin/make -f Makefile cmTC_2e692/fast
+        /Applications/Xcode.app/Contents/Developer/usr/bin/make  -f CMakeFiles/cmTC_2e692.dir/build.make CMakeFiles/cmTC_2e692.dir/build
+        Building CXX object CMakeFiles/cmTC_2e692.dir/src.cxx.o
+        /Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/c++ -DCOMPILER_SUPPORT_Wwritestrings  -pedantic -Wall -Wextra -Wundef -Wcast-align -Wchar-subscripts -Wnon-virtual-dtor -Wunused-local-typedefs -Wpointer-arith -Werror -std=gnu++17 -arch x86_64 -isysroot /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX15.2.sdk -mmacosx-version-min=14.5 -fPIE   -Wwrite-strings -MD -MT CMakeFiles/cmTC_2e692.dir/src.cxx.o -MF CMakeFiles/cmTC_2e692.dir/src.cxx.o.d -o CMakeFiles/cmTC_2e692.dir/src.cxx.o -c /Users/arashdeep/StudioProjects/holtersync/macos/.tflite-build/build-x86_64/CMakeFiles/CMakeScratch/TryCompile-U5e9RD/src.cxx
+        Linking CXX executable cmTC_2e692
+        /opt/homebrew/Cellar/cmake/3.29.6/bin/cmake -E cmake_link_script CMakeFiles/cmTC_2e692.dir/link.txt --verbose=1
+        /Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/c++  -pedantic -Wall -Wextra -Wundef -Wcast-align -Wchar-subscripts -Wnon-virtual-dtor -Wunused-local-typedefs -Wpointer-arith -Werror -arch x86_64 -isysroot /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX15.2.sdk -mmacosx-version-min=14.5 -Wl,-search_paths_first -Wl,-headerpad_max_install_names -L/opt/homebrew/opt/php@8.2/lib  CMakeFiles/cmTC_2e692.dir/src.cxx.o -o cmTC_2e692
+        
+      exitCode: 0
+  -
+    kind: "try_compile-v1"
+    backtrace:
+      - "/opt/homebrew/Cellar/cmake/3.29.6/share/cmake/Modules/Internal/CheckSourceCompiles.cmake:101 (try_compile)"
+      - "/opt/homebrew/Cellar/cmake/3.29.6/share/cmake/Modules/Internal/CheckCompilerFlag.cmake:18 (cmake_check_source_compiles)"
+      - "/opt/homebrew/Cellar/cmake/3.29.6/share/cmake/Modules/CheckCXXCompilerFlag.cmake:34 (cmake_check_compiler_flag)"
+      - "/Users/arashdeep/StudioProjects/holtersync/macos/.tflite-build/build-x86_64/eigen/CMakeLists.txt:96 (check_cxx_compiler_flag)"
+      - "/Users/arashdeep/StudioProjects/holtersync/macos/.tflite-build/build-x86_64/eigen/CMakeLists.txt:195 (ei_add_cxx_compiler_flag)"
+    checks:
+      - "Performing Test COMPILER_SUPPORT_Wformatsecurity"
+    directories:
+      source: "/Users/arashdeep/StudioProjects/holtersync/macos/.tflite-build/build-x86_64/CMakeFiles/CMakeScratch/TryCompile-7uK8zP"
+      binary: "/Users/arashdeep/StudioProjects/holtersync/macos/.tflite-build/build-x86_64/CMakeFiles/CMakeScratch/TryCompile-7uK8zP"
+    cmakeVariables:
+      CMAKE_CXX_FLAGS: " -pedantic -Wall -Wextra -Wundef -Wcast-align -Wchar-subscripts -Wnon-virtual-dtor -Wunused-local-typedefs -Wpointer-arith -Wwrite-strings"
+      CMAKE_CXX_FLAGS_DEBUG: "-g"
+      CMAKE_EXE_LINKER_FLAGS: "-L/opt/homebrew/opt/php@8.2/lib"
+      CMAKE_MODULE_PATH: "/Users/arashdeep/StudioProjects/holtersync/macos/.tflite-build/build-x86_64/eigen/cmake"
+      CMAKE_OSX_ARCHITECTURES: "x86_64"
+      CMAKE_OSX_DEPLOYMENT_TARGET: "14.5"
+      CMAKE_OSX_SYSROOT: "/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX15.2.sdk"
+      CMAKE_POSITION_INDEPENDENT_CODE: "ON"
+    buildResult:
+      variable: "COMPILER_SUPPORT_Wformatsecurity"
+      cached: true
+      stdout: |
+        Change Dir: '/Users/arashdeep/StudioProjects/holtersync/macos/.tflite-build/build-x86_64/CMakeFiles/CMakeScratch/TryCompile-7uK8zP'
+        
+        Run Build Command(s): /opt/homebrew/Cellar/cmake/3.29.6/bin/cmake -E env VERBOSE=1 /usr/bin/make -f Makefile cmTC_68b52/fast
+        /Applications/Xcode.app/Contents/Developer/usr/bin/make  -f CMakeFiles/cmTC_68b52.dir/build.make CMakeFiles/cmTC_68b52.dir/build
+        Building CXX object CMakeFiles/cmTC_68b52.dir/src.cxx.o
+        /Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/c++ -DCOMPILER_SUPPORT_Wformatsecurity  -pedantic -Wall -Wextra -Wundef -Wcast-align -Wchar-subscripts -Wnon-virtual-dtor -Wunused-local-typedefs -Wpointer-arith -Wwrite-strings -Werror -std=gnu++17 -arch x86_64 -isysroot /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX15.2.sdk -mmacosx-version-min=14.5 -fPIE   -Wformat-security -MD -MT CMakeFiles/cmTC_68b52.dir/src.cxx.o -MF CMakeFiles/cmTC_68b52.dir/src.cxx.o.d -o CMakeFiles/cmTC_68b52.dir/src.cxx.o -c /Users/arashdeep/StudioProjects/holtersync/macos/.tflite-build/build-x86_64/CMakeFiles/CMakeScratch/TryCompile-7uK8zP/src.cxx
+        Linking CXX executable cmTC_68b52
+        /opt/homebrew/Cellar/cmake/3.29.6/bin/cmake -E cmake_link_script CMakeFiles/cmTC_68b52.dir/link.txt --verbose=1
+        /Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/c++  -pedantic -Wall -Wextra -Wundef -Wcast-align -Wchar-subscripts -Wnon-virtual-dtor -Wunused-local-typedefs -Wpointer-arith -Wwrite-strings -Werror -arch x86_64 -isysroot /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX15.2.sdk -mmacosx-version-min=14.5 -Wl,-search_paths_first -Wl,-headerpad_max_install_names -L/opt/homebrew/opt/php@8.2/lib  CMakeFiles/cmTC_68b52.dir/src.cxx.o -o cmTC_68b52
+        
+      exitCode: 0
+  -
+    kind: "try_compile-v1"
+    backtrace:
+      - "/opt/homebrew/Cellar/cmake/3.29.6/share/cmake/Modules/Internal/CheckSourceCompiles.cmake:101 (try_compile)"
+      - "/opt/homebrew/Cellar/cmake/3.29.6/share/cmake/Modules/Internal/CheckCompilerFlag.cmake:18 (cmake_check_source_compiles)"
+      - "/opt/homebrew/Cellar/cmake/3.29.6/share/cmake/Modules/CheckCXXCompilerFlag.cmake:34 (cmake_check_compiler_flag)"
+      - "/Users/arashdeep/StudioProjects/holtersync/macos/.tflite-build/build-x86_64/eigen/CMakeLists.txt:96 (check_cxx_compiler_flag)"
+      - "/Users/arashdeep/StudioProjects/holtersync/macos/.tflite-build/build-x86_64/eigen/CMakeLists.txt:196 (ei_add_cxx_compiler_flag)"
+    checks:
+      - "Performing Test COMPILER_SUPPORT_Wshorten64to32"
+    directories:
+      source: "/Users/arashdeep/StudioProjects/holtersync/macos/.tflite-build/build-x86_64/CMakeFiles/CMakeScratch/TryCompile-Luv5YX"
+      binary: "/Users/arashdeep/StudioProjects/holtersync/macos/.tflite-build/build-x86_64/CMakeFiles/CMakeScratch/TryCompile-Luv5YX"
+    cmakeVariables:
+      CMAKE_CXX_FLAGS: " -pedantic -Wall -Wextra -Wundef -Wcast-align -Wchar-subscripts -Wnon-virtual-dtor -Wunused-local-typedefs -Wpointer-arith -Wwrite-strings -Wformat-security"
+      CMAKE_CXX_FLAGS_DEBUG: "-g"
+      CMAKE_EXE_LINKER_FLAGS: "-L/opt/homebrew/opt/php@8.2/lib"
+      CMAKE_MODULE_PATH: "/Users/arashdeep/StudioProjects/holtersync/macos/.tflite-build/build-x86_64/eigen/cmake"
+      CMAKE_OSX_ARCHITECTURES: "x86_64"
+      CMAKE_OSX_DEPLOYMENT_TARGET: "14.5"
+      CMAKE_OSX_SYSROOT: "/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX15.2.sdk"
+      CMAKE_POSITION_INDEPENDENT_CODE: "ON"
+    buildResult:
+      variable: "COMPILER_SUPPORT_Wshorten64to32"
+      cached: true
+      stdout: |
+        Change Dir: '/Users/arashdeep/StudioProjects/holtersync/macos/.tflite-build/build-x86_64/CMakeFiles/CMakeScratch/TryCompile-Luv5YX'
+        
+        Run Build Command(s): /opt/homebrew/Cellar/cmake/3.29.6/bin/cmake -E env VERBOSE=1 /usr/bin/make -f Makefile cmTC_9e632/fast
+        /Applications/Xcode.app/Contents/Developer/usr/bin/make  -f CMakeFiles/cmTC_9e632.dir/build.make CMakeFiles/cmTC_9e632.dir/build
+        Building CXX object CMakeFiles/cmTC_9e632.dir/src.cxx.o
+        /Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/c++ -DCOMPILER_SUPPORT_Wshorten64to32  -pedantic -Wall -Wextra -Wundef -Wcast-align -Wchar-subscripts -Wnon-virtual-dtor -Wunused-local-typedefs -Wpointer-arith -Wwrite-strings -Wformat-security -Werror -std=gnu++17 -arch x86_64 -isysroot /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX15.2.sdk -mmacosx-version-min=14.5 -fPIE   -Wshorten-64-to-32 -MD -MT CMakeFiles/cmTC_9e632.dir/src.cxx.o -MF CMakeFiles/cmTC_9e632.dir/src.cxx.o.d -o CMakeFiles/cmTC_9e632.dir/src.cxx.o -c /Users/arashdeep/StudioProjects/holtersync/macos/.tflite-build/build-x86_64/CMakeFiles/CMakeScratch/TryCompile-Luv5YX/src.cxx
+        Linking CXX executable cmTC_9e632
+        /opt/homebrew/Cellar/cmake/3.29.6/bin/cmake -E cmake_link_script CMakeFiles/cmTC_9e632.dir/link.txt --verbose=1
+        /Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/c++  -pedantic -Wall -Wextra -Wundef -Wcast-align -Wchar-subscripts -Wnon-virtual-dtor -Wunused-local-typedefs -Wpointer-arith -Wwrite-strings -Wformat-security -Werror -arch x86_64 -isysroot /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX15.2.sdk -mmacosx-version-min=14.5 -Wl,-search_paths_first -Wl,-headerpad_max_install_names -L/opt/homebrew/opt/php@8.2/lib  CMakeFiles/cmTC_9e632.dir/src.cxx.o -o cmTC_9e632
+        
+      exitCode: 0
+  -
+    kind: "try_compile-v1"
+    backtrace:
+      - "/opt/homebrew/Cellar/cmake/3.29.6/share/cmake/Modules/Internal/CheckSourceCompiles.cmake:101 (try_compile)"
+      - "/opt/homebrew/Cellar/cmake/3.29.6/share/cmake/Modules/Internal/CheckCompilerFlag.cmake:18 (cmake_check_source_compiles)"
+      - "/opt/homebrew/Cellar/cmake/3.29.6/share/cmake/Modules/CheckCXXCompilerFlag.cmake:34 (cmake_check_compiler_flag)"
+      - "/Users/arashdeep/StudioProjects/holtersync/macos/.tflite-build/build-x86_64/eigen/CMakeLists.txt:96 (check_cxx_compiler_flag)"
+      - "/Users/arashdeep/StudioProjects/holtersync/macos/.tflite-build/build-x86_64/eigen/CMakeLists.txt:197 (ei_add_cxx_compiler_flag)"
+    checks:
+      - "Performing Test COMPILER_SUPPORT_Wlogicalop"
+    directories:
+      source: "/Users/arashdeep/StudioProjects/holtersync/macos/.tflite-build/build-x86_64/CMakeFiles/CMakeScratch/TryCompile-uxQJAo"
+      binary: "/Users/arashdeep/StudioProjects/holtersync/macos/.tflite-build/build-x86_64/CMakeFiles/CMakeScratch/TryCompile-uxQJAo"
+    cmakeVariables:
+      CMAKE_CXX_FLAGS: " -pedantic -Wall -Wextra -Wundef -Wcast-align -Wchar-subscripts -Wnon-virtual-dtor -Wunused-local-typedefs -Wpointer-arith -Wwrite-strings -Wformat-security -Wshorten-64-to-32"
+      CMAKE_CXX_FLAGS_DEBUG: "-g"
+      CMAKE_EXE_LINKER_FLAGS: "-L/opt/homebrew/opt/php@8.2/lib"
+      CMAKE_MODULE_PATH: "/Users/arashdeep/StudioProjects/holtersync/macos/.tflite-build/build-x86_64/eigen/cmake"
+      CMAKE_OSX_ARCHITECTURES: "x86_64"
+      CMAKE_OSX_DEPLOYMENT_TARGET: "14.5"
+      CMAKE_OSX_SYSROOT: "/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX15.2.sdk"
+      CMAKE_POSITION_INDEPENDENT_CODE: "ON"
+    buildResult:
+      variable: "COMPILER_SUPPORT_Wlogicalop"
+      cached: true
+      stdout: |
+        Change Dir: '/Users/arashdeep/StudioProjects/holtersync/macos/.tflite-build/build-x86_64/CMakeFiles/CMakeScratch/TryCompile-uxQJAo'
+        
+        Run Build Command(s): /opt/homebrew/Cellar/cmake/3.29.6/bin/cmake -E env VERBOSE=1 /usr/bin/make -f Makefile cmTC_e99bf/fast
+        /Applications/Xcode.app/Contents/Developer/usr/bin/make  -f CMakeFiles/cmTC_e99bf.dir/build.make CMakeFiles/cmTC_e99bf.dir/build
+        Building CXX object CMakeFiles/cmTC_e99bf.dir/src.cxx.o
+        /Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/c++ -DCOMPILER_SUPPORT_Wlogicalop  -pedantic -Wall -Wextra -Wundef -Wcast-align -Wchar-subscripts -Wnon-virtual-dtor -Wunused-local-typedefs -Wpointer-arith -Wwrite-strings -Wformat-security -Wshorten-64-to-32 -Werror -std=gnu++17 -arch x86_64 -isysroot /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX15.2.sdk -mmacosx-version-min=14.5 -fPIE   -Wlogical-op -MD -MT CMakeFiles/cmTC_e99bf.dir/src.cxx.o -MF CMakeFiles/cmTC_e99bf.dir/src.cxx.o.d -o CMakeFiles/cmTC_e99bf.dir/src.cxx.o -c /Users/arashdeep/StudioProjects/holtersync/macos/.tflite-build/build-x86_64/CMakeFiles/CMakeScratch/TryCompile-uxQJAo/src.cxx
+        error: unknown warning option '-Wlogical-op'; did you mean '-Wlong-long'? [-Werror,-Wunknown-warning-option]
+        make[1]: *** [CMakeFiles/cmTC_e99bf.dir/src.cxx.o] Error 1
+        make: *** [cmTC_e99bf/fast] Error 2
+        
+      exitCode: 2
+  -
+    kind: "try_compile-v1"
+    backtrace:
+      - "/opt/homebrew/Cellar/cmake/3.29.6/share/cmake/Modules/Internal/CheckSourceCompiles.cmake:101 (try_compile)"
+      - "/opt/homebrew/Cellar/cmake/3.29.6/share/cmake/Modules/Internal/CheckCompilerFlag.cmake:18 (cmake_check_source_compiles)"
+      - "/opt/homebrew/Cellar/cmake/3.29.6/share/cmake/Modules/CheckCXXCompilerFlag.cmake:34 (cmake_check_compiler_flag)"
+      - "/Users/arashdeep/StudioProjects/holtersync/macos/.tflite-build/build-x86_64/eigen/CMakeLists.txt:96 (check_cxx_compiler_flag)"
+      - "/Users/arashdeep/StudioProjects/holtersync/macos/.tflite-build/build-x86_64/eigen/CMakeLists.txt:198 (ei_add_cxx_compiler_flag)"
+    checks:
+      - "Performing Test COMPILER_SUPPORT_Wenumconversion"
+    directories:
+      source: "/Users/arashdeep/StudioProjects/holtersync/macos/.tflite-build/build-x86_64/CMakeFiles/CMakeScratch/TryCompile-WeL1BP"
+      binary: "/Users/arashdeep/StudioProjects/holtersync/macos/.tflite-build/build-x86_64/CMakeFiles/CMakeScratch/TryCompile-WeL1BP"
+    cmakeVariables:
+      CMAKE_CXX_FLAGS: " -pedantic -Wall -Wextra -Wundef -Wcast-align -Wchar-subscripts -Wnon-virtual-dtor -Wunused-local-typedefs -Wpointer-arith -Wwrite-strings -Wformat-security -Wshorten-64-to-32"
+      CMAKE_CXX_FLAGS_DEBUG: "-g"
+      CMAKE_EXE_LINKER_FLAGS: "-L/opt/homebrew/opt/php@8.2/lib"
+      CMAKE_MODULE_PATH: "/Users/arashdeep/StudioProjects/holtersync/macos/.tflite-build/build-x86_64/eigen/cmake"
+      CMAKE_OSX_ARCHITECTURES: "x86_64"
+      CMAKE_OSX_DEPLOYMENT_TARGET: "14.5"
+      CMAKE_OSX_SYSROOT: "/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX15.2.sdk"
+      CMAKE_POSITION_INDEPENDENT_CODE: "ON"
+    buildResult:
+      variable: "COMPILER_SUPPORT_Wenumconversion"
+      cached: true
+      stdout: |
+        Change Dir: '/Users/arashdeep/StudioProjects/holtersync/macos/.tflite-build/build-x86_64/CMakeFiles/CMakeScratch/TryCompile-WeL1BP'
+        
+        Run Build Command(s): /opt/homebrew/Cellar/cmake/3.29.6/bin/cmake -E env VERBOSE=1 /usr/bin/make -f Makefile cmTC_e03ac/fast
+        /Applications/Xcode.app/Contents/Developer/usr/bin/make  -f CMakeFiles/cmTC_e03ac.dir/build.make CMakeFiles/cmTC_e03ac.dir/build
+        Building CXX object CMakeFiles/cmTC_e03ac.dir/src.cxx.o
+        /Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/c++ -DCOMPILER_SUPPORT_Wenumconversion  -pedantic -Wall -Wextra -Wundef -Wcast-align -Wchar-subscripts -Wnon-virtual-dtor -Wunused-local-typedefs -Wpointer-arith -Wwrite-strings -Wformat-security -Wshorten-64-to-32 -Werror -std=gnu++17 -arch x86_64 -isysroot /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX15.2.sdk -mmacosx-version-min=14.5 -fPIE   -Wenum-conversion -MD -MT CMakeFiles/cmTC_e03ac.dir/src.cxx.o -MF CMakeFiles/cmTC_e03ac.dir/src.cxx.o.d -o CMakeFiles/cmTC_e03ac.dir/src.cxx.o -c /Users/arashdeep/StudioProjects/holtersync/macos/.tflite-build/build-x86_64/CMakeFiles/CMakeScratch/TryCompile-WeL1BP/src.cxx
+        Linking CXX executable cmTC_e03ac
+        /opt/homebrew/Cellar/cmake/3.29.6/bin/cmake -E cmake_link_script CMakeFiles/cmTC_e03ac.dir/link.txt --verbose=1
+        /Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/c++  -pedantic -Wall -Wextra -Wundef -Wcast-align -Wchar-subscripts -Wnon-virtual-dtor -Wunused-local-typedefs -Wpointer-arith -Wwrite-strings -Wformat-security -Wshorten-64-to-32 -Werror -arch x86_64 -isysroot /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX15.2.sdk -mmacosx-version-min=14.5 -Wl,-search_paths_first -Wl,-headerpad_max_install_names -L/opt/homebrew/opt/php@8.2/lib  CMakeFiles/cmTC_e03ac.dir/src.cxx.o -o cmTC_e03ac
+        
+      exitCode: 0
+  -
+    kind: "try_compile-v1"
+    backtrace:
+      - "/opt/homebrew/Cellar/cmake/3.29.6/share/cmake/Modules/Internal/CheckSourceCompiles.cmake:101 (try_compile)"
+      - "/opt/homebrew/Cellar/cmake/3.29.6/share/cmake/Modules/Internal/CheckCompilerFlag.cmake:18 (cmake_check_source_compiles)"
+      - "/opt/homebrew/Cellar/cmake/3.29.6/share/cmake/Modules/CheckCXXCompilerFlag.cmake:34 (cmake_check_compiler_flag)"
+      - "/Users/arashdeep/StudioProjects/holtersync/macos/.tflite-build/build-x86_64/eigen/CMakeLists.txt:96 (check_cxx_compiler_flag)"
+      - "/Users/arashdeep/StudioProjects/holtersync/macos/.tflite-build/build-x86_64/eigen/CMakeLists.txt:199 (ei_add_cxx_compiler_flag)"
+    checks:
+      - "Performing Test COMPILER_SUPPORT_Wcpp11extensions"
+    directories:
+      source: "/Users/arashdeep/StudioProjects/holtersync/macos/.tflite-build/build-x86_64/CMakeFiles/CMakeScratch/TryCompile-lNQ85l"
+      binary: "/Users/arashdeep/StudioProjects/holtersync/macos/.tflite-build/build-x86_64/CMakeFiles/CMakeScratch/TryCompile-lNQ85l"
+    cmakeVariables:
+      CMAKE_CXX_FLAGS: " -pedantic -Wall -Wextra -Wundef -Wcast-align -Wchar-subscripts -Wnon-virtual-dtor -Wunused-local-typedefs -Wpointer-arith -Wwrite-strings -Wformat-security -Wshorten-64-to-32 -Wenum-conversion"
+      CMAKE_CXX_FLAGS_DEBUG: "-g"
+      CMAKE_EXE_LINKER_FLAGS: "-L/opt/homebrew/opt/php@8.2/lib"
+      CMAKE_MODULE_PATH: "/Users/arashdeep/StudioProjects/holtersync/macos/.tflite-build/build-x86_64/eigen/cmake"
+      CMAKE_OSX_ARCHITECTURES: "x86_64"
+      CMAKE_OSX_DEPLOYMENT_TARGET: "14.5"
+      CMAKE_OSX_SYSROOT: "/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX15.2.sdk"
+      CMAKE_POSITION_INDEPENDENT_CODE: "ON"
+    buildResult:
+      variable: "COMPILER_SUPPORT_Wcpp11extensions"
+      cached: true
+      stdout: |
+        Change Dir: '/Users/arashdeep/StudioProjects/holtersync/macos/.tflite-build/build-x86_64/CMakeFiles/CMakeScratch/TryCompile-lNQ85l'
+        
+        Run Build Command(s): /opt/homebrew/Cellar/cmake/3.29.6/bin/cmake -E env VERBOSE=1 /usr/bin/make -f Makefile cmTC_27a4c/fast
+        /Applications/Xcode.app/Contents/Developer/usr/bin/make  -f CMakeFiles/cmTC_27a4c.dir/build.make CMakeFiles/cmTC_27a4c.dir/build
+        Building CXX object CMakeFiles/cmTC_27a4c.dir/src.cxx.o
+        /Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/c++ -DCOMPILER_SUPPORT_Wcpp11extensions  -pedantic -Wall -Wextra -Wundef -Wcast-align -Wchar-subscripts -Wnon-virtual-dtor -Wunused-local-typedefs -Wpointer-arith -Wwrite-strings -Wformat-security -Wshorten-64-to-32 -Wenum-conversion -Werror -std=gnu++17 -arch x86_64 -isysroot /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX15.2.sdk -mmacosx-version-min=14.5 -fPIE   -Wc++11-extensions -MD -MT CMakeFiles/cmTC_27a4c.dir/src.cxx.o -MF CMakeFiles/cmTC_27a4c.dir/src.cxx.o.d -o CMakeFiles/cmTC_27a4c.dir/src.cxx.o -c /Users/arashdeep/StudioProjects/holtersync/macos/.tflite-build/build-x86_64/CMakeFiles/CMakeScratch/TryCompile-lNQ85l/src.cxx
+        Linking CXX executable cmTC_27a4c
+        /opt/homebrew/Cellar/cmake/3.29.6/bin/cmake -E cmake_link_script CMakeFiles/cmTC_27a4c.dir/link.txt --verbose=1
+        /Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/c++  -pedantic -Wall -Wextra -Wundef -Wcast-align -Wchar-subscripts -Wnon-virtual-dtor -Wunused-local-typedefs -Wpointer-arith -Wwrite-strings -Wformat-security -Wshorten-64-to-32 -Wenum-conversion -Werror -arch x86_64 -isysroot /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX15.2.sdk -mmacosx-version-min=14.5 -Wl,-search_paths_first -Wl,-headerpad_max_install_names -L/opt/homebrew/opt/php@8.2/lib  CMakeFiles/cmTC_27a4c.dir/src.cxx.o -o cmTC_27a4c
+        
+      exitCode: 0
+  -
+    kind: "try_compile-v1"
+    backtrace:
+      - "/opt/homebrew/Cellar/cmake/3.29.6/share/cmake/Modules/Internal/CheckSourceCompiles.cmake:101 (try_compile)"
+      - "/opt/homebrew/Cellar/cmake/3.29.6/share/cmake/Modules/Internal/CheckCompilerFlag.cmake:18 (cmake_check_source_compiles)"
+      - "/opt/homebrew/Cellar/cmake/3.29.6/share/cmake/Modules/CheckCXXCompilerFlag.cmake:34 (cmake_check_compiler_flag)"
+      - "/Users/arashdeep/StudioProjects/holtersync/macos/.tflite-build/build-x86_64/eigen/CMakeLists.txt:96 (check_cxx_compiler_flag)"
+      - "/Users/arashdeep/StudioProjects/holtersync/macos/.tflite-build/build-x86_64/eigen/CMakeLists.txt:200 (ei_add_cxx_compiler_flag)"
+    checks:
+      - "Performing Test COMPILER_SUPPORT_Wdoublepromotion"
+    directories:
+      source: "/Users/arashdeep/StudioProjects/holtersync/macos/.tflite-build/build-x86_64/CMakeFiles/CMakeScratch/TryCompile-k2J90S"
+      binary: "/Users/arashdeep/StudioProjects/holtersync/macos/.tflite-build/build-x86_64/CMakeFiles/CMakeScratch/TryCompile-k2J90S"
+    cmakeVariables:
+      CMAKE_CXX_FLAGS: " -pedantic -Wall -Wextra -Wundef -Wcast-align -Wchar-subscripts -Wnon-virtual-dtor -Wunused-local-typedefs -Wpointer-arith -Wwrite-strings -Wformat-security -Wshorten-64-to-32 -Wenum-conversion -Wc++11-extensions"
+      CMAKE_CXX_FLAGS_DEBUG: "-g"
+      CMAKE_EXE_LINKER_FLAGS: "-L/opt/homebrew/opt/php@8.2/lib"
+      CMAKE_MODULE_PATH: "/Users/arashdeep/StudioProjects/holtersync/macos/.tflite-build/build-x86_64/eigen/cmake"
+      CMAKE_OSX_ARCHITECTURES: "x86_64"
+      CMAKE_OSX_DEPLOYMENT_TARGET: "14.5"
+      CMAKE_OSX_SYSROOT: "/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX15.2.sdk"
+      CMAKE_POSITION_INDEPENDENT_CODE: "ON"
+    buildResult:
+      variable: "COMPILER_SUPPORT_Wdoublepromotion"
+      cached: true
+      stdout: |
+        Change Dir: '/Users/arashdeep/StudioProjects/holtersync/macos/.tflite-build/build-x86_64/CMakeFiles/CMakeScratch/TryCompile-k2J90S'
+        
+        Run Build Command(s): /opt/homebrew/Cellar/cmake/3.29.6/bin/cmake -E env VERBOSE=1 /usr/bin/make -f Makefile cmTC_a7b89/fast
+        /Applications/Xcode.app/Contents/Developer/usr/bin/make  -f CMakeFiles/cmTC_a7b89.dir/build.make CMakeFiles/cmTC_a7b89.dir/build
+        Building CXX object CMakeFiles/cmTC_a7b89.dir/src.cxx.o
+        /Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/c++ -DCOMPILER_SUPPORT_Wdoublepromotion  -pedantic -Wall -Wextra -Wundef -Wcast-align -Wchar-subscripts -Wnon-virtual-dtor -Wunused-local-typedefs -Wpointer-arith -Wwrite-strings -Wformat-security -Wshorten-64-to-32 -Wenum-conversion -Wc++11-extensions -Werror -std=gnu++17 -arch x86_64 -isysroot /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX15.2.sdk -mmacosx-version-min=14.5 -fPIE   -Wdouble-promotion -MD -MT CMakeFiles/cmTC_a7b89.dir/src.cxx.o -MF CMakeFiles/cmTC_a7b89.dir/src.cxx.o.d -o CMakeFiles/cmTC_a7b89.dir/src.cxx.o -c /Users/arashdeep/StudioProjects/holtersync/macos/.tflite-build/build-x86_64/CMakeFiles/CMakeScratch/TryCompile-k2J90S/src.cxx
+        Linking CXX executable cmTC_a7b89
+        /opt/homebrew/Cellar/cmake/3.29.6/bin/cmake -E cmake_link_script CMakeFiles/cmTC_a7b89.dir/link.txt --verbose=1
+        /Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/c++  -pedantic -Wall -Wextra -Wundef -Wcast-align -Wchar-subscripts -Wnon-virtual-dtor -Wunused-local-typedefs -Wpointer-arith -Wwrite-strings -Wformat-security -Wshorten-64-to-32 -Wenum-conversion -Wc++11-extensions -Werror -arch x86_64 -isysroot /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX15.2.sdk -mmacosx-version-min=14.5 -Wl,-search_paths_first -Wl,-headerpad_max_install_names -L/opt/homebrew/opt/php@8.2/lib  CMakeFiles/cmTC_a7b89.dir/src.cxx.o -o cmTC_a7b89
+        
+      exitCode: 0
+  -
+    kind: "try_compile-v1"
+    backtrace:
+      - "/opt/homebrew/Cellar/cmake/3.29.6/share/cmake/Modules/Internal/CheckSourceCompiles.cmake:101 (try_compile)"
+      - "/opt/homebrew/Cellar/cmake/3.29.6/share/cmake/Modules/Internal/CheckCompilerFlag.cmake:18 (cmake_check_source_compiles)"
+      - "/opt/homebrew/Cellar/cmake/3.29.6/share/cmake/Modules/CheckCXXCompilerFlag.cmake:34 (cmake_check_compiler_flag)"
+      - "/Users/arashdeep/StudioProjects/holtersync/macos/.tflite-build/build-x86_64/eigen/CMakeLists.txt:96 (check_cxx_compiler_flag)"
+      - "/Users/arashdeep/StudioProjects/holtersync/macos/.tflite-build/build-x86_64/eigen/CMakeLists.txt:203 (ei_add_cxx_compiler_flag)"
+    checks:
+      - "Performing Test COMPILER_SUPPORT_Wshadow"
+    directories:
+      source: "/Users/arashdeep/StudioProjects/holtersync/macos/.tflite-build/build-x86_64/CMakeFiles/CMakeScratch/TryCompile-A2OwPj"
+      binary: "/Users/arashdeep/StudioProjects/holtersync/macos/.tflite-build/build-x86_64/CMakeFiles/CMakeScratch/TryCompile-A2OwPj"
+    cmakeVariables:
+      CMAKE_CXX_FLAGS: " -pedantic -Wall -Wextra -Wundef -Wcast-align -Wchar-subscripts -Wnon-virtual-dtor -Wunused-local-typedefs -Wpointer-arith -Wwrite-strings -Wformat-security -Wshorten-64-to-32 -Wenum-conversion -Wc++11-extensions -Wdouble-promotion"
+      CMAKE_CXX_FLAGS_DEBUG: "-g"
+      CMAKE_EXE_LINKER_FLAGS: "-L/opt/homebrew/opt/php@8.2/lib"
+      CMAKE_MODULE_PATH: "/Users/arashdeep/StudioProjects/holtersync/macos/.tflite-build/build-x86_64/eigen/cmake"
+      CMAKE_OSX_ARCHITECTURES: "x86_64"
+      CMAKE_OSX_DEPLOYMENT_TARGET: "14.5"
+      CMAKE_OSX_SYSROOT: "/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX15.2.sdk"
+      CMAKE_POSITION_INDEPENDENT_CODE: "ON"
+    buildResult:
+      variable: "COMPILER_SUPPORT_Wshadow"
+      cached: true
+      stdout: |
+        Change Dir: '/Users/arashdeep/StudioProjects/holtersync/macos/.tflite-build/build-x86_64/CMakeFiles/CMakeScratch/TryCompile-A2OwPj'
+        
+        Run Build Command(s): /opt/homebrew/Cellar/cmake/3.29.6/bin/cmake -E env VERBOSE=1 /usr/bin/make -f Makefile cmTC_3f94c/fast
+        /Applications/Xcode.app/Contents/Developer/usr/bin/make  -f CMakeFiles/cmTC_3f94c.dir/build.make CMakeFiles/cmTC_3f94c.dir/build
+        Building CXX object CMakeFiles/cmTC_3f94c.dir/src.cxx.o
+        /Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/c++ -DCOMPILER_SUPPORT_Wshadow  -pedantic -Wall -Wextra -Wundef -Wcast-align -Wchar-subscripts -Wnon-virtual-dtor -Wunused-local-typedefs -Wpointer-arith -Wwrite-strings -Wformat-security -Wshorten-64-to-32 -Wenum-conversion -Wc++11-extensions -Wdouble-promotion -Werror -std=gnu++17 -arch x86_64 -isysroot /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX15.2.sdk -mmacosx-version-min=14.5 -fPIE   -Wshadow -MD -MT CMakeFiles/cmTC_3f94c.dir/src.cxx.o -MF CMakeFiles/cmTC_3f94c.dir/src.cxx.o.d -o CMakeFiles/cmTC_3f94c.dir/src.cxx.o -c /Users/arashdeep/StudioProjects/holtersync/macos/.tflite-build/build-x86_64/CMakeFiles/CMakeScratch/TryCompile-A2OwPj/src.cxx
+        Linking CXX executable cmTC_3f94c
+        /opt/homebrew/Cellar/cmake/3.29.6/bin/cmake -E cmake_link_script CMakeFiles/cmTC_3f94c.dir/link.txt --verbose=1
+        /Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/c++  -pedantic -Wall -Wextra -Wundef -Wcast-align -Wchar-subscripts -Wnon-virtual-dtor -Wunused-local-typedefs -Wpointer-arith -Wwrite-strings -Wformat-security -Wshorten-64-to-32 -Wenum-conversion -Wc++11-extensions -Wdouble-promotion -Werror -arch x86_64 -isysroot /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX15.2.sdk -mmacosx-version-min=14.5 -Wl,-search_paths_first -Wl,-headerpad_max_install_names -L/opt/homebrew/opt/php@8.2/lib  CMakeFiles/cmTC_3f94c.dir/src.cxx.o -o cmTC_3f94c
+        
+      exitCode: 0
+  -
+    kind: "try_compile-v1"
+    backtrace:
+      - "/opt/homebrew/Cellar/cmake/3.29.6/share/cmake/Modules/Internal/CheckSourceCompiles.cmake:101 (try_compile)"
+      - "/opt/homebrew/Cellar/cmake/3.29.6/share/cmake/Modules/Internal/CheckCompilerFlag.cmake:18 (cmake_check_source_compiles)"
+      - "/opt/homebrew/Cellar/cmake/3.29.6/share/cmake/Modules/CheckCXXCompilerFlag.cmake:34 (cmake_check_compiler_flag)"
+      - "/Users/arashdeep/StudioProjects/holtersync/macos/.tflite-build/build-x86_64/eigen/CMakeLists.txt:96 (check_cxx_compiler_flag)"
+      - "/Users/arashdeep/StudioProjects/holtersync/macos/.tflite-build/build-x86_64/eigen/CMakeLists.txt:205 (ei_add_cxx_compiler_flag)"
+    checks:
+      - "Performing Test COMPILER_SUPPORT_Wnopsabi"
+    directories:
+      source: "/Users/arashdeep/StudioProjects/holtersync/macos/.tflite-build/build-x86_64/CMakeFiles/CMakeScratch/TryCompile-NX6BvT"
+      binary: "/Users/arashdeep/StudioProjects/holtersync/macos/.tflite-build/build-x86_64/CMakeFiles/CMakeScratch/TryCompile-NX6BvT"
+    cmakeVariables:
+      CMAKE_CXX_FLAGS: " -pedantic -Wall -Wextra -Wundef -Wcast-align -Wchar-subscripts -Wnon-virtual-dtor -Wunused-local-typedefs -Wpointer-arith -Wwrite-strings -Wformat-security -Wshorten-64-to-32 -Wenum-conversion -Wc++11-extensions -Wdouble-promotion -Wshadow"
+      CMAKE_CXX_FLAGS_DEBUG: "-g"
+      CMAKE_EXE_LINKER_FLAGS: "-L/opt/homebrew/opt/php@8.2/lib"
+      CMAKE_MODULE_PATH: "/Users/arashdeep/StudioProjects/holtersync/macos/.tflite-build/build-x86_64/eigen/cmake"
+      CMAKE_OSX_ARCHITECTURES: "x86_64"
+      CMAKE_OSX_DEPLOYMENT_TARGET: "14.5"
+      CMAKE_OSX_SYSROOT: "/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX15.2.sdk"
+      CMAKE_POSITION_INDEPENDENT_CODE: "ON"
+    buildResult:
+      variable: "COMPILER_SUPPORT_Wnopsabi"
+      cached: true
+      stdout: |
+        Change Dir: '/Users/arashdeep/StudioProjects/holtersync/macos/.tflite-build/build-x86_64/CMakeFiles/CMakeScratch/TryCompile-NX6BvT'
+        
+        Run Build Command(s): /opt/homebrew/Cellar/cmake/3.29.6/bin/cmake -E env VERBOSE=1 /usr/bin/make -f Makefile cmTC_36605/fast
+        /Applications/Xcode.app/Contents/Developer/usr/bin/make  -f CMakeFiles/cmTC_36605.dir/build.make CMakeFiles/cmTC_36605.dir/build
+        Building CXX object CMakeFiles/cmTC_36605.dir/src.cxx.o
+        /Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/c++ -DCOMPILER_SUPPORT_Wnopsabi  -pedantic -Wall -Wextra -Wundef -Wcast-align -Wchar-subscripts -Wnon-virtual-dtor -Wunused-local-typedefs -Wpointer-arith -Wwrite-strings -Wformat-security -Wshorten-64-to-32 -Wenum-conversion -Wc++11-extensions -Wdouble-promotion -Wshadow -Werror -std=gnu++17 -arch x86_64 -isysroot /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX15.2.sdk -mmacosx-version-min=14.5 -fPIE   -Wno-psabi -MD -MT CMakeFiles/cmTC_36605.dir/src.cxx.o -MF CMakeFiles/cmTC_36605.dir/src.cxx.o.d -o CMakeFiles/cmTC_36605.dir/src.cxx.o -c /Users/arashdeep/StudioProjects/holtersync/macos/.tflite-build/build-x86_64/CMakeFiles/CMakeScratch/TryCompile-NX6BvT/src.cxx
+        Linking CXX executable cmTC_36605
+        /opt/homebrew/Cellar/cmake/3.29.6/bin/cmake -E cmake_link_script CMakeFiles/cmTC_36605.dir/link.txt --verbose=1
+        /Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/c++  -pedantic -Wall -Wextra -Wundef -Wcast-align -Wchar-subscripts -Wnon-virtual-dtor -Wunused-local-typedefs -Wpointer-arith -Wwrite-strings -Wformat-security -Wshorten-64-to-32 -Wenum-conversion -Wc++11-extensions -Wdouble-promotion -Wshadow -Werror -arch x86_64 -isysroot /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX15.2.sdk -mmacosx-version-min=14.5 -Wl,-search_paths_first -Wl,-headerpad_max_install_names -L/opt/homebrew/opt/php@8.2/lib  CMakeFiles/cmTC_36605.dir/src.cxx.o -o cmTC_36605
+        
+      exitCode: 0
+  -
+    kind: "try_compile-v1"
+    backtrace:
+      - "/opt/homebrew/Cellar/cmake/3.29.6/share/cmake/Modules/Internal/CheckSourceCompiles.cmake:101 (try_compile)"
+      - "/opt/homebrew/Cellar/cmake/3.29.6/share/cmake/Modules/Internal/CheckCompilerFlag.cmake:18 (cmake_check_source_compiles)"
+      - "/opt/homebrew/Cellar/cmake/3.29.6/share/cmake/Modules/CheckCXXCompilerFlag.cmake:34 (cmake_check_compiler_flag)"
+      - "/Users/arashdeep/StudioProjects/holtersync/macos/.tflite-build/build-x86_64/eigen/CMakeLists.txt:96 (check_cxx_compiler_flag)"
+      - "/Users/arashdeep/StudioProjects/holtersync/macos/.tflite-build/build-x86_64/eigen/CMakeLists.txt:206 (ei_add_cxx_compiler_flag)"
+    checks:
+      - "Performing Test COMPILER_SUPPORT_Wnovariadicmacros"
+    directories:
+      source: "/Users/arashdeep/StudioProjects/holtersync/macos/.tflite-build/build-x86_64/CMakeFiles/CMakeScratch/TryCompile-Brmfgr"
+      binary: "/Users/arashdeep/StudioProjects/holtersync/macos/.tflite-build/build-x86_64/CMakeFiles/CMakeScratch/TryCompile-Brmfgr"
+    cmakeVariables:
+      CMAKE_CXX_FLAGS: " -pedantic -Wall -Wextra -Wundef -Wcast-align -Wchar-subscripts -Wnon-virtual-dtor -Wunused-local-typedefs -Wpointer-arith -Wwrite-strings -Wformat-security -Wshorten-64-to-32 -Wenum-conversion -Wc++11-extensions -Wdouble-promotion -Wshadow -Wno-psabi"
+      CMAKE_CXX_FLAGS_DEBUG: "-g"
+      CMAKE_EXE_LINKER_FLAGS: "-L/opt/homebrew/opt/php@8.2/lib"
+      CMAKE_MODULE_PATH: "/Users/arashdeep/StudioProjects/holtersync/macos/.tflite-build/build-x86_64/eigen/cmake"
+      CMAKE_OSX_ARCHITECTURES: "x86_64"
+      CMAKE_OSX_DEPLOYMENT_TARGET: "14.5"
+      CMAKE_OSX_SYSROOT: "/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX15.2.sdk"
+      CMAKE_POSITION_INDEPENDENT_CODE: "ON"
+    buildResult:
+      variable: "COMPILER_SUPPORT_Wnovariadicmacros"
+      cached: true
+      stdout: |
+        Change Dir: '/Users/arashdeep/StudioProjects/holtersync/macos/.tflite-build/build-x86_64/CMakeFiles/CMakeScratch/TryCompile-Brmfgr'
+        
+        Run Build Command(s): /opt/homebrew/Cellar/cmake/3.29.6/bin/cmake -E env VERBOSE=1 /usr/bin/make -f Makefile cmTC_f5a56/fast
+        /Applications/Xcode.app/Contents/Developer/usr/bin/make  -f CMakeFiles/cmTC_f5a56.dir/build.make CMakeFiles/cmTC_f5a56.dir/build
+        Building CXX object CMakeFiles/cmTC_f5a56.dir/src.cxx.o
+        /Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/c++ -DCOMPILER_SUPPORT_Wnovariadicmacros  -pedantic -Wall -Wextra -Wundef -Wcast-align -Wchar-subscripts -Wnon-virtual-dtor -Wunused-local-typedefs -Wpointer-arith -Wwrite-strings -Wformat-security -Wshorten-64-to-32 -Wenum-conversion -Wc++11-extensions -Wdouble-promotion -Wshadow -Wno-psabi -Werror -std=gnu++17 -arch x86_64 -isysroot /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX15.2.sdk -mmacosx-version-min=14.5 -fPIE   -Wno-variadic-macros -MD -MT CMakeFiles/cmTC_f5a56.dir/src.cxx.o -MF CMakeFiles/cmTC_f5a56.dir/src.cxx.o.d -o CMakeFiles/cmTC_f5a56.dir/src.cxx.o -c /Users/arashdeep/StudioProjects/holtersync/macos/.tflite-build/build-x86_64/CMakeFiles/CMakeScratch/TryCompile-Brmfgr/src.cxx
+        Linking CXX executable cmTC_f5a56
+        /opt/homebrew/Cellar/cmake/3.29.6/bin/cmake -E cmake_link_script CMakeFiles/cmTC_f5a56.dir/link.txt --verbose=1
+        /Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/c++  -pedantic -Wall -Wextra -Wundef -Wcast-align -Wchar-subscripts -Wnon-virtual-dtor -Wunused-local-typedefs -Wpointer-arith -Wwrite-strings -Wformat-security -Wshorten-64-to-32 -Wenum-conversion -Wc++11-extensions -Wdouble-promotion -Wshadow -Wno-psabi -Werror -arch x86_64 -isysroot /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX15.2.sdk -mmacosx-version-min=14.5 -Wl,-search_paths_first -Wl,-headerpad_max_install_names -L/opt/homebrew/opt/php@8.2/lib  CMakeFiles/cmTC_f5a56.dir/src.cxx.o -o cmTC_f5a56
+        
+      exitCode: 0
+  -
+    kind: "try_compile-v1"
+    backtrace:
+      - "/opt/homebrew/Cellar/cmake/3.29.6/share/cmake/Modules/Internal/CheckSourceCompiles.cmake:101 (try_compile)"
+      - "/opt/homebrew/Cellar/cmake/3.29.6/share/cmake/Modules/Internal/CheckCompilerFlag.cmake:18 (cmake_check_source_compiles)"
+      - "/opt/homebrew/Cellar/cmake/3.29.6/share/cmake/Modules/CheckCXXCompilerFlag.cmake:34 (cmake_check_compiler_flag)"
+      - "/Users/arashdeep/StudioProjects/holtersync/macos/.tflite-build/build-x86_64/eigen/CMakeLists.txt:96 (check_cxx_compiler_flag)"
+      - "/Users/arashdeep/StudioProjects/holtersync/macos/.tflite-build/build-x86_64/eigen/CMakeLists.txt:207 (ei_add_cxx_compiler_flag)"
+    checks:
+      - "Performing Test COMPILER_SUPPORT_Wnolonglong"
+    directories:
+      source: "/Users/arashdeep/StudioProjects/holtersync/macos/.tflite-build/build-x86_64/CMakeFiles/CMakeScratch/TryCompile-vQ9R99"
+      binary: "/Users/arashdeep/StudioProjects/holtersync/macos/.tflite-build/build-x86_64/CMakeFiles/CMakeScratch/TryCompile-vQ9R99"
+    cmakeVariables:
+      CMAKE_CXX_FLAGS: " -pedantic -Wall -Wextra -Wundef -Wcast-align -Wchar-subscripts -Wnon-virtual-dtor -Wunused-local-typedefs -Wpointer-arith -Wwrite-strings -Wformat-security -Wshorten-64-to-32 -Wenum-conversion -Wc++11-extensions -Wdouble-promotion -Wshadow -Wno-psabi -Wno-variadic-macros"
+      CMAKE_CXX_FLAGS_DEBUG: "-g"
+      CMAKE_EXE_LINKER_FLAGS: "-L/opt/homebrew/opt/php@8.2/lib"
+      CMAKE_MODULE_PATH: "/Users/arashdeep/StudioProjects/holtersync/macos/.tflite-build/build-x86_64/eigen/cmake"
+      CMAKE_OSX_ARCHITECTURES: "x86_64"
+      CMAKE_OSX_DEPLOYMENT_TARGET: "14.5"
+      CMAKE_OSX_SYSROOT: "/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX15.2.sdk"
+      CMAKE_POSITION_INDEPENDENT_CODE: "ON"
+    buildResult:
+      variable: "COMPILER_SUPPORT_Wnolonglong"
+      cached: true
+      stdout: |
+        Change Dir: '/Users/arashdeep/StudioProjects/holtersync/macos/.tflite-build/build-x86_64/CMakeFiles/CMakeScratch/TryCompile-vQ9R99'
+        
+        Run Build Command(s): /opt/homebrew/Cellar/cmake/3.29.6/bin/cmake -E env VERBOSE=1 /usr/bin/make -f Makefile cmTC_67fe5/fast
+        /Applications/Xcode.app/Contents/Developer/usr/bin/make  -f CMakeFiles/cmTC_67fe5.dir/build.make CMakeFiles/cmTC_67fe5.dir/build
+        Building CXX object CMakeFiles/cmTC_67fe5.dir/src.cxx.o
+        /Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/c++ -DCOMPILER_SUPPORT_Wnolonglong  -pedantic -Wall -Wextra -Wundef -Wcast-align -Wchar-subscripts -Wnon-virtual-dtor -Wunused-local-typedefs -Wpointer-arith -Wwrite-strings -Wformat-security -Wshorten-64-to-32 -Wenum-conversion -Wc++11-extensions -Wdouble-promotion -Wshadow -Wno-psabi -Wno-variadic-macros -Werror -std=gnu++17 -arch x86_64 -isysroot /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX15.2.sdk -mmacosx-version-min=14.5 -fPIE   -Wno-long-long -MD -MT CMakeFiles/cmTC_67fe5.dir/src.cxx.o -MF CMakeFiles/cmTC_67fe5.dir/src.cxx.o.d -o CMakeFiles/cmTC_67fe5.dir/src.cxx.o -c /Users/arashdeep/StudioProjects/holtersync/macos/.tflite-build/build-x86_64/CMakeFiles/CMakeScratch/TryCompile-vQ9R99/src.cxx
+        Linking CXX executable cmTC_67fe5
+        /opt/homebrew/Cellar/cmake/3.29.6/bin/cmake -E cmake_link_script CMakeFiles/cmTC_67fe5.dir/link.txt --verbose=1
+        /Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/c++  -pedantic -Wall -Wextra -Wundef -Wcast-align -Wchar-subscripts -Wnon-virtual-dtor -Wunused-local-typedefs -Wpointer-arith -Wwrite-strings -Wformat-security -Wshorten-64-to-32 -Wenum-conversion -Wc++11-extensions -Wdouble-promotion -Wshadow -Wno-psabi -Wno-variadic-macros -Werror -arch x86_64 -isysroot /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX15.2.sdk -mmacosx-version-min=14.5 -Wl,-search_paths_first -Wl,-headerpad_max_install_names -L/opt/homebrew/opt/php@8.2/lib  CMakeFiles/cmTC_67fe5.dir/src.cxx.o -o cmTC_67fe5
+        
+      exitCode: 0
+  -
+    kind: "try_compile-v1"
+    backtrace:
+      - "/opt/homebrew/Cellar/cmake/3.29.6/share/cmake/Modules/Internal/CheckSourceCompiles.cmake:101 (try_compile)"
+      - "/opt/homebrew/Cellar/cmake/3.29.6/share/cmake/Modules/Internal/CheckCompilerFlag.cmake:18 (cmake_check_source_compiles)"
+      - "/opt/homebrew/Cellar/cmake/3.29.6/share/cmake/Modules/CheckCXXCompilerFlag.cmake:34 (cmake_check_compiler_flag)"
+      - "/Users/arashdeep/StudioProjects/holtersync/macos/.tflite-build/build-x86_64/eigen/CMakeLists.txt:96 (check_cxx_compiler_flag)"
+      - "/Users/arashdeep/StudioProjects/holtersync/macos/.tflite-build/build-x86_64/eigen/CMakeLists.txt:209 (ei_add_cxx_compiler_flag)"
+    checks:
+      - "Performing Test COMPILER_SUPPORT_fnochecknew"
+    directories:
+      source: "/Users/arashdeep/StudioProjects/holtersync/macos/.tflite-build/build-x86_64/CMakeFiles/CMakeScratch/TryCompile-EftZpq"
+      binary: "/Users/arashdeep/StudioProjects/holtersync/macos/.tflite-build/build-x86_64/CMakeFiles/CMakeScratch/TryCompile-EftZpq"
+    cmakeVariables:
+      CMAKE_CXX_FLAGS: " -pedantic -Wall -Wextra -Wundef -Wcast-align -Wchar-subscripts -Wnon-virtual-dtor -Wunused-local-typedefs -Wpointer-arith -Wwrite-strings -Wformat-security -Wshorten-64-to-32 -Wenum-conversion -Wc++11-extensions -Wdouble-promotion -Wshadow -Wno-psabi -Wno-variadic-macros -Wno-long-long"
+      CMAKE_CXX_FLAGS_DEBUG: "-g"
+      CMAKE_EXE_LINKER_FLAGS: "-L/opt/homebrew/opt/php@8.2/lib"
+      CMAKE_MODULE_PATH: "/Users/arashdeep/StudioProjects/holtersync/macos/.tflite-build/build-x86_64/eigen/cmake"
+      CMAKE_OSX_ARCHITECTURES: "x86_64"
+      CMAKE_OSX_DEPLOYMENT_TARGET: "14.5"
+      CMAKE_OSX_SYSROOT: "/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX15.2.sdk"
+      CMAKE_POSITION_INDEPENDENT_CODE: "ON"
+    buildResult:
+      variable: "COMPILER_SUPPORT_fnochecknew"
+      cached: true
+      stdout: |
+        Change Dir: '/Users/arashdeep/StudioProjects/holtersync/macos/.tflite-build/build-x86_64/CMakeFiles/CMakeScratch/TryCompile-EftZpq'
+        
+        Run Build Command(s): /opt/homebrew/Cellar/cmake/3.29.6/bin/cmake -E env VERBOSE=1 /usr/bin/make -f Makefile cmTC_757d1/fast
+        /Applications/Xcode.app/Contents/Developer/usr/bin/make  -f CMakeFiles/cmTC_757d1.dir/build.make CMakeFiles/cmTC_757d1.dir/build
+        Building CXX object CMakeFiles/cmTC_757d1.dir/src.cxx.o
+        /Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/c++ -DCOMPILER_SUPPORT_fnochecknew  -pedantic -Wall -Wextra -Wundef -Wcast-align -Wchar-subscripts -Wnon-virtual-dtor -Wunused-local-typedefs -Wpointer-arith -Wwrite-strings -Wformat-security -Wshorten-64-to-32 -Wenum-conversion -Wc++11-extensions -Wdouble-promotion -Wshadow -Wno-psabi -Wno-variadic-macros -Wno-long-long -Werror -std=gnu++17 -arch x86_64 -isysroot /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX15.2.sdk -mmacosx-version-min=14.5 -fPIE   -fno-check-new -MD -MT CMakeFiles/cmTC_757d1.dir/src.cxx.o -MF CMakeFiles/cmTC_757d1.dir/src.cxx.o.d -o CMakeFiles/cmTC_757d1.dir/src.cxx.o -c /Users/arashdeep/StudioProjects/holtersync/macos/.tflite-build/build-x86_64/CMakeFiles/CMakeScratch/TryCompile-EftZpq/src.cxx
+        Linking CXX executable cmTC_757d1
+        /opt/homebrew/Cellar/cmake/3.29.6/bin/cmake -E cmake_link_script CMakeFiles/cmTC_757d1.dir/link.txt --verbose=1
+        /Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/c++  -pedantic -Wall -Wextra -Wundef -Wcast-align -Wchar-subscripts -Wnon-virtual-dtor -Wunused-local-typedefs -Wpointer-arith -Wwrite-strings -Wformat-security -Wshorten-64-to-32 -Wenum-conversion -Wc++11-extensions -Wdouble-promotion -Wshadow -Wno-psabi -Wno-variadic-macros -Wno-long-long -Werror -arch x86_64 -isysroot /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX15.2.sdk -mmacosx-version-min=14.5 -Wl,-search_paths_first -Wl,-headerpad_max_install_names -L/opt/homebrew/opt/php@8.2/lib  CMakeFiles/cmTC_757d1.dir/src.cxx.o -o cmTC_757d1
+        
+      exitCode: 0
+  -
+    kind: "try_compile-v1"
+    backtrace:
+      - "/opt/homebrew/Cellar/cmake/3.29.6/share/cmake/Modules/Internal/CheckSourceCompiles.cmake:101 (try_compile)"
+      - "/opt/homebrew/Cellar/cmake/3.29.6/share/cmake/Modules/Internal/CheckCompilerFlag.cmake:18 (cmake_check_source_compiles)"
+      - "/opt/homebrew/Cellar/cmake/3.29.6/share/cmake/Modules/CheckCXXCompilerFlag.cmake:34 (cmake_check_compiler_flag)"
+      - "/Users/arashdeep/StudioProjects/holtersync/macos/.tflite-build/build-x86_64/eigen/CMakeLists.txt:96 (check_cxx_compiler_flag)"
+      - "/Users/arashdeep/StudioProjects/holtersync/macos/.tflite-build/build-x86_64/eigen/CMakeLists.txt:210 (ei_add_cxx_compiler_flag)"
+    checks:
+      - "Performing Test COMPILER_SUPPORT_fnocommon"
+    directories:
+      source: "/Users/arashdeep/StudioProjects/holtersync/macos/.tflite-build/build-x86_64/CMakeFiles/CMakeScratch/TryCompile-2HltUk"
+      binary: "/Users/arashdeep/StudioProjects/holtersync/macos/.tflite-build/build-x86_64/CMakeFiles/CMakeScratch/TryCompile-2HltUk"
+    cmakeVariables:
+      CMAKE_CXX_FLAGS: " -pedantic -Wall -Wextra -Wundef -Wcast-align -Wchar-subscripts -Wnon-virtual-dtor -Wunused-local-typedefs -Wpointer-arith -Wwrite-strings -Wformat-security -Wshorten-64-to-32 -Wenum-conversion -Wc++11-extensions -Wdouble-promotion -Wshadow -Wno-psabi -Wno-variadic-macros -Wno-long-long -fno-check-new"
+      CMAKE_CXX_FLAGS_DEBUG: "-g"
+      CMAKE_EXE_LINKER_FLAGS: "-L/opt/homebrew/opt/php@8.2/lib"
+      CMAKE_MODULE_PATH: "/Users/arashdeep/StudioProjects/holtersync/macos/.tflite-build/build-x86_64/eigen/cmake"
+      CMAKE_OSX_ARCHITECTURES: "x86_64"
+      CMAKE_OSX_DEPLOYMENT_TARGET: "14.5"
+      CMAKE_OSX_SYSROOT: "/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX15.2.sdk"
+      CMAKE_POSITION_INDEPENDENT_CODE: "ON"
+    buildResult:
+      variable: "COMPILER_SUPPORT_fnocommon"
+      cached: true
+      stdout: |
+        Change Dir: '/Users/arashdeep/StudioProjects/holtersync/macos/.tflite-build/build-x86_64/CMakeFiles/CMakeScratch/TryCompile-2HltUk'
+        
+        Run Build Command(s): /opt/homebrew/Cellar/cmake/3.29.6/bin/cmake -E env VERBOSE=1 /usr/bin/make -f Makefile cmTC_ed35e/fast
+        /Applications/Xcode.app/Contents/Developer/usr/bin/make  -f CMakeFiles/cmTC_ed35e.dir/build.make CMakeFiles/cmTC_ed35e.dir/build
+        Building CXX object CMakeFiles/cmTC_ed35e.dir/src.cxx.o
+        /Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/c++ -DCOMPILER_SUPPORT_fnocommon  -pedantic -Wall -Wextra -Wundef -Wcast-align -Wchar-subscripts -Wnon-virtual-dtor -Wunused-local-typedefs -Wpointer-arith -Wwrite-strings -Wformat-security -Wshorten-64-to-32 -Wenum-conversion -Wc++11-extensions -Wdouble-promotion -Wshadow -Wno-psabi -Wno-variadic-macros -Wno-long-long -fno-check-new -Werror -std=gnu++17 -arch x86_64 -isysroot /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX15.2.sdk -mmacosx-version-min=14.5 -fPIE   -fno-common -MD -MT CMakeFiles/cmTC_ed35e.dir/src.cxx.o -MF CMakeFiles/cmTC_ed35e.dir/src.cxx.o.d -o CMakeFiles/cmTC_ed35e.dir/src.cxx.o -c /Users/arashdeep/StudioProjects/holtersync/macos/.tflite-build/build-x86_64/CMakeFiles/CMakeScratch/TryCompile-2HltUk/src.cxx
+        Linking CXX executable cmTC_ed35e
+        /opt/homebrew/Cellar/cmake/3.29.6/bin/cmake -E cmake_link_script CMakeFiles/cmTC_ed35e.dir/link.txt --verbose=1
+        /Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/c++  -pedantic -Wall -Wextra -Wundef -Wcast-align -Wchar-subscripts -Wnon-virtual-dtor -Wunused-local-typedefs -Wpointer-arith -Wwrite-strings -Wformat-security -Wshorten-64-to-32 -Wenum-conversion -Wc++11-extensions -Wdouble-promotion -Wshadow -Wno-psabi -Wno-variadic-macros -Wno-long-long -fno-check-new -Werror -arch x86_64 -isysroot /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX15.2.sdk -mmacosx-version-min=14.5 -Wl,-search_paths_first -Wl,-headerpad_max_install_names -L/opt/homebrew/opt/php@8.2/lib  CMakeFiles/cmTC_ed35e.dir/src.cxx.o -o cmTC_ed35e
+        c++: error: argument unused during compilation: '-fno-check-new' [-Werror,-Wunused-command-line-argument]
+        make[1]: *** [cmTC_ed35e] Error 1
+        make: *** [cmTC_ed35e/fast] Error 2
+        
+      exitCode: 2
+  -
+    kind: "try_compile-v1"
+    backtrace:
+      - "/opt/homebrew/Cellar/cmake/3.29.6/share/cmake/Modules/Internal/CheckSourceCompiles.cmake:101 (try_compile)"
+      - "/opt/homebrew/Cellar/cmake/3.29.6/share/cmake/Modules/Internal/CheckCompilerFlag.cmake:18 (cmake_check_source_compiles)"
+      - "/opt/homebrew/Cellar/cmake/3.29.6/share/cmake/Modules/CheckCXXCompilerFlag.cmake:34 (cmake_check_compiler_flag)"
+      - "/Users/arashdeep/StudioProjects/holtersync/macos/.tflite-build/build-x86_64/eigen/CMakeLists.txt:96 (check_cxx_compiler_flag)"
+      - "/Users/arashdeep/StudioProjects/holtersync/macos/.tflite-build/build-x86_64/eigen/CMakeLists.txt:211 (ei_add_cxx_compiler_flag)"
+    checks:
+      - "Performing Test COMPILER_SUPPORT_fstrictaliasing"
+    directories:
+      source: "/Users/arashdeep/StudioProjects/holtersync/macos/.tflite-build/build-x86_64/CMakeFiles/CMakeScratch/TryCompile-TLpRps"
+      binary: "/Users/arashdeep/StudioProjects/holtersync/macos/.tflite-build/build-x86_64/CMakeFiles/CMakeScratch/TryCompile-TLpRps"
+    cmakeVariables:
+      CMAKE_CXX_FLAGS: " -pedantic -Wall -Wextra -Wundef -Wcast-align -Wchar-subscripts -Wnon-virtual-dtor -Wunused-local-typedefs -Wpointer-arith -Wwrite-strings -Wformat-security -Wshorten-64-to-32 -Wenum-conversion -Wc++11-extensions -Wdouble-promotion -Wshadow -Wno-psabi -Wno-variadic-macros -Wno-long-long -fno-check-new"
+      CMAKE_CXX_FLAGS_DEBUG: "-g"
+      CMAKE_EXE_LINKER_FLAGS: "-L/opt/homebrew/opt/php@8.2/lib"
+      CMAKE_MODULE_PATH: "/Users/arashdeep/StudioProjects/holtersync/macos/.tflite-build/build-x86_64/eigen/cmake"
+      CMAKE_OSX_ARCHITECTURES: "x86_64"
+      CMAKE_OSX_DEPLOYMENT_TARGET: "14.5"
+      CMAKE_OSX_SYSROOT: "/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX15.2.sdk"
+      CMAKE_POSITION_INDEPENDENT_CODE: "ON"
+    buildResult:
+      variable: "COMPILER_SUPPORT_fstrictaliasing"
+      cached: true
+      stdout: |
+        Change Dir: '/Users/arashdeep/StudioProjects/holtersync/macos/.tflite-build/build-x86_64/CMakeFiles/CMakeScratch/TryCompile-TLpRps'
+        
+        Run Build Command(s): /opt/homebrew/Cellar/cmake/3.29.6/bin/cmake -E env VERBOSE=1 /usr/bin/make -f Makefile cmTC_e55d7/fast
+        /Applications/Xcode.app/Contents/Developer/usr/bin/make  -f CMakeFiles/cmTC_e55d7.dir/build.make CMakeFiles/cmTC_e55d7.dir/build
+        Building CXX object CMakeFiles/cmTC_e55d7.dir/src.cxx.o
+        /Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/c++ -DCOMPILER_SUPPORT_fstrictaliasing  -pedantic -Wall -Wextra -Wundef -Wcast-align -Wchar-subscripts -Wnon-virtual-dtor -Wunused-local-typedefs -Wpointer-arith -Wwrite-strings -Wformat-security -Wshorten-64-to-32 -Wenum-conversion -Wc++11-extensions -Wdouble-promotion -Wshadow -Wno-psabi -Wno-variadic-macros -Wno-long-long -fno-check-new -Werror -std=gnu++17 -arch x86_64 -isysroot /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX15.2.sdk -mmacosx-version-min=14.5 -fPIE   -fstrict-aliasing -MD -MT CMakeFiles/cmTC_e55d7.dir/src.cxx.o -MF CMakeFiles/cmTC_e55d7.dir/src.cxx.o.d -o CMakeFiles/cmTC_e55d7.dir/src.cxx.o -c /Users/arashdeep/StudioProjects/holtersync/macos/.tflite-build/build-x86_64/CMakeFiles/CMakeScratch/TryCompile-TLpRps/src.cxx
+        Linking CXX executable cmTC_e55d7
+        /opt/homebrew/Cellar/cmake/3.29.6/bin/cmake -E cmake_link_script CMakeFiles/cmTC_e55d7.dir/link.txt --verbose=1
+        /Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/c++  -pedantic -Wall -Wextra -Wundef -Wcast-align -Wchar-subscripts -Wnon-virtual-dtor -Wunused-local-typedefs -Wpointer-arith -Wwrite-strings -Wformat-security -Wshorten-64-to-32 -Wenum-conversion -Wc++11-extensions -Wdouble-promotion -Wshadow -Wno-psabi -Wno-variadic-macros -Wno-long-long -fno-check-new -Werror -arch x86_64 -isysroot /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX15.2.sdk -mmacosx-version-min=14.5 -Wl,-search_paths_first -Wl,-headerpad_max_install_names -L/opt/homebrew/opt/php@8.2/lib  CMakeFiles/cmTC_e55d7.dir/src.cxx.o -o cmTC_e55d7
+        c++: error: argument unused during compilation: '-fno-check-new' [-Werror,-Wunused-command-line-argument]
+        make[1]: *** [cmTC_e55d7] Error 1
+        make: *** [cmTC_e55d7/fast] Error 2
+        
+      exitCode: 2
+  -
+    kind: "try_compile-v1"
+    backtrace:
+      - "/opt/homebrew/Cellar/cmake/3.29.6/share/cmake/Modules/Internal/CheckSourceCompiles.cmake:101 (try_compile)"
+      - "/opt/homebrew/Cellar/cmake/3.29.6/share/cmake/Modules/Internal/CheckCompilerFlag.cmake:18 (cmake_check_source_compiles)"
+      - "/opt/homebrew/Cellar/cmake/3.29.6/share/cmake/Modules/CheckCXXCompilerFlag.cmake:34 (cmake_check_compiler_flag)"
+      - "/Users/arashdeep/StudioProjects/holtersync/macos/.tflite-build/build-x86_64/eigen/CMakeLists.txt:96 (check_cxx_compiler_flag)"
+      - "/Users/arashdeep/StudioProjects/holtersync/macos/.tflite-build/build-x86_64/eigen/CMakeLists.txt:212 (ei_add_cxx_compiler_flag)"
+    checks:
+      - "Performing Test COMPILER_SUPPORT_wd981"
+    directories:
+      source: "/Users/arashdeep/StudioProjects/holtersync/macos/.tflite-build/build-x86_64/CMakeFiles/CMakeScratch/TryCompile-fYcRCW"
+      binary: "/Users/arashdeep/StudioProjects/holtersync/macos/.tflite-build/build-x86_64/CMakeFiles/CMakeScratch/TryCompile-fYcRCW"
+    cmakeVariables:
+      CMAKE_CXX_FLAGS: " -pedantic -Wall -Wextra -Wundef -Wcast-align -Wchar-subscripts -Wnon-virtual-dtor -Wunused-local-typedefs -Wpointer-arith -Wwrite-strings -Wformat-security -Wshorten-64-to-32 -Wenum-conversion -Wc++11-extensions -Wdouble-promotion -Wshadow -Wno-psabi -Wno-variadic-macros -Wno-long-long -fno-check-new"
+      CMAKE_CXX_FLAGS_DEBUG: "-g"
+      CMAKE_EXE_LINKER_FLAGS: "-L/opt/homebrew/opt/php@8.2/lib"
+      CMAKE_MODULE_PATH: "/Users/arashdeep/StudioProjects/holtersync/macos/.tflite-build/build-x86_64/eigen/cmake"
+      CMAKE_OSX_ARCHITECTURES: "x86_64"
+      CMAKE_OSX_DEPLOYMENT_TARGET: "14.5"
+      CMAKE_OSX_SYSROOT: "/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX15.2.sdk"
+      CMAKE_POSITION_INDEPENDENT_CODE: "ON"
+    buildResult:
+      variable: "COMPILER_SUPPORT_wd981"
+      cached: true
+      stdout: |
+        Change Dir: '/Users/arashdeep/StudioProjects/holtersync/macos/.tflite-build/build-x86_64/CMakeFiles/CMakeScratch/TryCompile-fYcRCW'
+        
+        Run Build Command(s): /opt/homebrew/Cellar/cmake/3.29.6/bin/cmake -E env VERBOSE=1 /usr/bin/make -f Makefile cmTC_eaa70/fast
+        /Applications/Xcode.app/Contents/Developer/usr/bin/make  -f CMakeFiles/cmTC_eaa70.dir/build.make CMakeFiles/cmTC_eaa70.dir/build
+        Building CXX object CMakeFiles/cmTC_eaa70.dir/src.cxx.o
+        /Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/c++ -DCOMPILER_SUPPORT_wd981  -pedantic -Wall -Wextra -Wundef -Wcast-align -Wchar-subscripts -Wnon-virtual-dtor -Wunused-local-typedefs -Wpointer-arith -Wwrite-strings -Wformat-security -Wshorten-64-to-32 -Wenum-conversion -Wc++11-extensions -Wdouble-promotion -Wshadow -Wno-psabi -Wno-variadic-macros -Wno-long-long -fno-check-new -Werror -std=gnu++17 -arch x86_64 -isysroot /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX15.2.sdk -mmacosx-version-min=14.5 -fPIE   -wd981 -MD -MT CMakeFiles/cmTC_eaa70.dir/src.cxx.o -MF CMakeFiles/cmTC_eaa70.dir/src.cxx.o.d -o CMakeFiles/cmTC_eaa70.dir/src.cxx.o -c /Users/arashdeep/StudioProjects/holtersync/macos/.tflite-build/build-x86_64/CMakeFiles/CMakeScratch/TryCompile-fYcRCW/src.cxx
+        c++: error: unknown argument: '-wd981'
+        make[1]: *** [CMakeFiles/cmTC_eaa70.dir/src.cxx.o] Error 1
+        make: *** [cmTC_eaa70/fast] Error 2
+        
+      exitCode: 2
+  -
+    kind: "try_compile-v1"
+    backtrace:
+      - "/opt/homebrew/Cellar/cmake/3.29.6/share/cmake/Modules/Internal/CheckSourceCompiles.cmake:101 (try_compile)"
+      - "/opt/homebrew/Cellar/cmake/3.29.6/share/cmake/Modules/Internal/CheckCompilerFlag.cmake:18 (cmake_check_source_compiles)"
+      - "/opt/homebrew/Cellar/cmake/3.29.6/share/cmake/Modules/CheckCXXCompilerFlag.cmake:34 (cmake_check_compiler_flag)"
+      - "/Users/arashdeep/StudioProjects/holtersync/macos/.tflite-build/build-x86_64/eigen/CMakeLists.txt:96 (check_cxx_compiler_flag)"
+      - "/Users/arashdeep/StudioProjects/holtersync/macos/.tflite-build/build-x86_64/eigen/CMakeLists.txt:213 (ei_add_cxx_compiler_flag)"
+    checks:
+      - "Performing Test COMPILER_SUPPORT_wd2304"
+    directories:
+      source: "/Users/arashdeep/StudioProjects/holtersync/macos/.tflite-build/build-x86_64/CMakeFiles/CMakeScratch/TryCompile-i5WFup"
+      binary: "/Users/arashdeep/StudioProjects/holtersync/macos/.tflite-build/build-x86_64/CMakeFiles/CMakeScratch/TryCompile-i5WFup"
+    cmakeVariables:
+      CMAKE_CXX_FLAGS: " -pedantic -Wall -Wextra -Wundef -Wcast-align -Wchar-subscripts -Wnon-virtual-dtor -Wunused-local-typedefs -Wpointer-arith -Wwrite-strings -Wformat-security -Wshorten-64-to-32 -Wenum-conversion -Wc++11-extensions -Wdouble-promotion -Wshadow -Wno-psabi -Wno-variadic-macros -Wno-long-long -fno-check-new"
+      CMAKE_CXX_FLAGS_DEBUG: "-g"
+      CMAKE_EXE_LINKER_FLAGS: "-L/opt/homebrew/opt/php@8.2/lib"
+      CMAKE_MODULE_PATH: "/Users/arashdeep/StudioProjects/holtersync/macos/.tflite-build/build-x86_64/eigen/cmake"
+      CMAKE_OSX_ARCHITECTURES: "x86_64"
+      CMAKE_OSX_DEPLOYMENT_TARGET: "14.5"
+      CMAKE_OSX_SYSROOT: "/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX15.2.sdk"
+      CMAKE_POSITION_INDEPENDENT_CODE: "ON"
+    buildResult:
+      variable: "COMPILER_SUPPORT_wd2304"
+      cached: true
+      stdout: |
+        Change Dir: '/Users/arashdeep/StudioProjects/holtersync/macos/.tflite-build/build-x86_64/CMakeFiles/CMakeScratch/TryCompile-i5WFup'
+        
+        Run Build Command(s): /opt/homebrew/Cellar/cmake/3.29.6/bin/cmake -E env VERBOSE=1 /usr/bin/make -f Makefile cmTC_b154e/fast
+        /Applications/Xcode.app/Contents/Developer/usr/bin/make  -f CMakeFiles/cmTC_b154e.dir/build.make CMakeFiles/cmTC_b154e.dir/build
+        Building CXX object CMakeFiles/cmTC_b154e.dir/src.cxx.o
+        /Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/c++ -DCOMPILER_SUPPORT_wd2304  -pedantic -Wall -Wextra -Wundef -Wcast-align -Wchar-subscripts -Wnon-virtual-dtor -Wunused-local-typedefs -Wpointer-arith -Wwrite-strings -Wformat-security -Wshorten-64-to-32 -Wenum-conversion -Wc++11-extensions -Wdouble-promotion -Wshadow -Wno-psabi -Wno-variadic-macros -Wno-long-long -fno-check-new -Werror -std=gnu++17 -arch x86_64 -isysroot /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX15.2.sdk -mmacosx-version-min=14.5 -fPIE   -wd2304 -MD -MT CMakeFiles/cmTC_b154e.dir/src.cxx.o -MF CMakeFiles/cmTC_b154e.dir/src.cxx.o.d -o CMakeFiles/cmTC_b154e.dir/src.cxx.o -c /Users/arashdeep/StudioProjects/holtersync/macos/.tflite-build/build-x86_64/CMakeFiles/CMakeScratch/TryCompile-i5WFup/src.cxx
+        c++: error: unknown argument: '-wd2304'
+        make[1]: *** [CMakeFiles/cmTC_b154e.dir/src.cxx.o] Error 1
+        make: *** [cmTC_b154e/fast] Error 2
+        
+      exitCode: 2
+  -
+    kind: "try_compile-v1"
+    backtrace:
+      - "/opt/homebrew/Cellar/cmake/3.29.6/share/cmake/Modules/Internal/CheckSourceCompiles.cmake:101 (try_compile)"
+      - "/opt/homebrew/Cellar/cmake/3.29.6/share/cmake/Modules/Internal/CheckCompilerFlag.cmake:18 (cmake_check_source_compiles)"
+      - "/opt/homebrew/Cellar/cmake/3.29.6/share/cmake/Modules/CheckCXXCompilerFlag.cmake:34 (cmake_check_compiler_flag)"
+      - "/Users/arashdeep/StudioProjects/holtersync/macos/.tflite-build/build-x86_64/eigen/CMakeLists.txt:341 (check_cxx_compiler_flag)"
+    checks:
+      - "Performing Test COMPILER_SUPPORT_OPENMP"
+    directories:
+      source: "/Users/arashdeep/StudioProjects/holtersync/macos/.tflite-build/build-x86_64/CMakeFiles/CMakeScratch/TryCompile-fM5nes"
+      binary: "/Users/arashdeep/StudioProjects/holtersync/macos/.tflite-build/build-x86_64/CMakeFiles/CMakeScratch/TryCompile-fM5nes"
+    cmakeVariables:
+      CMAKE_CXX_FLAGS: " -pedantic -Wall -Wextra -Wundef -Wcast-align -Wchar-subscripts -Wnon-virtual-dtor -Wunused-local-typedefs -Wpointer-arith -Wwrite-strings -Wformat-security -Wshorten-64-to-32 -Wenum-conversion -Wc++11-extensions -Wdouble-promotion -Wshadow -Wno-psabi -Wno-variadic-macros -Wno-long-long -fno-check-new"
+      CMAKE_CXX_FLAGS_DEBUG: "-g"
+      CMAKE_EXE_LINKER_FLAGS: "-L/opt/homebrew/opt/php@8.2/lib"
+      CMAKE_MODULE_PATH: "/Users/arashdeep/StudioProjects/holtersync/macos/.tflite-build/build-x86_64/eigen/cmake"
+      CMAKE_OSX_ARCHITECTURES: "x86_64"
+      CMAKE_OSX_DEPLOYMENT_TARGET: "14.5"
+      CMAKE_OSX_SYSROOT: "/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX15.2.sdk"
+      CMAKE_POSITION_INDEPENDENT_CODE: "ON"
+    buildResult:
+      variable: "COMPILER_SUPPORT_OPENMP"
+      cached: true
+      stdout: |
+        Change Dir: '/Users/arashdeep/StudioProjects/holtersync/macos/.tflite-build/build-x86_64/CMakeFiles/CMakeScratch/TryCompile-fM5nes'
+        
+        Run Build Command(s): /opt/homebrew/Cellar/cmake/3.29.6/bin/cmake -E env VERBOSE=1 /usr/bin/make -f Makefile cmTC_521c3/fast
+        /Applications/Xcode.app/Contents/Developer/usr/bin/make  -f CMakeFiles/cmTC_521c3.dir/build.make CMakeFiles/cmTC_521c3.dir/build
+        Building CXX object CMakeFiles/cmTC_521c3.dir/src.cxx.o
+        /Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/c++ -DCOMPILER_SUPPORT_OPENMP  -pedantic -Wall -Wextra -Wundef -Wcast-align -Wchar-subscripts -Wnon-virtual-dtor -Wunused-local-typedefs -Wpointer-arith -Wwrite-strings -Wformat-security -Wshorten-64-to-32 -Wenum-conversion -Wc++11-extensions -Wdouble-promotion -Wshadow -Wno-psabi -Wno-variadic-macros -Wno-long-long -fno-check-new  -std=gnu++17 -arch x86_64 -isysroot /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX15.2.sdk -mmacosx-version-min=14.5 -fPIE   -fopenmp -MD -MT CMakeFiles/cmTC_521c3.dir/src.cxx.o -MF CMakeFiles/cmTC_521c3.dir/src.cxx.o.d -o CMakeFiles/cmTC_521c3.dir/src.cxx.o -c /Users/arashdeep/StudioProjects/holtersync/macos/.tflite-build/build-x86_64/CMakeFiles/CMakeScratch/TryCompile-fM5nes/src.cxx
+        c++: error: unsupported option '-fopenmp'
+        make[1]: *** [CMakeFiles/cmTC_521c3.dir/src.cxx.o] Error 1
+        make: *** [cmTC_521c3/fast] Error 2
+        
+      exitCode: 2
+  -
+    kind: "message-v1"
+    backtrace:
+      - "/opt/homebrew/Cellar/cmake/3.29.6/share/cmake/Modules/CMakeDetermineCompilerId.cmake:17 (message)"
+      - "/opt/homebrew/Cellar/cmake/3.29.6/share/cmake/Modules/CMakeDetermineCompilerId.cmake:64 (__determine_compiler_id_test)"
+      - "/opt/homebrew/Cellar/cmake/3.29.6/share/cmake/Modules/CMakeDetermineFortranCompiler.cmake:186 (CMAKE_DETERMINE_COMPILER_ID)"
+      - "/Users/arashdeep/StudioProjects/holtersync/macos/.tflite-build/build-x86_64/eigen/CMakeLists.txt:514 (include)"
+    message: |
+      Compiling the Fortran compiler identification source file "CMakeFortranCompilerId.F" succeeded.
+      Compiler: /opt/homebrew/bin/gfortran 
+      Build flags: 
+      Id flags: -v 
+      
+      The output was:
+      0
+      Driving: /opt/homebrew/bin/gfortran -v CMakeFortranCompilerId.F -mmacosx-version-min=14.0.0 -asm_macosx_version_min=14.0 -nodefaultexport -l gfortran
+      Using built-in specs.
+      COLLECT_GCC=/opt/homebrew/bin/gfortran
+      COLLECT_LTO_WRAPPER=/opt/homebrew/Cellar/gcc/14.2.0/bin/../libexec/gcc/aarch64-apple-darwin23/14/lto-wrapper
+      Target: aarch64-apple-darwin23
+      Configured with: ../configure --prefix=/opt/homebrew/opt/gcc --libdir=/opt/homebrew/opt/gcc/lib/gcc/current --disable-nls --enable-checking=release --with-gcc-major-version-only --enable-languages=c,c++,objc,obj-c++,fortran,m2 --program-suffix=-14 --with-gmp=/opt/homebrew/opt/gmp --with-mpfr=/opt/homebrew/opt/mpfr --with-mpc=/opt/homebrew/opt/libmpc --with-isl=/opt/homebrew/opt/isl --with-zstd=/opt/homebrew/opt/zstd --with-pkgversion='Homebrew GCC 14.2.0' --with-bugurl=https://github.com/Homebrew/homebrew-core/issues --with-system-zlib --build=aarch64-apple-darwin23 --with-sysroot=/Library/Developer/CommandLineTools/SDKs/MacOSX14.sdk
+      Thread model: posix
+      Supported LTO compression algorithms: zlib zstd
+      gcc version 14.2.0 (Homebrew GCC 14.2.0) 
+      COLLECT_GCC_OPTIONS='-v' '-mmacosx-version-min=14.0.0' '-asm_macosx_version_min=14.0' '-nodefaultexport' '-mcpu=apple-m1' '-mlittle-endian' '-mabi=lp64' '-dumpdir' 'a-'
+       /opt/homebrew/Cellar/gcc/14.2.0/bin/../libexec/gcc/aarch64-apple-darwin23/14/f951 CMakeFortranCompilerId.F -ffixed-form -cpp=/var/folders/dc/yttn94fj08v4plk0wzyvx2rm0000gn/T//ccswkKgr.fi -quiet -v -iprefix /opt/homebrew/Cellar/gcc/14.2.0/bin/../lib/gcc/current/gcc/aarch64-apple-darwin23/14/ -D__DYNAMIC__ CMakeFortranCompilerId.F -fPIC -quiet -dumpdir a- -dumpbase CMakeFortranCompilerId.F -dumpbase-ext .F -mmacosx-version-min=14.0.0 -mcpu=apple-m1 -mlittle-endian -mabi=lp64 -version -fintrinsic-modules-path /opt/homebrew/Cellar/gcc/14.2.0/bin/../lib/gcc/current/gcc/aarch64-apple-darwin23/14/finclude -o /var/folders/dc/yttn94fj08v4plk0wzyvx2rm0000gn/T//ccScn1rS.s
+      GNU Fortran (Homebrew GCC 14.2.0) version 14.2.0 (aarch64-apple-darwin23)
+      	compiled by GNU C version 14.2.0, GMP version 6.3.0, MPFR version 4.2.1, MPC version 1.3.1, isl version isl-0.27-GMP
+      
+      GGC heuristics: --param ggc-min-expand=100 --param ggc-min-heapsize=131072
+      ignoring nonexistent directory "/opt/homebrew/Cellar/gcc/14.2.0/bin/../lib/gcc/current/gcc/aarch64-apple-darwin23/14/../../../../../../aarch64-apple-darwin23/include"
+      ignoring duplicate directory "/opt/homebrew/Cellar/gcc/14.2.0/bin/../lib/gcc/current/gcc/../../../../lib/gcc/current/gcc/aarch64-apple-darwin23/14/include"
+      ignoring nonexistent directory "/Library/Developer/CommandLineTools/SDKs/MacOSX14.sdk/usr/local/include"
+      ignoring duplicate directory "/opt/homebrew/Cellar/gcc/14.2.0/bin/../lib/gcc/current/gcc/../../../../lib/gcc/current/gcc/aarch64-apple-darwin23/14/include-fixed"
+      ignoring nonexistent directory "/opt/homebrew/Cellar/gcc/14.2.0/bin/../lib/gcc/current/gcc/../../../../lib/gcc/current/gcc/aarch64-apple-darwin23/14/../../../../../../aarch64-apple-darwin23/include"
+      #include "..." search starts here:
+      #include <...> search starts here:
+       /opt/homebrew/Cellar/gcc/14.2.0/bin/../lib/gcc/current/gcc/aarch64-apple-darwin23/14/finclude
+       /opt/homebrew/Cellar/gcc/14.2.0/bin/../lib/gcc/current/gcc/aarch64-apple-darwin23/14/include
+       /opt/homebrew/Cellar/gcc/14.2.0/bin/../lib/gcc/current/gcc/aarch64-apple-darwin23/14/include-fixed
+       /Library/Developer/CommandLineTools/SDKs/MacOSX14.sdk/usr/include
+      End of search list.
+      COLLECT_GCC_OPTIONS='-v' '-mmacosx-version-min=14.0.0'  '-nodefaultexport' '-mcpu=apple-m1' '-mlittle-endian' '-mabi=lp64' '-dumpdir' 'a-'
+       as -arch arm64 -v -mmacosx-version-min=14.0 -o /var/folders/dc/yttn94fj08v4plk0wzyvx2rm0000gn/T//ccZIEg2n.o /var/folders/dc/yttn94fj08v4plk0wzyvx2rm0000gn/T//ccScn1rS.s
+      Apple clang version 16.0.0 (clang-1600.0.26.6)
+      Target: arm64-apple-darwin23.5.0
+      Thread model: posix
+      InstalledDir: /Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin
+       "/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/clang" -cc1as -triple arm64-apple-macosx14.0.0 -target-sdk-version=15.2 -filetype obj -main-file-name ccScn1rS.s -target-cpu apple-m1 -target-feature +v8.5a -target-feature +aes -target-feature +crc -target-feature +dotprod -target-feature +fp-armv8 -target-feature +fp16fml -target-feature +lse -target-feature +ras -target-feature +rcpc -target-feature +rdm -target-feature +sha2 -target-feature +sha3 -target-feature +neon -target-feature +zcm -target-feature +zcz -target-feature +fullfp16 -fdebug-compilation-dir=/Users/arashdeep/StudioProjects/holtersync/macos/.tflite-build/build-x86_64/CMakeFiles/3.29.6/CompilerIdFortran -dwarf-debug-producer "Apple clang version 16.0.0 (clang-1600.0.26.6)" -dwarf-version=4 -mrelocation-model pic -o /var/folders/dc/yttn94fj08v4plk0wzyvx2rm0000gn/T//ccZIEg2n.o /var/folders/dc/yttn94fj08v4plk0wzyvx2rm0000gn/T//ccScn1rS.s
+      Reading specs from /opt/homebrew/Cellar/gcc/14.2.0/bin/../lib/gcc/current/gcc/aarch64-apple-darwin23/14/../../../libgfortran.spec
+      rename spec lib to liborig
+      COLLECT_GCC_OPTIONS='-v' '-mmacosx-version-min=14.0.0'  '-nodefaultexport' '-mcpu=apple-m1' '-mlittle-endian' '-mabi=lp64' '-dumpdir' 'a-'
+      COMPILER_PATH=/opt/homebrew/Cellar/gcc/14.2.0/bin/../libexec/gcc/aarch64-apple-darwin23/14/:/opt/homebrew/Cellar/gcc/14.2.0/bin/../libexec/gcc/
+      LIBRARY_PATH=/opt/homebrew/Cellar/gcc/14.2.0/bin/../lib/gcc/current/gcc/aarch64-apple-darwin23/14/:/opt/homebrew/Cellar/gcc/14.2.0/bin/../lib/gcc/current/gcc/:/opt/homebrew/Cellar/gcc/14.2.0/bin/../lib/gcc/current/gcc/aarch64-apple-darwin23/14/../../../
+      COLLECT_GCC_OPTIONS='-v' '-mmacosx-version-min=14.0.0'  '-nodefaultexport' '-mcpu=apple-m1' '-mlittle-endian' '-mabi=lp64' '-dumpdir' 'a.'
+       /opt/homebrew/Cellar/gcc/14.2.0/bin/../libexec/gcc/aarch64-apple-darwin23/14/collect2 -demangle -syslibroot /Library/Developer/CommandLineTools/SDKs/MacOSX14.sdk/ -dynamic -arch arm64 -platform_version macos 14.0.0 0.0 -o a.out -L/opt/homebrew/Cellar/gcc/14.2.0/bin/../lib/gcc/current/gcc/aarch64-apple-darwin23/14 -L/opt/homebrew/Cellar/gcc/14.2.0/bin/../lib/gcc/current/gcc -L/opt/homebrew/Cellar/gcc/14.2.0/bin/../lib/gcc/current/gcc/aarch64-apple-darwin23/14/../../.. -lemutls_w -lheapt_w /var/folders/dc/yttn94fj08v4plk0wzyvx2rm0000gn/T//ccZIEg2n.o -lgfortran -lgcc -lquadmath -lSystem -no_compact_unwind -rpath @loader_path -rpath /opt/homebrew/Cellar/gcc/14.2.0/lib/gcc/current/gcc/aarch64-apple-darwin23/14 -rpath /opt/homebrew/Cellar/gcc/14.2.0/lib/gcc/current/gcc -rpath /opt/homebrew/Cellar/gcc/14.2.0/lib/gcc/current
+      
+      
+      Compilation of the Fortran compiler identification source "CMakeFortranCompilerId.F" produced "a.out"
+      
+      The Fortran compiler identification is GNU, found in:
+        /Users/arashdeep/StudioProjects/holtersync/macos/.tflite-build/build-x86_64/CMakeFiles/3.29.6/CompilerIdFortran/a.out
+      
+  -
+    kind: "try_compile-v1"
+    backtrace:
+      - "/opt/homebrew/Cellar/cmake/3.29.6/share/cmake/Modules/Internal/CheckSourceCompiles.cmake:101 (try_compile)"
+      - "/opt/homebrew/Cellar/cmake/3.29.6/share/cmake/Modules/CheckCXXSourceCompiles.cmake:52 (cmake_check_source_compiles)"
+      - "/Users/arashdeep/StudioProjects/holtersync/macos/.tflite-build/tensorflow/tensorflow/lite/tools/cmake/modules/farmhash/CMakeLists.txt:27 (check_cxx_source_compiles)"
+    checks:
+      - "Performing Test FARMHASH_HAS_BUILTIN_EXPECT"
+    directories:
+      source: "/Users/arashdeep/StudioProjects/holtersync/macos/.tflite-build/build-x86_64/CMakeFiles/CMakeScratch/TryCompile-0NuYzF"
+      binary: "/Users/arashdeep/StudioProjects/holtersync/macos/.tflite-build/build-x86_64/CMakeFiles/CMakeScratch/TryCompile-0NuYzF"
+    cmakeVariables:
+      CMAKE_CXX_FLAGS: ""
+      CMAKE_CXX_FLAGS_DEBUG: "-g"
+      CMAKE_EXE_LINKER_FLAGS: "-L/opt/homebrew/opt/php@8.2/lib"
+      CMAKE_MODULE_PATH: "/Users/arashdeep/StudioProjects/holtersync/macos/.tflite-build/tensorflow/tensorflow/lite/tools/cmake/modules"
+      CMAKE_OSX_ARCHITECTURES: "x86_64"
+      CMAKE_OSX_DEPLOYMENT_TARGET: "14.5"
+      CMAKE_OSX_SYSROOT: "/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX15.2.sdk"
+      CMAKE_POSITION_INDEPENDENT_CODE: "ON"
+    buildResult:
+      variable: "FARMHASH_HAS_BUILTIN_EXPECT"
+      cached: true
+      stdout: |
+        Change Dir: '/Users/arashdeep/StudioProjects/holtersync/macos/.tflite-build/build-x86_64/CMakeFiles/CMakeScratch/TryCompile-0NuYzF'
+        
+        Run Build Command(s): /opt/homebrew/Cellar/cmake/3.29.6/bin/cmake -E env VERBOSE=1 /usr/bin/make -f Makefile cmTC_609f4/fast
+        /Applications/Xcode.app/Contents/Developer/usr/bin/make  -f CMakeFiles/cmTC_609f4.dir/build.make CMakeFiles/cmTC_609f4.dir/build
+        Building CXX object CMakeFiles/cmTC_609f4.dir/src.cxx.o
+        /Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/c++ -DFARMHASH_HAS_BUILTIN_EXPECT  -std=gnu++17 -arch x86_64 -isysroot /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX15.2.sdk -mmacosx-version-min=14.5 -fPIE -MD -MT CMakeFiles/cmTC_609f4.dir/src.cxx.o -MF CMakeFiles/cmTC_609f4.dir/src.cxx.o.d -o CMakeFiles/cmTC_609f4.dir/src.cxx.o -c /Users/arashdeep/StudioProjects/holtersync/macos/.tflite-build/build-x86_64/CMakeFiles/CMakeScratch/TryCompile-0NuYzF/src.cxx
+        Linking CXX executable cmTC_609f4
+        /opt/homebrew/Cellar/cmake/3.29.6/bin/cmake -E cmake_link_script CMakeFiles/cmTC_609f4.dir/link.txt --verbose=1
+        /Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/c++  -arch x86_64 -isysroot /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX15.2.sdk -mmacosx-version-min=14.5 -Wl,-search_paths_first -Wl,-headerpad_max_install_names -L/opt/homebrew/opt/php@8.2/lib  CMakeFiles/cmTC_609f4.dir/src.cxx.o -o cmTC_609f4
+        
+      exitCode: 0
+  -
+    kind: "try_compile-v1"
+    backtrace:
+      - "/opt/homebrew/Cellar/cmake/3.29.6/share/cmake/Modules/CheckSymbolExists.cmake:140 (try_compile)"
+      - "/opt/homebrew/Cellar/cmake/3.29.6/share/cmake/Modules/CheckCXXSymbolExists.cmake:72 (__CHECK_SYMBOL_EXISTS_IMPL)"
+      - "/Users/arashdeep/StudioProjects/holtersync/macos/.tflite-build/build-x86_64/flatbuffers/CMakeLists.txt:105 (check_cxx_symbol_exists)"
+    checks:
+      - "Looking for strtof_l"
+    directories:
+      source: "/Users/arashdeep/StudioProjects/holtersync/macos/.tflite-build/build-x86_64/CMakeFiles/CMakeScratch/TryCompile-uTYPTv"
+      binary: "/Users/arashdeep/StudioProjects/holtersync/macos/.tflite-build/build-x86_64/CMakeFiles/CMakeScratch/TryCompile-uTYPTv"
+    cmakeVariables:
+      CMAKE_CXX_FLAGS: ""
+      CMAKE_CXX_FLAGS_DEBUG: "-g"
+      CMAKE_EXE_LINKER_FLAGS: "-L/opt/homebrew/opt/php@8.2/lib"
+      CMAKE_MODULE_PATH: "/Users/arashdeep/StudioProjects/holtersync/macos/.tflite-build/tensorflow/tensorflow/lite/tools/cmake/modules"
+      CMAKE_OSX_ARCHITECTURES: "x86_64"
+      CMAKE_OSX_DEPLOYMENT_TARGET: "14.5"
+      CMAKE_OSX_SYSROOT: "/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX15.2.sdk"
+      CMAKE_POSITION_INDEPENDENT_CODE: "ON"
+    buildResult:
+      variable: "FLATBUFFERS_HAS_STRTOF_L"
+      cached: true
+      stdout: |
+        Change Dir: '/Users/arashdeep/StudioProjects/holtersync/macos/.tflite-build/build-x86_64/CMakeFiles/CMakeScratch/TryCompile-uTYPTv'
+        
+        Run Build Command(s): /opt/homebrew/Cellar/cmake/3.29.6/bin/cmake -E env VERBOSE=1 /usr/bin/make -f Makefile cmTC_7874e/fast
+        /Applications/Xcode.app/Contents/Developer/usr/bin/make  -f CMakeFiles/cmTC_7874e.dir/build.make CMakeFiles/cmTC_7874e.dir/build
+        Building CXX object CMakeFiles/cmTC_7874e.dir/CheckSymbolExists.cxx.o
+        /Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/c++   -std=gnu++17 -arch x86_64 -isysroot /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX15.2.sdk -mmacosx-version-min=14.5 -fPIE -MD -MT CMakeFiles/cmTC_7874e.dir/CheckSymbolExists.cxx.o -MF CMakeFiles/cmTC_7874e.dir/CheckSymbolExists.cxx.o.d -o CMakeFiles/cmTC_7874e.dir/CheckSymbolExists.cxx.o -c /Users/arashdeep/StudioProjects/holtersync/macos/.tflite-build/build-x86_64/CMakeFiles/CMakeScratch/TryCompile-uTYPTv/CheckSymbolExists.cxx
+        /Users/arashdeep/StudioProjects/holtersync/macos/.tflite-build/build-x86_64/CMakeFiles/CMakeScratch/TryCompile-uTYPTv/CheckSymbolExists.cxx:8:19: error: use of undeclared identifier 'strtof_l'
+            8 |   return ((int*)(&strtof_l))[argc];
+              |                   ^
+        1 error generated.
+        make[1]: *** [CMakeFiles/cmTC_7874e.dir/CheckSymbolExists.cxx.o] Error 1
+        make: *** [cmTC_7874e/fast] Error 2
+        
+      exitCode: 2
+  -
+    kind: "try_compile-v1"
+    backtrace:
+      - "/opt/homebrew/Cellar/cmake/3.29.6/share/cmake/Modules/CheckSymbolExists.cmake:140 (try_compile)"
+      - "/opt/homebrew/Cellar/cmake/3.29.6/share/cmake/Modules/CheckCXXSymbolExists.cmake:72 (__CHECK_SYMBOL_EXISTS_IMPL)"
+      - "/Users/arashdeep/StudioProjects/holtersync/macos/.tflite-build/build-x86_64/flatbuffers/CMakeLists.txt:106 (check_cxx_symbol_exists)"
+    checks:
+      - "Looking for strtoull_l"
+    directories:
+      source: "/Users/arashdeep/StudioProjects/holtersync/macos/.tflite-build/build-x86_64/CMakeFiles/CMakeScratch/TryCompile-chAiYA"
+      binary: "/Users/arashdeep/StudioProjects/holtersync/macos/.tflite-build/build-x86_64/CMakeFiles/CMakeScratch/TryCompile-chAiYA"
+    cmakeVariables:
+      CMAKE_CXX_FLAGS: ""
+      CMAKE_CXX_FLAGS_DEBUG: "-g"
+      CMAKE_EXE_LINKER_FLAGS: "-L/opt/homebrew/opt/php@8.2/lib"
+      CMAKE_MODULE_PATH: "/Users/arashdeep/StudioProjects/holtersync/macos/.tflite-build/tensorflow/tensorflow/lite/tools/cmake/modules"
+      CMAKE_OSX_ARCHITECTURES: "x86_64"
+      CMAKE_OSX_DEPLOYMENT_TARGET: "14.5"
+      CMAKE_OSX_SYSROOT: "/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX15.2.sdk"
+      CMAKE_POSITION_INDEPENDENT_CODE: "ON"
+    buildResult:
+      variable: "FLATBUFFERS_HAS_STRTOULL_L"
+      cached: true
+      stdout: |
+        Change Dir: '/Users/arashdeep/StudioProjects/holtersync/macos/.tflite-build/build-x86_64/CMakeFiles/CMakeScratch/TryCompile-chAiYA'
+        
+        Run Build Command(s): /opt/homebrew/Cellar/cmake/3.29.6/bin/cmake -E env VERBOSE=1 /usr/bin/make -f Makefile cmTC_3c192/fast
+        /Applications/Xcode.app/Contents/Developer/usr/bin/make  -f CMakeFiles/cmTC_3c192.dir/build.make CMakeFiles/cmTC_3c192.dir/build
+        Building CXX object CMakeFiles/cmTC_3c192.dir/CheckSymbolExists.cxx.o
+        /Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/c++   -std=gnu++17 -arch x86_64 -isysroot /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX15.2.sdk -mmacosx-version-min=14.5 -fPIE -MD -MT CMakeFiles/cmTC_3c192.dir/CheckSymbolExists.cxx.o -MF CMakeFiles/cmTC_3c192.dir/CheckSymbolExists.cxx.o.d -o CMakeFiles/cmTC_3c192.dir/CheckSymbolExists.cxx.o -c /Users/arashdeep/StudioProjects/holtersync/macos/.tflite-build/build-x86_64/CMakeFiles/CMakeScratch/TryCompile-chAiYA/CheckSymbolExists.cxx
+        /Users/arashdeep/StudioProjects/holtersync/macos/.tflite-build/build-x86_64/CMakeFiles/CMakeScratch/TryCompile-chAiYA/CheckSymbolExists.cxx:8:19: error: use of undeclared identifier 'strtoull_l'; did you mean 'strtoull'?
+            8 |   return ((int*)(&strtoull_l))[argc];
+              |                   ^~~~~~~~~~
+              |                   strtoull
+        /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX15.2.sdk/usr/include/_stdlib.h:178:3: note: 'strtoull' declared here
+          178 |          strtoull(const char *__str, char **__endptr, int __base);
+              |          ^
+        1 error generated.
+        make[1]: *** [CMakeFiles/cmTC_3c192.dir/CheckSymbolExists.cxx.o] Error 1
+        make: *** [cmTC_3c192/fast] Error 2
+        
+      exitCode: 2
+  -
+    kind: "try_compile-v1"
+    backtrace:
+      - "/opt/homebrew/Cellar/cmake/3.29.6/share/cmake/Modules/CheckSymbolExists.cmake:140 (try_compile)"
+      - "/opt/homebrew/Cellar/cmake/3.29.6/share/cmake/Modules/CheckSymbolExists.cmake:66 (__CHECK_SYMBOL_EXISTS_IMPL)"
+      - "/Users/arashdeep/StudioProjects/holtersync/macos/.tflite-build/build-x86_64/flatbuffers/CMakeLists.txt:115 (check_symbol_exists)"
+    checks:
+      - "Looking for realpath"
+    directories:
+      source: "/Users/arashdeep/StudioProjects/holtersync/macos/.tflite-build/build-x86_64/CMakeFiles/CMakeScratch/TryCompile-LAiznO"
+      binary: "/Users/arashdeep/StudioProjects/holtersync/macos/.tflite-build/build-x86_64/CMakeFiles/CMakeScratch/TryCompile-LAiznO"
+    cmakeVariables:
+      CMAKE_C_FLAGS: ""
+      CMAKE_C_FLAGS_DEBUG: "-g"
+      CMAKE_EXE_LINKER_FLAGS: "-L/opt/homebrew/opt/php@8.2/lib"
+      CMAKE_MODULE_PATH: "/Users/arashdeep/StudioProjects/holtersync/macos/.tflite-build/tensorflow/tensorflow/lite/tools/cmake/modules"
+      CMAKE_OSX_ARCHITECTURES: "x86_64"
+      CMAKE_OSX_DEPLOYMENT_TARGET: "14.5"
+      CMAKE_OSX_SYSROOT: "/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX15.2.sdk"
+      CMAKE_POSITION_INDEPENDENT_CODE: "ON"
+    buildResult:
+      variable: "HAVE_REALPATH"
+      cached: true
+      stdout: |
+        Change Dir: '/Users/arashdeep/StudioProjects/holtersync/macos/.tflite-build/build-x86_64/CMakeFiles/CMakeScratch/TryCompile-LAiznO'
+        
+        Run Build Command(s): /opt/homebrew/Cellar/cmake/3.29.6/bin/cmake -E env VERBOSE=1 /usr/bin/make -f Makefile cmTC_588bc/fast
+        /Applications/Xcode.app/Contents/Developer/usr/bin/make  -f CMakeFiles/cmTC_588bc.dir/build.make CMakeFiles/cmTC_588bc.dir/build
+        Building C object CMakeFiles/cmTC_588bc.dir/CheckSymbolExists.c.o
+        /Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/cc   -arch x86_64 -isysroot /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX15.2.sdk -mmacosx-version-min=14.5 -fPIE -MD -MT CMakeFiles/cmTC_588bc.dir/CheckSymbolExists.c.o -MF CMakeFiles/cmTC_588bc.dir/CheckSymbolExists.c.o.d -o CMakeFiles/cmTC_588bc.dir/CheckSymbolExists.c.o -c /Users/arashdeep/StudioProjects/holtersync/macos/.tflite-build/build-x86_64/CMakeFiles/CMakeScratch/TryCompile-LAiznO/CheckSymbolExists.c
+        Linking C executable cmTC_588bc
+        /opt/homebrew/Cellar/cmake/3.29.6/bin/cmake -E cmake_link_script CMakeFiles/cmTC_588bc.dir/link.txt --verbose=1
+        /Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/cc  -arch x86_64 -isysroot /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX15.2.sdk -mmacosx-version-min=14.5 -Wl,-search_paths_first -Wl,-headerpad_max_install_names -L/opt/homebrew/opt/php@8.2/lib  CMakeFiles/cmTC_588bc.dir/CheckSymbolExists.c.o -o cmTC_588bc
+        
+      exitCode: 0
+  -
+    kind: "message-v1"
+    backtrace:
+      - "/opt/homebrew/Cellar/cmake/3.29.6/share/cmake/Modules/CMakeDetermineCompilerId.cmake:1178 (message)"
+      - "/opt/homebrew/Cellar/cmake/3.29.6/share/cmake/Modules/CMakeDetermineASMCompiler.cmake:135 (CMAKE_DETERMINE_COMPILER_ID_VENDOR)"
+      - "/Users/arashdeep/StudioProjects/holtersync/macos/.tflite-build/build-x86_64/xnnpack/CMakeLists.txt:15 (PROJECT)"
+    message: |
+      Checking whether the ASM compiler is GNU using "--version" did not match "(GNU assembler)|(GCC)|(Free Software Foundation)":
+      Apple clang version 16.0.0 (clang-1600.0.26.6)
+      Target: x86_64-apple-darwin23.5.0
+      Thread model: posix
+      InstalledDir: /Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin
+  -
+    kind: "message-v1"
+    backtrace:
+      - "/opt/homebrew/Cellar/cmake/3.29.6/share/cmake/Modules/CMakeDetermineCompilerId.cmake:1165 (message)"
+      - "/opt/homebrew/Cellar/cmake/3.29.6/share/cmake/Modules/CMakeDetermineASMCompiler.cmake:135 (CMAKE_DETERMINE_COMPILER_ID_VENDOR)"
+      - "/Users/arashdeep/StudioProjects/holtersync/macos/.tflite-build/build-x86_64/xnnpack/CMakeLists.txt:15 (PROJECT)"
+    message: |
+      Checking whether the ASM compiler is AppleClang using "--version" matched "(Apple (clang|LLVM) version)":
+      Apple clang version 16.0.0 (clang-1600.0.26.6)
+      Target: x86_64-apple-darwin23.5.0
+      Thread model: posix
+      InstalledDir: /Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin
+...

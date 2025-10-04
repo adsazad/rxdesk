@@ -1,0 +1,14 @@
+# Target labels
+ xnnpack-populate
+# Source files and their labels
+/Users/arashdeep/StudioProjects/holtersync/macos/.tflite-build/build-x86_64/_deps/xnnpack-subbuild/CMakeFiles/xnnpack-populate
+/Users/arashdeep/StudioProjects/holtersync/macos/.tflite-build/build-x86_64/_deps/xnnpack-subbuild/CMakeFiles/xnnpack-populate.rule
+/Users/arashdeep/StudioProjects/holtersync/macos/.tflite-build/build-x86_64/_deps/xnnpack-subbuild/CMakeFiles/xnnpack-populate-complete.rule
+/Users/arashdeep/StudioProjects/holtersync/macos/.tflite-build/build-x86_64/src/xnnpack-populate-stamp/xnnpack-populate-build.rule
+/Users/arashdeep/StudioProjects/holtersync/macos/.tflite-build/build-x86_64/src/xnnpack-populate-stamp/xnnpack-populate-configure.rule
+/Users/arashdeep/StudioProjects/holtersync/macos/.tflite-build/build-x86_64/src/xnnpack-populate-stamp/xnnpack-populate-download.rule
+/Users/arashdeep/StudioProjects/holtersync/macos/.tflite-build/build-x86_64/src/xnnpack-populate-stamp/xnnpack-populate-install.rule
+/Users/arashdeep/StudioProjects/holtersync/macos/.tflite-build/build-x86_64/src/xnnpack-populate-stamp/xnnpack-populate-mkdir.rule
+/Users/arashdeep/StudioProjects/holtersync/macos/.tflite-build/build-x86_64/src/xnnpack-populate-stamp/xnnpack-populate-patch.rule
+/Users/arashdeep/StudioProjects/holtersync/macos/.tflite-build/build-x86_64/src/xnnpack-populate-stamp/xnnpack-populate-test.rule
+/Users/arashdeep/StudioProjects/holtersync/macos/.tflite-build/build-x86_64/src/xnnpack-populate-stamp/xnnpack-populate-update.rule

@@ -106,3 +106,17 @@ install(DIRECTORY "${PROJECT_BUILD_DIR}/${FLUTTER_ASSET_DIR_NAME}"
 install(FILES "${AOT_LIBRARY}" DESTINATION "${INSTALL_BUNDLE_DATA_DIR}"
   CONFIGURATIONS Profile;Release
   COMPONENT Runtime)
+
+# === TensorFlow Lite DLL (Windows) ===
+# Copy prebuilt TFLite C API DLL from top-level blobs folder into the bundle.
+# Place libtensorflowlite_c-win.dll under <project-root>/blobs/
+set(TFLITE_BLOBS_DIR "${PROJECT_BUILD_DIR}/../blobs")
+set(TFLITE_DLL "${TFLITE_BLOBS_DIR}/libtensorflowlite_c-win.dll")
+if(EXISTS "${TFLITE_DLL}")
+  message(STATUS "Installing TensorFlow Lite DLL from ${TFLITE_DLL}")
+  install(FILES "${TFLITE_DLL}"
+    DESTINATION "${INSTALL_BUNDLE_DATA_DIR}/../blobs/"
+    COMPONENT Runtime)
+else()
+  message(WARNING "TensorFlow Lite DLL not found at ${TFLITE_DLL}. Place libtensorflowlite_c-win.dll under <project-root>/blobs/")
+endif()

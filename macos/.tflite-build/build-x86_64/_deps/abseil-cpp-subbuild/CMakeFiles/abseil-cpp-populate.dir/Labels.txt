@@ -1,0 +1,14 @@
+# Target labels
+ abseil-cpp-populate
+# Source files and their labels
+/Users/arashdeep/StudioProjects/holtersync/macos/.tflite-build/build-x86_64/_deps/abseil-cpp-subbuild/CMakeFiles/abseil-cpp-populate
+/Users/arashdeep/StudioProjects/holtersync/macos/.tflite-build/build-x86_64/_deps/abseil-cpp-subbuild/CMakeFiles/abseil-cpp-populate.rule
+/Users/arashdeep/StudioProjects/holtersync/macos/.tflite-build/build-x86_64/_deps/abseil-cpp-subbuild/CMakeFiles/abseil-cpp-populate-complete.rule
+/Users/arashdeep/StudioProjects/holtersync/macos/.tflite-build/build-x86_64/src/abseil-cpp-populate-stamp/abseil-cpp-populate-build.rule
+/Users/arashdeep/StudioProjects/holtersync/macos/.tflite-build/build-x86_64/src/abseil-cpp-populate-stamp/abseil-cpp-populate-configure.rule
+/Users/arashdeep/StudioProjects/holtersync/macos/.tflite-build/build-x86_64/src/abseil-cpp-populate-stamp/abseil-cpp-populate-download.rule
+/Users/arashdeep/StudioProjects/holtersync/macos/.tflite-build/build-x86_64/src/abseil-cpp-populate-stamp/abseil-cpp-populate-install.rule
+/Users/arashdeep/StudioProjects/holtersync/macos/.tflite-build/build-x86_64/src/abseil-cpp-populate-stamp/abseil-cpp-populate-mkdir.rule
+/Users/arashdeep/StudioProjects/holtersync/macos/.tflite-build/build-x86_64/src/abseil-cpp-populate-stamp/abseil-cpp-populate-patch.rule
+/Users/arashdeep/StudioProjects/holtersync/macos/.tflite-build/build-x86_64/src/abseil-cpp-populate-stamp/abseil-cpp-populate-test.rule
+/Users/arashdeep/StudioProjects/holtersync/macos/.tflite-build/build-x86_64/src/abseil-cpp-populate-stamp/abseil-cpp-populate-update.rule

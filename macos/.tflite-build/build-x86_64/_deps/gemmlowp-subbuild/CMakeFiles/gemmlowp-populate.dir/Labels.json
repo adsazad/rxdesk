@@ -1,0 +1,46 @@
+{
+	"sources" : 
+	[
+		{
+			"file" : "/Users/arashdeep/StudioProjects/holtersync/macos/.tflite-build/build-x86_64/_deps/gemmlowp-subbuild/CMakeFiles/gemmlowp-populate"
+		},
+		{
+			"file" : "/Users/arashdeep/StudioProjects/holtersync/macos/.tflite-build/build-x86_64/_deps/gemmlowp-subbuild/CMakeFiles/gemmlowp-populate.rule"
+		},
+		{
+			"file" : "/Users/arashdeep/StudioProjects/holtersync/macos/.tflite-build/build-x86_64/_deps/gemmlowp-subbuild/CMakeFiles/gemmlowp-populate-complete.rule"
+		},
+		{
+			"file" : "/Users/arashdeep/StudioProjects/holtersync/macos/.tflite-build/build-x86_64/_deps/gemmlowp-subbuild/gemmlowp-populate-prefix/src/gemmlowp-populate-stamp/gemmlowp-populate-build.rule"
+		},
+		{
+			"file" : "/Users/arashdeep/StudioProjects/holtersync/macos/.tflite-build/build-x86_64/_deps/gemmlowp-subbuild/gemmlowp-populate-prefix/src/gemmlowp-populate-stamp/gemmlowp-populate-configure.rule"
+		},
+		{
+			"file" : "/Users/arashdeep/StudioProjects/holtersync/macos/.tflite-build/build-x86_64/_deps/gemmlowp-subbuild/gemmlowp-populate-prefix/src/gemmlowp-populate-stamp/gemmlowp-populate-download.rule"
+		},
+		{
+			"file" : "/Users/arashdeep/StudioProjects/holtersync/macos/.tflite-build/build-x86_64/_deps/gemmlowp-subbuild/gemmlowp-populate-prefix/src/gemmlowp-populate-stamp/gemmlowp-populate-install.rule"
+		},
+		{
+			"file" : "/Users/arashdeep/StudioProjects/holtersync/macos/.tflite-build/build-x86_64/_deps/gemmlowp-subbuild/gemmlowp-populate-prefix/src/gemmlowp-populate-stamp/gemmlowp-populate-mkdir.rule"
+		},
+		{
+			"file" : "/Users/arashdeep/StudioProjects/holtersync/macos/.tflite-build/build-x86_64/_deps/gemmlowp-subbuild/gemmlowp-populate-prefix/src/gemmlowp-populate-stamp/gemmlowp-populate-patch.rule"
+		},
+		{
+			"file" : "/Users/arashdeep/StudioProjects/holtersync/macos/.tflite-build/build-x86_64/_deps/gemmlowp-subbuild/gemmlowp-populate-prefix/src/gemmlowp-populate-stamp/gemmlowp-populate-test.rule"
+		},
+		{
+			"file" : "/Users/arashdeep/StudioProjects/holtersync/macos/.tflite-build/build-x86_64/_deps/gemmlowp-subbuild/gemmlowp-populate-prefix/src/gemmlowp-populate-stamp/gemmlowp-populate-update.rule"
+		}
+	],
+	"target" : 
+	{
+		"labels" : 
+		[
+			"gemmlowp-populate"
+		],
+		"name" : "gemmlowp-populate"
+	}
+}

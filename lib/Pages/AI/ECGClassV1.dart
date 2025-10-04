@@ -52,7 +52,12 @@ class ECGClassv1 {
 
   Future<void> _initialize() async {
     print("MODEL LOADER STARTING");
-    interpreter = await tfl.Interpreter.fromAsset('assets/model.tflite');
+    try {
+      interpreter = await tfl.Interpreter.fromAsset('assets/model.tflite');
+    } catch (e) {
+      print("Error loading model: $e");
+      rethrow;
+    }
     print("MODEL LOADER DONE");
     print("SCALER LOADER STARTING");
     scalerTwo = await StandardScaler.fromJsonFile("assets/scaler_params.json");

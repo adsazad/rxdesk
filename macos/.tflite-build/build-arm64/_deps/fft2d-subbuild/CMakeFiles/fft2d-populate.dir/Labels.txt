@@ -1,0 +1,14 @@
+# Target labels
+ fft2d-populate
+# Source files and their labels
+/Users/arashdeep/StudioProjects/holtersync/macos/.tflite-build/build-arm64/_deps/fft2d-subbuild/CMakeFiles/fft2d-populate
+/Users/arashdeep/StudioProjects/holtersync/macos/.tflite-build/build-arm64/_deps/fft2d-subbuild/CMakeFiles/fft2d-populate.rule
+/Users/arashdeep/StudioProjects/holtersync/macos/.tflite-build/build-arm64/_deps/fft2d-subbuild/CMakeFiles/fft2d-populate-complete.rule
+/Users/arashdeep/StudioProjects/holtersync/macos/.tflite-build/build-arm64/_deps/fft2d-subbuild/fft2d-populate-prefix/src/fft2d-populate-stamp/fft2d-populate-build.rule
+/Users/arashdeep/StudioProjects/holtersync/macos/.tflite-build/build-arm64/_deps/fft2d-subbuild/fft2d-populate-prefix/src/fft2d-populate-stamp/fft2d-populate-configure.rule
+/Users/arashdeep/StudioProjects/holtersync/macos/.tflite-build/build-arm64/_deps/fft2d-subbuild/fft2d-populate-prefix/src/fft2d-populate-stamp/fft2d-populate-download.rule
+/Users/arashdeep/StudioProjects/holtersync/macos/.tflite-build/build-arm64/_deps/fft2d-subbuild/fft2d-populate-prefix/src/fft2d-populate-stamp/fft2d-populate-install.rule
+/Users/arashdeep/StudioProjects/holtersync/macos/.tflite-build/build-arm64/_deps/fft2d-subbuild/fft2d-populate-prefix/src/fft2d-populate-stamp/fft2d-populate-mkdir.rule
+/Users/arashdeep/StudioProjects/holtersync/macos/.tflite-build/build-arm64/_deps/fft2d-subbuild/fft2d-populate-prefix/src/fft2d-populate-stamp/fft2d-populate-patch.rule
+/Users/arashdeep/StudioProjects/holtersync/macos/.tflite-build/build-arm64/_deps/fft2d-subbuild/fft2d-populate-prefix/src/fft2d-populate-stamp/fft2d-populate-test.rule
+/Users/arashdeep/StudioProjects/holtersync/macos/.tflite-build/build-arm64/_deps/fft2d-subbuild/fft2d-populate-prefix/src/fft2d-populate-stamp/fft2d-populate-update.rule

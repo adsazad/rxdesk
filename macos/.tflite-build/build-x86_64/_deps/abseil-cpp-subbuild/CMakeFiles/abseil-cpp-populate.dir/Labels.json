@@ -1,0 +1,46 @@
+{
+	"sources" : 
+	[
+		{
+			"file" : "/Users/arashdeep/StudioProjects/holtersync/macos/.tflite-build/build-x86_64/_deps/abseil-cpp-subbuild/CMakeFiles/abseil-cpp-populate"
+		},
+		{
+			"file" : "/Users/arashdeep/StudioProjects/holtersync/macos/.tflite-build/build-x86_64/_deps/abseil-cpp-subbuild/CMakeFiles/abseil-cpp-populate.rule"
+		},
+		{
+			"file" : "/Users/arashdeep/StudioProjects/holtersync/macos/.tflite-build/build-x86_64/_deps/abseil-cpp-subbuild/CMakeFiles/abseil-cpp-populate-complete.rule"
+		},
+		{
+			"file" : "/Users/arashdeep/StudioProjects/holtersync/macos/.tflite-build/build-x86_64/src/abseil-cpp-populate-stamp/abseil-cpp-populate-build.rule"
+		},
+		{
+			"file" : "/Users/arashdeep/StudioProjects/holtersync/macos/.tflite-build/build-x86_64/src/abseil-cpp-populate-stamp/abseil-cpp-populate-configure.rule"
+		},
+		{
+			"file" : "/Users/arashdeep/StudioProjects/holtersync/macos/.tflite-build/build-x86_64/src/abseil-cpp-populate-stamp/abseil-cpp-populate-download.rule"
+		},
+		{
+			"file" : "/Users/arashdeep/StudioProjects/holtersync/macos/.tflite-build/build-x86_64/src/abseil-cpp-populate-stamp/abseil-cpp-populate-install.rule"
+		},
+		{
+			"file" : "/Users/arashdeep/StudioProjects/holtersync/macos/.tflite-build/build-x86_64/src/abseil-cpp-populate-stamp/abseil-cpp-populate-mkdir.rule"
+		},
+		{
+			"file" : "/Users/arashdeep/StudioProjects/holtersync/macos/.tflite-build/build-x86_64/src/abseil-cpp-populate-stamp/abseil-cpp-populate-patch.rule"
+		},
+		{
+			"file" : "/Users/arashdeep/StudioProjects/holtersync/macos/.tflite-build/build-x86_64/src/abseil-cpp-populate-stamp/abseil-cpp-populate-test.rule"
+		},
+		{
+			"file" : "/Users/arashdeep/StudioProjects/holtersync/macos/.tflite-build/build-x86_64/src/abseil-cpp-populate-stamp/abseil-cpp-populate-update.rule"
+		}
+	],
+	"target" : 
+	{
+		"labels" : 
+		[
+			"abseil-cpp-populate"
+		],
+		"name" : "abseil-cpp-populate"
+	}
+}

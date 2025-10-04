@@ -1,0 +1,43 @@
+{
+	"sources" : 
+	[
+		{
+			"file" : "/Users/arashdeep/StudioProjects/holtersync/macos/.tflite-build/build-arm64/tensorflow-lite/CMakeFiles/flatbuffers-flatc"
+		},
+		{
+			"file" : "/Users/arashdeep/StudioProjects/holtersync/macos/.tflite-build/build-arm64/tensorflow-lite/CMakeFiles/flatbuffers-flatc.rule"
+		},
+		{
+			"file" : "/Users/arashdeep/StudioProjects/holtersync/macos/.tflite-build/build-arm64/tensorflow-lite/CMakeFiles/flatbuffers-flatc-complete.rule"
+		},
+		{
+			"file" : "/Users/arashdeep/StudioProjects/holtersync/macos/.tflite-build/build-arm64/flatbuffers-flatc/src/flatbuffers-flatc-stamp/flatbuffers-flatc-build.rule"
+		},
+		{
+			"file" : "/Users/arashdeep/StudioProjects/holtersync/macos/.tflite-build/build-arm64/flatbuffers-flatc/src/flatbuffers-flatc-stamp/flatbuffers-flatc-configure.rule"
+		},
+		{
+			"file" : "/Users/arashdeep/StudioProjects/holtersync/macos/.tflite-build/build-arm64/flatbuffers-flatc/src/flatbuffers-flatc-stamp/flatbuffers-flatc-download.rule"
+		},
+		{
+			"file" : "/Users/arashdeep/StudioProjects/holtersync/macos/.tflite-build/build-arm64/flatbuffers-flatc/src/flatbuffers-flatc-stamp/flatbuffers-flatc-install.rule"
+		},
+		{
+			"file" : "/Users/arashdeep/StudioProjects/holtersync/macos/.tflite-build/build-arm64/flatbuffers-flatc/src/flatbuffers-flatc-stamp/flatbuffers-flatc-mkdir.rule"
+		},
+		{
+			"file" : "/Users/arashdeep/StudioProjects/holtersync/macos/.tflite-build/build-arm64/flatbuffers-flatc/src/flatbuffers-flatc-stamp/flatbuffers-flatc-patch.rule"
+		},
+		{
+			"file" : "/Users/arashdeep/StudioProjects/holtersync/macos/.tflite-build/build-arm64/flatbuffers-flatc/src/flatbuffers-flatc-stamp/flatbuffers-flatc-update.rule"
+		}
+	],
+	"target" : 
+	{
+		"labels" : 
+		[
+			"flatbuffers-flatc"
+		],
+		"name" : "flatbuffers-flatc"
+	}
+}

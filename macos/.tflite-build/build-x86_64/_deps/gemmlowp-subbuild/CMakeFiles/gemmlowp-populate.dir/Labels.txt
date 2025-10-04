@@ -1,0 +1,14 @@
+# Target labels
+ gemmlowp-populate
+# Source files and their labels
+/Users/arashdeep/StudioProjects/holtersync/macos/.tflite-build/build-x86_64/_deps/gemmlowp-subbuild/CMakeFiles/gemmlowp-populate
+/Users/arashdeep/StudioProjects/holtersync/macos/.tflite-build/build-x86_64/_deps/gemmlowp-subbuild/CMakeFiles/gemmlowp-populate.rule
+/Users/arashdeep/StudioProjects/holtersync/macos/.tflite-build/build-x86_64/_deps/gemmlowp-subbuild/CMakeFiles/gemmlowp-populate-complete.rule
+/Users/arashdeep/StudioProjects/holtersync/macos/.tflite-build/build-x86_64/_deps/gemmlowp-subbuild/gemmlowp-populate-prefix/src/gemmlowp-populate-stamp/gemmlowp-populate-build.rule
+/Users/arashdeep/StudioProjects/holtersync/macos/.tflite-build/build-x86_64/_deps/gemmlowp-subbuild/gemmlowp-populate-prefix/src/gemmlowp-populate-stamp/gemmlowp-populate-configure.rule
+/Users/arashdeep/StudioProjects/holtersync/macos/.tflite-build/build-x86_64/_deps/gemmlowp-subbuild/gemmlowp-populate-prefix/src/gemmlowp-populate-stamp/gemmlowp-populate-download.rule
+/Users/arashdeep/StudioProjects/holtersync/macos/.tflite-build/build-x86_64/_deps/gemmlowp-subbuild/gemmlowp-populate-prefix/src/gemmlowp-populate-stamp/gemmlowp-populate-install.rule
+/Users/arashdeep/StudioProjects/holtersync/macos/.tflite-build/build-x86_64/_deps/gemmlowp-subbuild/gemmlowp-populate-prefix/src/gemmlowp-populate-stamp/gemmlowp-populate-mkdir.rule
+/Users/arashdeep/StudioProjects/holtersync/macos/.tflite-build/build-x86_64/_deps/gemmlowp-subbuild/gemmlowp-populate-prefix/src/gemmlowp-populate-stamp/gemmlowp-populate-patch.rule
+/Users/arashdeep/StudioProjects/holtersync/macos/.tflite-build/build-x86_64/_deps/gemmlowp-subbuild/gemmlowp-populate-prefix/src/gemmlowp-populate-stamp/gemmlowp-populate-test.rule
+/Users/arashdeep/StudioProjects/holtersync/macos/.tflite-build/build-x86_64/_deps/gemmlowp-subbuild/gemmlowp-populate-prefix/src/gemmlowp-populate-stamp/gemmlowp-populate-update.rule

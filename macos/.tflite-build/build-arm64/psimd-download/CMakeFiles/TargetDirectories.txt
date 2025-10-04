@@ -1,0 +1,3 @@
+/Users/arashdeep/StudioProjects/holtersync/macos/.tflite-build/build-arm64/psimd-download/CMakeFiles/psimd.dir
+/Users/arashdeep/StudioProjects/holtersync/macos/.tflite-build/build-arm64/psimd-download/CMakeFiles/edit_cache.dir
+/Users/arashdeep/StudioProjects/holtersync/macos/.tflite-build/build-arm64/psimd-download/CMakeFiles/rebuild_cache.dir

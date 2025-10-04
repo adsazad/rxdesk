@@ -1,0 +1,14 @@
+# Target labels
+ pthreadpool
+# Source files and their labels
+/Users/arashdeep/StudioProjects/holtersync/macos/.tflite-build/build-arm64/pthreadpool-download/CMakeFiles/pthreadpool
+/Users/arashdeep/StudioProjects/holtersync/macos/.tflite-build/build-arm64/pthreadpool-download/CMakeFiles/pthreadpool.rule
+/Users/arashdeep/StudioProjects/holtersync/macos/.tflite-build/build-arm64/pthreadpool-download/CMakeFiles/pthreadpool-complete.rule
+/Users/arashdeep/StudioProjects/holtersync/macos/.tflite-build/build-arm64/pthreadpool-download/pthreadpool-prefix/src/pthreadpool-stamp/pthreadpool-build.rule
+/Users/arashdeep/StudioProjects/holtersync/macos/.tflite-build/build-arm64/pthreadpool-download/pthreadpool-prefix/src/pthreadpool-stamp/pthreadpool-configure.rule
+/Users/arashdeep/StudioProjects/holtersync/macos/.tflite-build/build-arm64/pthreadpool-download/pthreadpool-prefix/src/pthreadpool-stamp/pthreadpool-download.rule
+/Users/arashdeep/StudioProjects/holtersync/macos/.tflite-build/build-arm64/pthreadpool-download/pthreadpool-prefix/src/pthreadpool-stamp/pthreadpool-install.rule
+/Users/arashdeep/StudioProjects/holtersync/macos/.tflite-build/build-arm64/pthreadpool-download/pthreadpool-prefix/src/pthreadpool-stamp/pthreadpool-mkdir.rule
+/Users/arashdeep/StudioProjects/holtersync/macos/.tflite-build/build-arm64/pthreadpool-download/pthreadpool-prefix/src/pthreadpool-stamp/pthreadpool-patch.rule
+/Users/arashdeep/StudioProjects/holtersync/macos/.tflite-build/build-arm64/pthreadpool-download/pthreadpool-prefix/src/pthreadpool-stamp/pthreadpool-test.rule
+/Users/arashdeep/StudioProjects/holtersync/macos/.tflite-build/build-arm64/pthreadpool-download/pthreadpool-prefix/src/pthreadpool-stamp/pthreadpool-update.rule

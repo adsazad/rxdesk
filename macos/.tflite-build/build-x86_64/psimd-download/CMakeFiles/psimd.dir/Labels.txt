@@ -1,0 +1,14 @@
+# Target labels
+ psimd
+# Source files and their labels
+/Users/arashdeep/StudioProjects/holtersync/macos/.tflite-build/build-x86_64/psimd-download/CMakeFiles/psimd
+/Users/arashdeep/StudioProjects/holtersync/macos/.tflite-build/build-x86_64/psimd-download/CMakeFiles/psimd.rule
+/Users/arashdeep/StudioProjects/holtersync/macos/.tflite-build/build-x86_64/psimd-download/CMakeFiles/psimd-complete.rule
+/Users/arashdeep/StudioProjects/holtersync/macos/.tflite-build/build-x86_64/psimd-download/psimd-prefix/src/psimd-stamp/psimd-build.rule
+/Users/arashdeep/StudioProjects/holtersync/macos/.tflite-build/build-x86_64/psimd-download/psimd-prefix/src/psimd-stamp/psimd-configure.rule
+/Users/arashdeep/StudioProjects/holtersync/macos/.tflite-build/build-x86_64/psimd-download/psimd-prefix/src/psimd-stamp/psimd-download.rule
+/Users/arashdeep/StudioProjects/holtersync/macos/.tflite-build/build-x86_64/psimd-download/psimd-prefix/src/psimd-stamp/psimd-install.rule
+/Users/arashdeep/StudioProjects/holtersync/macos/.tflite-build/build-x86_64/psimd-download/psimd-prefix/src/psimd-stamp/psimd-mkdir.rule
+/Users/arashdeep/StudioProjects/holtersync/macos/.tflite-build/build-x86_64/psimd-download/psimd-prefix/src/psimd-stamp/psimd-patch.rule
+/Users/arashdeep/StudioProjects/holtersync/macos/.tflite-build/build-x86_64/psimd-download/psimd-prefix/src/psimd-stamp/psimd-test.rule
+/Users/arashdeep/StudioProjects/holtersync/macos/.tflite-build/build-x86_64/psimd-download/psimd-prefix/src/psimd-stamp/psimd-update.rule

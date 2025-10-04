@@ -1,0 +1,11 @@
+# Hashes of file build rules.
+46611219cfbbb828c64d6bcae55661ab /Users/arashdeep/StudioProjects/holtersync/macos/.tflite-build/build-x86_64/src/xnnpack-populate-stamp/xnnpack-populate-build
+7379752f5a2681e863ebface6a6175db /Users/arashdeep/StudioProjects/holtersync/macos/.tflite-build/build-x86_64/src/xnnpack-populate-stamp/xnnpack-populate-configure
+a33a09b2f4832dae36178a63dde6643b /Users/arashdeep/StudioProjects/holtersync/macos/.tflite-build/build-x86_64/src/xnnpack-populate-stamp/xnnpack-populate-download
+c87ba84cc7d176291785731202b848d7 /Users/arashdeep/StudioProjects/holtersync/macos/.tflite-build/build-x86_64/src/xnnpack-populate-stamp/xnnpack-populate-install
+20b0c79550b87b8e56580a96a24db3d1 /Users/arashdeep/StudioProjects/holtersync/macos/.tflite-build/build-x86_64/src/xnnpack-populate-stamp/xnnpack-populate-mkdir
+75e4f0e938864ee8bca6714cd78a355a /Users/arashdeep/StudioProjects/holtersync/macos/.tflite-build/build-x86_64/src/xnnpack-populate-stamp/xnnpack-populate-patch
+c01c1cfbc9c6b79f7b3fd82c48174cf0 /Users/arashdeep/StudioProjects/holtersync/macos/.tflite-build/build-x86_64/src/xnnpack-populate-stamp/xnnpack-populate-test
+ea8ed9c5c2b03bbc07971dc7a6713f24 /Users/arashdeep/StudioProjects/holtersync/macos/.tflite-build/build-x86_64/src/xnnpack-populate-stamp/xnnpack-populate-update
+10faface2afb06cd1ca56b695318005f CMakeFiles/xnnpack-populate
+338559da399da9c0f9eb1ee01ce6a2a0 CMakeFiles/xnnpack-populate-complete

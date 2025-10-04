@@ -1,0 +1,46 @@
+{
+	"sources" : 
+	[
+		{
+			"file" : "/Users/arashdeep/StudioProjects/holtersync/macos/.tflite-build/build-x86_64/psimd-download/CMakeFiles/psimd"
+		},
+		{
+			"file" : "/Users/arashdeep/StudioProjects/holtersync/macos/.tflite-build/build-x86_64/psimd-download/CMakeFiles/psimd.rule"
+		},
+		{
+			"file" : "/Users/arashdeep/StudioProjects/holtersync/macos/.tflite-build/build-x86_64/psimd-download/CMakeFiles/psimd-complete.rule"
+		},
+		{
+			"file" : "/Users/arashdeep/StudioProjects/holtersync/macos/.tflite-build/build-x86_64/psimd-download/psimd-prefix/src/psimd-stamp/psimd-build.rule"
+		},
+		{
+			"file" : "/Users/arashdeep/StudioProjects/holtersync/macos/.tflite-build/build-x86_64/psimd-download/psimd-prefix/src/psimd-stamp/psimd-configure.rule"
+		},
+		{
+			"file" : "/Users/arashdeep/StudioProjects/holtersync/macos/.tflite-build/build-x86_64/psimd-download/psimd-prefix/src/psimd-stamp/psimd-download.rule"
+		},
+		{
+			"file" : "/Users/arashdeep/StudioProjects/holtersync/macos/.tflite-build/build-x86_64/psimd-download/psimd-prefix/src/psimd-stamp/psimd-install.rule"
+		},
+		{
+			"file" : "/Users/arashdeep/StudioProjects/holtersync/macos/.tflite-build/build-x86_64/psimd-download/psimd-prefix/src/psimd-stamp/psimd-mkdir.rule"
+		},
+		{
+			"file" : "/Users/arashdeep/StudioProjects/holtersync/macos/.tflite-build/build-x86_64/psimd-download/psimd-prefix/src/psimd-stamp/psimd-patch.rule"
+		},
+		{
+			"file" : "/Users/arashdeep/StudioProjects/holtersync/macos/.tflite-build/build-x86_64/psimd-download/psimd-prefix/src/psimd-stamp/psimd-test.rule"
+		},
+		{
+			"file" : "/Users/arashdeep/StudioProjects/holtersync/macos/.tflite-build/build-x86_64/psimd-download/psimd-prefix/src/psimd-stamp/psimd-update.rule"
+		}
+	],
+	"target" : 
+	{
+		"labels" : 
+		[
+			"psimd"
+		],
+		"name" : "psimd"
+	}
+}

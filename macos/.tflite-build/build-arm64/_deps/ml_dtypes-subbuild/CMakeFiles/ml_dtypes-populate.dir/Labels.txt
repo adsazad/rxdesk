@@ -1,0 +1,14 @@
+# Target labels
+ ml_dtypes-populate
+# Source files and their labels
+/Users/arashdeep/StudioProjects/holtersync/macos/.tflite-build/build-arm64/_deps/ml_dtypes-subbuild/CMakeFiles/ml_dtypes-populate
+/Users/arashdeep/StudioProjects/holtersync/macos/.tflite-build/build-arm64/_deps/ml_dtypes-subbuild/CMakeFiles/ml_dtypes-populate.rule
+/Users/arashdeep/StudioProjects/holtersync/macos/.tflite-build/build-arm64/_deps/ml_dtypes-subbuild/CMakeFiles/ml_dtypes-populate-complete.rule
+/Users/arashdeep/StudioProjects/holtersync/macos/.tflite-build/build-arm64/_deps/ml_dtypes-subbuild/ml_dtypes-populate-prefix/src/ml_dtypes-populate-stamp/ml_dtypes-populate-build.rule
+/Users/arashdeep/StudioProjects/holtersync/macos/.tflite-build/build-arm64/_deps/ml_dtypes-subbuild/ml_dtypes-populate-prefix/src/ml_dtypes-populate-stamp/ml_dtypes-populate-configure.rule
+/Users/arashdeep/StudioProjects/holtersync/macos/.tflite-build/build-arm64/_deps/ml_dtypes-subbuild/ml_dtypes-populate-prefix/src/ml_dtypes-populate-stamp/ml_dtypes-populate-download.rule
+/Users/arashdeep/StudioProjects/holtersync/macos/.tflite-build/build-arm64/_deps/ml_dtypes-subbuild/ml_dtypes-populate-prefix/src/ml_dtypes-populate-stamp/ml_dtypes-populate-install.rule
+/Users/arashdeep/StudioProjects/holtersync/macos/.tflite-build/build-arm64/_deps/ml_dtypes-subbuild/ml_dtypes-populate-prefix/src/ml_dtypes-populate-stamp/ml_dtypes-populate-mkdir.rule
+/Users/arashdeep/StudioProjects/holtersync/macos/.tflite-build/build-arm64/_deps/ml_dtypes-subbuild/ml_dtypes-populate-prefix/src/ml_dtypes-populate-stamp/ml_dtypes-populate-patch.rule
+/Users/arashdeep/StudioProjects/holtersync/macos/.tflite-build/build-arm64/_deps/ml_dtypes-subbuild/ml_dtypes-populate-prefix/src/ml_dtypes-populate-stamp/ml_dtypes-populate-test.rule
+/Users/arashdeep/StudioProjects/holtersync/macos/.tflite-build/build-arm64/_deps/ml_dtypes-subbuild/ml_dtypes-populate-prefix/src/ml_dtypes-populate-stamp/ml_dtypes-populate-update.rule
