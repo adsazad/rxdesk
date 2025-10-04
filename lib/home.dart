@@ -32,6 +32,7 @@ class Home extends StatefulWidget {
 
 class _HomeState extends State<Home> {
   final GlobalKey<MyBigGraphV2State> myBigGraphKey = GlobalKey();
+  final GlobalKey<MyBigGraphV2State> detailGraphKey = GlobalKey();
   final HolterReportGenerator _holter = HolterReportGenerator();
   TabController? _tabController;
 
@@ -45,6 +46,9 @@ class _HomeState extends State<Home> {
   int _totalSamples = 0;
   List<List<double>>?
   _lastRows; // cache of last rendered rows for quick refresh
+  // Detail graph state
+  int? _selectedRowIndex; // 0..rowsPerPage-1
+  List<double> _detailData = const [];
 
   int get _totalPages =>
       _totalSamples > 0
@@ -108,8 +112,8 @@ class _HomeState extends State<Home> {
       "name": "ECG",
       "boxValue": 4096 / 12,
       "unit": "mV",
-      "minDisplay": -(4096 / 12) * 3,
-      "maxDisplay": (4096 / 12) * 3,
+      "minDisplay": -(4096 / 12) * 1,
+      "maxDisplay": (4096 / 12) * 1,
       "scale": 3,
       "gain": 1.0,
       "filterConfig": {"filterOn": false, "lpf": 3, "hpf": 5, "notch": 1},
@@ -175,8 +179,8 @@ class _HomeState extends State<Home> {
                 "name": "ECG ${i + 1}",
                 "boxValue": 4096 / 12,
                 "unit": "mV",
-                "minDisplay": -(4096 / 12) * 3,
-                "maxDisplay": (4096 / 12) * 3,
+                "minDisplay": -(4096 / 12) * 1,
+                "maxDisplay": (4096 / 12) * 1,
                 "scale": 3,
                 "gain": 1.0,
                 "filterConfig": {
@@ -567,14 +571,19 @@ class _HomeState extends State<Home> {
   }
 
   Widget _buildViewerTab() {
-    return SingleChildScrollView(
-      child: Column(
-        children: [
-          const SizedBox(height: 3),
-          Row(
-            children: [
-              Expanded(
-                child: MyBigGraphV2(
+    // Layout: a single Row: [left: graphs column], [right: stats]
+    // Inside left, a Column with top (smaller) overview graph and bottom (bigger) detail graph.
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        // Left side: stacked graphs
+        Expanded(
+          child: Padding(
+            padding: const EdgeInsets.only(top: 4.0, left: 4.0, right: 4.0),
+            child: Column(
+              children: [
+                // Top overview graph (smaller)
+                MyBigGraphV2(
                   key: myBigGraphKey,
                   isImported: true,
                   onCycleComplete: () {},
@@ -602,111 +611,205 @@ class _HomeState extends State<Home> {
                   samplingRate: 300,
                   minY: -(4096 / 12) * 5,
                   maxY: (4096 / 12) * 25,
+                  chartHeight: 320, // slightly taller to fit labels
+                  showLeftConsole: false,
+                  onRowTap: (rowIdx) async {
+                    // Map row tap to the absolute sample range for that row on current page
+                    if (_totalSamples <= 0) return;
+                    final startSample = _currentPage * samplesPerPage;
+                    final rowStart = startSample + rowIdx * samplesPerRow;
+                    final rowLen =
+                        ((rowStart + samplesPerRow) <= _totalSamples)
+                            ? samplesPerRow
+                            : (_totalSamples - rowStart);
+                    if (rowLen <= 0) return;
+                    // Fetch from holter (already filtered in getEcgSamples)
+                    final data = await _holter.getEcgSamples(rowStart, rowLen);
+                    if (!mounted) return;
+                    setState(() {
+                      _selectedRowIndex = rowIdx;
+                      _detailData = data;
+                    });
+                    // Render in detail graph (single channel) after widget mounts
+                    WidgetsBinding.instance.addPostFrameCallback((_) {
+                      final rows = <List<double>>[data];
+                      detailGraphKey.currentState?.renderMultiRowPage(rows);
+                    });
+                  },
                 ),
-              ),
-              // Right-side panel with page/time, navigation, and stats
-              Container(
-                width: 200,
-                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.stretch,
-                  children: [
-                    Text(
-                      _totalPages > 0
-                          ? 'Page ${_currentPage + 1} / $_totalPages'
-                          : 'Page -- / --',
-                      textAlign: TextAlign.center,
-                      style: const TextStyle(
-                        fontSize: 16,
-                        fontWeight: FontWeight.w600,
-                      ),
-                    ),
-                    const SizedBox(height: 6),
-                    Text(
-                      _currentPageTimeRangeText,
-                      textAlign: TextAlign.center,
-                      style: const TextStyle(
-                        fontSize: 12,
-                        color: Colors.black87,
-                      ),
-                    ),
-                    const SizedBox(height: 12),
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                      children: [
-                        IconButton(
-                          tooltip: 'Previous Page',
-                          onPressed:
-                              (_currentPage > 0)
-                                  ? () async {
-                                    await _loadPage(_currentPage - 1);
-                                  }
-                                  : null,
-                          icon: const Icon(Icons.chevron_left),
+                const SizedBox(height: 8),
+                if (_detailData.isNotEmpty)
+                  Align(
+                    alignment: Alignment.centerLeft,
+                    child: Padding(
+                      padding: const EdgeInsets.only(bottom: 6.0, left: 2.0),
+                      child: Text(
+                        _selectedRowIndex != null
+                            ? 'Expanded view: Row ${_selectedRowIndex! + 1} (30s)'
+                            : 'Expanded view',
+                        style: const TextStyle(
+                          fontWeight: FontWeight.w600,
+                          fontSize: 13,
                         ),
-                        IconButton(
-                          tooltip: 'Next Page',
-                          onPressed:
-                              (_totalPages == 0 ||
-                                      _currentPage >= _totalPages - 1)
-                                  ? null
-                                  : () async {
-                                    await _loadPage(_currentPage + 1);
+                      ),
+                    ),
+                  ),
+                // Bottom detail graph (bigger) - visible when data loaded
+                Expanded(
+                  child: Container(
+                    alignment: Alignment.topLeft,
+                    child:
+                        _detailData.isNotEmpty
+                            ? MyBigGraphV2(
+                              key: detailGraphKey,
+                              isImported: true,
+                              onCycleComplete: () {},
+                              streamConfig: const [],
+                              onStreamResult: (_) {},
+                              plot: [
+                                {
+                                  "name": "ECG (detail)",
+                                  "boxValue": 4096 / 12,
+                                  "unit": "mV",
+                                  "minDisplay": -(4096 / 12) * 3,
+                                  "maxDisplay": (4096 / 12) * 3,
+                                  "scale": 3,
+                                  "gain": 1.0,
+                                  "filterConfig": {
+                                    "filterOn": false,
+                                    "lpf": 3,
+                                    "hpf": 5,
+                                    "notch": 1,
                                   },
-                          icon: const Icon(Icons.chevron_right),
-                        ),
-                      ],
-                    ),
-                    const SizedBox(height: 12),
-                    _statBox(
-                      'Avg BPM',
-                      (_holter.avrBpm > 0)
-                          ? _holter.avrBpm.toStringAsFixed(1)
-                          : '--',
-                    ),
-                    _statBox(
-                      'Min BPM',
-                      (_holter.minBpm > 0)
-                          ? _holter.minBpm.toStringAsFixed(1)
-                          : '--',
-                    ),
-                    _statBox(
-                      'Max BPM',
-                      (_holter.maxBpm > 0)
-                          ? _holter.maxBpm.toStringAsFixed(1)
-                          : '--',
-                    ),
-                    _statBox(
-                      'R-peaks',
-                      (_holter.allRrIndexes.isNotEmpty)
-                          ? _holter.allRrIndexes.length.toString()
-                          : '--',
-                    ),
-                    if (_holter.conditions != null &&
-                        _holter.conditions is List &&
-                        (_holter.conditions as List).isNotEmpty) ...[
-                      const SizedBox(height: 8),
-                      const Text(
-                        'Conditions',
-                        textAlign: TextAlign.center,
-                        style: TextStyle(fontWeight: FontWeight.w600),
-                      ),
-                      const SizedBox(height: 6),
-                      for (final cond in (_holter.conditions as List).take(3))
-                        _statBox(
-                          '${cond['name']}',
-                          (cond['index'] is List)
-                              ? (cond['index'] as List).length.toString()
-                              : '0',
-                        ),
-                    ],
-                  ],
+                                  "meter": {
+                                    "decimal": 1,
+                                    "unit": "mV",
+                                    "convert": null,
+                                  },
+                                },
+                              ],
+                              windowSize: samplesPerRow,
+                              verticalLineConfigs: [
+                                {
+                                  'seconds': 0.5,
+                                  'stroke': 0.5,
+                                  'color': Colors.blueAccent.withOpacity(0.2),
+                                },
+                                {
+                                  'seconds': 1.0,
+                                  'stroke': 0.8,
+                                  'color': Colors.redAccent.withOpacity(0.2),
+                                },
+                              ],
+                              horizontalInterval: 4096 / 12,
+                              verticalInterval: 8,
+                              samplingRate: 300,
+                              minY: -(4096 / 12) * 5,
+                              maxY: (4096 / 12) * 25,
+                              chartHeight: 520, // a bit larger for detail
+                            )
+                            : Center(
+                              child: Text(
+                                'Tap a row above to view details',
+                                style: TextStyle(color: Colors.grey[600]),
+                              ),
+                            ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+        // Right-side panel with page/time, navigation, and stats
+        Container(
+          width: 220,
+          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              Text(
+                _totalPages > 0
+                    ? 'Page ${_currentPage + 1} / $_totalPages'
+                    : 'Page -- / --',
+                textAlign: TextAlign.center,
+                style: const TextStyle(
+                  fontSize: 16,
+                  fontWeight: FontWeight.w600,
                 ),
               ),
+              const SizedBox(height: 6),
+              Text(
+                _currentPageTimeRangeText,
+                textAlign: TextAlign.center,
+                style: const TextStyle(fontSize: 12, color: Colors.black87),
+              ),
+              const SizedBox(height: 12),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                children: [
+                  IconButton(
+                    tooltip: 'Previous Page',
+                    onPressed:
+                        (_currentPage > 0)
+                            ? () async {
+                              await _loadPage(_currentPage - 1);
+                            }
+                            : null,
+                    icon: const Icon(Icons.chevron_left),
+                  ),
+                  IconButton(
+                    tooltip: 'Next Page',
+                    onPressed:
+                        (_totalPages == 0 || _currentPage >= _totalPages - 1)
+                            ? null
+                            : () async {
+                              await _loadPage(_currentPage + 1);
+                            },
+                    icon: const Icon(Icons.chevron_right),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 12),
+              _statBox(
+                'Avg BPM',
+                (_holter.avrBpm > 0) ? _holter.avrBpm.toStringAsFixed(1) : '--',
+              ),
+              _statBox(
+                'Min BPM',
+                (_holter.minBpm > 0) ? _holter.minBpm.toStringAsFixed(1) : '--',
+              ),
+              _statBox(
+                'Max BPM',
+                (_holter.maxBpm > 0) ? _holter.maxBpm.toStringAsFixed(1) : '--',
+              ),
+              _statBox(
+                'R-peaks',
+                (_holter.allRrIndexes.isNotEmpty)
+                    ? _holter.allRrIndexes.length.toString()
+                    : '--',
+              ),
+              if (_holter.conditions != null &&
+                  _holter.conditions is List &&
+                  (_holter.conditions as List).isNotEmpty) ...[
+                const SizedBox(height: 8),
+                const Text(
+                  'Conditions',
+                  textAlign: TextAlign.center,
+                  style: TextStyle(fontWeight: FontWeight.w600),
+                ),
+                const SizedBox(height: 6),
+                for (final cond in (_holter.conditions as List).take(3))
+                  _statBox(
+                    '${cond['name']}',
+                    (cond['index'] is List)
+                        ? (cond['index'] as List).length.toString()
+                        : '0',
+                  ),
+              ],
             ],
           ),
-        ],
-      ),
+        ),
+      ],
     );
   }
 
@@ -751,8 +854,8 @@ class _HomeState extends State<Home> {
               "boxValue": 4096 / 12,
               "unit": "mV",
               // "minDisplay": (-4096 / 12) * 1,
-              "minDisplay": -(4096 / 12) * 3,
-              "maxDisplay": (4096 / 12) * 3,
+              "minDisplay": -(4096 / 12) * 1,
+              "maxDisplay": (4096 / 12) * 1,
               "scale": 3,
               "gain": 1.0,
               "filterConfig": {

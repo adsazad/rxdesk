@@ -22,6 +22,12 @@ class MyBigGraphV2 extends StatefulWidget {
   final bool isImported;
   final ValueListenable<List<int>>?
   markerIndices; // NEW (global indices of peaks)
+  // NEW: callback when a user taps inside the chart to select a row (channel)
+  final void Function(int rowIndex)? onRowTap;
+  // NEW: allow parent to control chart height (fallback to previous default)
+  final double? chartHeight;
+  // NEW: allow hiding left console (channel controls)
+  final bool showLeftConsole;
 
   const MyBigGraphV2({
     super.key,
@@ -38,6 +44,9 @@ class MyBigGraphV2 extends StatefulWidget {
     this.onStreamResult,
     this.onCycleComplete,
     this.markerIndices, // NEW
+    this.onRowTap,
+    this.chartHeight,
+    this.showLeftConsole = true,
   });
 
   @override
@@ -783,7 +792,8 @@ class MyBigGraphV2State extends State<MyBigGraphV2> {
   }
 
   Widget _leftConsole() {
-    double totalHeight = (250 / 12) * 35;
+    // Keep left console height in sync with chart height to avoid overflow
+    double totalHeight = widget.chartHeight ?? ((250 / 12) * 35);
     double sectionHeight = totalHeight / widget.plot.length;
 
     return Container(
@@ -1251,7 +1261,7 @@ class MyBigGraphV2State extends State<MyBigGraphV2> {
     int gapLength = 25; // Number of points to hide ahead of current index
 
     return Container(
-      height: (250 / 12) * 35,
+      height: widget.chartHeight ?? ((250 / 12) * 35),
       child: LineChart(
         duration: const Duration(milliseconds: 0),
         // key: ValueKey(allPlotData[0].last.x), // ✅ forces rebuild
@@ -1459,7 +1469,7 @@ class MyBigGraphV2State extends State<MyBigGraphV2> {
   Widget build(BuildContext context) {
     return Row(
       children: [
-        _leftConsole(), // ✅ Left panel with controls (commented per request)
+        if (widget.showLeftConsole) _leftConsole(),
         Expanded(
           child: ValueListenableBuilder<List<List<FlSpot>>>(
             valueListenable: plotNotifier,
@@ -1474,9 +1484,25 @@ class MyBigGraphV2State extends State<MyBigGraphV2> {
                           : widget.windowSize.toDouble())
                       : widget.windowSize.toDouble() * 0.5;
 
-              return SizedBox(
-                width: calculatedWidth,
-                child: _chart(currentData),
+              // Detect taps to infer which row (channel) was tapped
+              final double chartHeight =
+                  widget.chartHeight ?? ((250 / 12) * 35);
+              return GestureDetector(
+                behavior: HitTestBehavior.opaque,
+                onTapDown: (details) {
+                  if (widget.onRowTap != null && widget.plot.isNotEmpty) {
+                    final dy = details.localPosition.dy;
+                    final rowHeight = chartHeight / widget.plot.length;
+                    int idx = (dy / rowHeight).floor();
+                    if (idx < 0) idx = 0;
+                    if (idx >= widget.plot.length) idx = widget.plot.length - 1;
+                    widget.onRowTap!(idx);
+                  }
+                },
+                child: SizedBox(
+                  width: calculatedWidth,
+                  child: _chart(currentData),
+                ),
               );
             },
           ),
