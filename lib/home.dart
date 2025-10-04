@@ -36,12 +36,18 @@ class _HomeState extends State<Home> {
   final HolterReportGenerator _holter = HolterReportGenerator();
   TabController? _tabController;
 
-  // Paging: 10 rows x 30 seconds each @ 300Hz = 90,000 samples per page
+  // Paging: 20 rows x 60 seconds each
   static const int rowsPerPage = 20;
   static const int secondsPerRow = 60;
-  static const int sr = 300;
-  static const int samplesPerRow = secondsPerRow * sr; // 9000
-  static const int samplesPerPage = rowsPerPage * samplesPerRow; // 90,000
+  static const int sr = 300; // base sampling rate for all calculations
+  // For top graph, we fetch downsampled 60Hz for 1-minute rows (3600 samples/row)
+  static const int displaySrTop = 60; // only for fetching for top overview
+  static const int samplesPerRow =
+      secondsPerRow * sr; // 18,000 per row at 300Hz
+  static const int samplesPerRowTop =
+      secondsPerRow * displaySrTop; // 3,600 at 60Hz
+  static const int samplesPerPage =
+      rowsPerPage * samplesPerRow; // page measured in base samples
   int _currentPage = 0;
   int _totalSamples = 0;
   List<List<double>>?
@@ -595,7 +601,8 @@ class _HomeState extends State<Home> {
                       plotConfig.length == 1
                           ? plotConfig
                           : plotConfig, // will be 10 rows after first page load
-                  windowSize: samplesPerRow, // 30 sec @ 300 Hz per row
+                  // Window size should match the number of points per row we render in the top chart (60Hz*60s)
+                  windowSize: samplesPerRowTop,
                   verticalLineConfigs: [
                     {
                       'seconds': 0.5,
@@ -626,7 +633,12 @@ class _HomeState extends State<Home> {
                             : (_totalSamples - rowStart);
                     if (rowLen <= 0) return;
                     // Fetch from holter (already filtered in getEcgSamples)
-                    final data = await _holter.getEcgSamples(rowStart, rowLen);
+                    // Fetch 60Hz decimated for the overview for speed
+                    final data = await _holter.getEcgSamples(
+                      rowStart,
+                      rowLen,
+                      targetSamplingRate: displaySrTop,
+                    );
                     if (!mounted) return;
                     setState(() {
                       _selectedRowIndex = rowIdx;
@@ -663,6 +675,7 @@ class _HomeState extends State<Home> {
                     child:
                         _detailData.isNotEmpty
                             ? MyBigGraphV2(
+                              showLeftConsole: false,
                               showXAxisLabels: false,
                               showYAxisLabels: false,
                               key: detailGraphKey,
@@ -692,6 +705,7 @@ class _HomeState extends State<Home> {
                                   },
                                 },
                               ],
+                              // Detail remains full resolution at 300Hz per row
                               windowSize: samplesPerRow,
                               verticalLineConfigs: [
                                 {
@@ -831,9 +845,12 @@ class _HomeState extends State<Home> {
         (startSample + samplesPerPage <= _totalSamples)
             ? samplesPerPage
             : (_totalSamples - startSample);
+    // Fetch full-resolution data for this page for detail graph usage when needed,
+    // but for the overview rendering we will also build a downsampled copy per row.
     final data = await _holter.getEcgSamples(startSample, length);
-    // Split into 10 rows of up to 9000 samples
+    // Split into rows at base rate for detail cache and a parallel 60Hz version for the top graph rendering
     List<List<double>> rows = [];
+    List<List<double>> rowsTop = [];
     for (int r = 0; r < rowsPerPage; r++) {
       final rs = r * samplesPerRow;
       final re =
@@ -842,8 +859,17 @@ class _HomeState extends State<Home> {
               : data.length;
       if (rs >= data.length) {
         rows.add(const <double>[]);
+        rowsTop.add(const <double>[]);
       } else {
-        rows.add(data.sublist(rs, re));
+        final baseRow = data.sublist(rs, re);
+        rows.add(baseRow);
+        // Build 60Hz row by simple stride picking. We rely on Holter for filtering/baseline.
+        final stride = sr ~/ displaySrTop; // 5 for 300->60
+        final reduced = <double>[];
+        for (int i = 0; i < baseRow.length; i += stride) {
+          reduced.add(baseRow[i]);
+        }
+        rowsTop.add(reduced);
       }
     }
 
@@ -877,8 +903,9 @@ class _HomeState extends State<Home> {
     }
 
     // Render page and update current page
-    _lastRows = rows;
-    myBigGraphKey.currentState?.renderMultiRowPage(rows);
+    _lastRows = rows; // keep full-res rows as cache for detail
+    // Render the overview using the 60Hz rows to reduce points
+    myBigGraphKey.currentState?.renderMultiRowPage(rowsTop);
     setState(() {
       _currentPage = pageIndex;
     });
