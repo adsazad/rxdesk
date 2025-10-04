@@ -810,7 +810,11 @@ class HolterReportGenerator {
   /// Supports both:
   /// - Raw Float64 streams (8 bytes per sample)
   /// - HolterSync .bin with JSON header + 5 Float64 channels per sample (40 bytes per sample)
-  Future<List<double>> getEcgSamples(int startSample, int lengthSamples) async {
+  Future<List<double>> getEcgSamples(
+    int startSample,
+    int lengthSamples, {
+    int? targetSamplingRate,
+  }) async {
     if (fileName == null || fileName!.isEmpty) {
       throw StateError('HolterReportGenerator not initialized with a file');
     }
@@ -870,8 +874,34 @@ class HolterReportGenerator {
       if (bytesPerSample == 8) {
         // Raw Float64 stream
         final floats = Float64List.view(readBytes.buffer, 0, safeLength);
-        // Apply filtering and baseline correction at base sampling rate
-        final filtered = filterData(floats.toList());
+        final raw = floats.toList();
+        // Decimation path for overview (top chart)
+        if (targetSamplingRate != null &&
+            targetSamplingRate > 0 &&
+            targetSamplingRate < sampleRate &&
+            sampleRate % targetSamplingRate == 0) {
+          final stride = sampleRate ~/ targetSamplingRate;
+          // Simple anti-aliasing: block-average over stride, then filter at target rate
+          final decimated = <double>[];
+          for (int i = 0; i < raw.length; i += stride) {
+            double acc = 0.0;
+            int end = (i + stride <= raw.length) ? (i + stride) : raw.length;
+            int cnt = end - i;
+            for (int j = i; j < end; j++) acc += raw[j];
+            decimated.add(acc / cnt);
+          }
+          final filtered60 = filterData(
+            decimated,
+            samplingRate: targetSamplingRate,
+          );
+          return _baselineCorrect(
+            filtered60,
+            samplingRate: targetSamplingRate,
+            windowSec: 0.6,
+          );
+        }
+        // Full-resolution path
+        final filtered = filterData(raw);
         return _baselineCorrect(
           filtered,
           samplingRate: sampleRate,
@@ -885,7 +915,29 @@ class HolterReportGenerator {
           final off = i * bytesPerSample;
           ecg[i] = bd.getFloat64(off + 0, Endian.little);
         }
-        // Apply filtering and baseline correction at base sampling rate
+        if (targetSamplingRate != null &&
+            targetSamplingRate > 0 &&
+            targetSamplingRate < sampleRate &&
+            sampleRate % targetSamplingRate == 0) {
+          final stride = sampleRate ~/ targetSamplingRate;
+          final decimated = <double>[];
+          for (int i = 0; i < ecg.length; i += stride) {
+            double acc = 0.0;
+            int end = (i + stride <= ecg.length) ? (i + stride) : ecg.length;
+            int cnt = end - i;
+            for (int j = i; j < end; j++) acc += ecg[j];
+            decimated.add(acc / cnt);
+          }
+          final filtered60 = filterData(
+            decimated,
+            samplingRate: targetSamplingRate,
+          );
+          return _baselineCorrect(
+            filtered60,
+            samplingRate: targetSamplingRate,
+            windowSec: 0.6,
+          );
+        }
         final filtered = filterData(ecg);
         return _baselineCorrect(
           filtered,

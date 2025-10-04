@@ -41,6 +41,8 @@ class _HomeState extends State<Home> {
   static const int secondsPerRow = 60;
   static const int sr = 300; // base sampling rate for all calculations
   static const int samplesPerRow = secondsPerRow * sr; // 18,000 per row
+  static const int displaySrTop = 60; // overview fetch rate
+  static const int samplesPerRowTop = secondsPerRow * displaySrTop; // 3,600
   static const int samplesPerPage =
       rowsPerPage * samplesPerRow; // page measured in base samples
   int _currentPage = 0;
@@ -596,8 +598,8 @@ class _HomeState extends State<Home> {
                       plotConfig.length == 1
                           ? plotConfig
                           : plotConfig, // will be 10 rows after first page load
-                  // Use full-resolution window (300Hz * 60s)
-                  windowSize: samplesPerRow,
+                  // Use 60Hz overview size for better readability
+                  windowSize: samplesPerRowTop,
                   verticalLineConfigs: [
                     // {
                     //   'seconds': 0.5,
@@ -627,7 +629,7 @@ class _HomeState extends State<Home> {
                             ? samplesPerRow
                             : (_totalSamples - rowStart);
                     if (rowLen <= 0) return;
-                    // Fetch from holter at full resolution (already filtered)
+                    // Fetch full-resolution (filtered + baseline-corrected) for detail view
                     final data = await _holter.getEcgSamples(rowStart, rowLen);
                     if (!mounted) return;
                     setState(() {
@@ -649,7 +651,7 @@ class _HomeState extends State<Home> {
                       padding: const EdgeInsets.only(bottom: 6.0, left: 2.0),
                       child: Text(
                         _selectedRowIndex != null
-                            ? 'Expanded view: Row ${_selectedRowIndex! + 1} (30s)'
+                            ? 'Expanded view: Row ${_selectedRowIndex! + 1} (60s)'
                             : 'Expanded view',
                         style: const TextStyle(
                           fontWeight: FontWeight.w600,
@@ -700,15 +702,25 @@ class _HomeState extends State<Home> {
                               enableHorizontalScroll: true,
                               pixelsPerSample: 0.5,
                               verticalLineConfigs: [
+                                // {
+                                //   'seconds': 0.05,
+                                //   'stroke': 0.5,
+                                //   'color': Colors.blueAccent,
+                                // },
+                                {
+                                  'seconds': 0.25,
+                                  'stroke': 0.5,
+                                  'color': Colors.blueAccent,
+                                },
                                 {
                                   'seconds': 0.5,
                                   'stroke': 0.5,
-                                  'color': Colors.blueAccent.withOpacity(0.2),
+                                  'color': Colors.blueAccent,
                                 },
                                 {
                                   'seconds': 1.0,
                                   'stroke': 0.8,
-                                  'color': Colors.redAccent.withOpacity(0.2),
+                                  'color': Colors.redAccent,
                                 },
                               ],
                               horizontalInterval: 4096 / 12,
@@ -837,9 +849,10 @@ class _HomeState extends State<Home> {
         (startSample + samplesPerPage <= _totalSamples)
             ? samplesPerPage
             : (_totalSamples - startSample);
-    // Fetch full-resolution data for this page
+    // Fetch full-resolution data for this page for detail
     final data = await _holter.getEcgSamples(startSample, length);
     List<List<double>> rows = [];
+    List<List<double>> rowsTop = [];
     for (int r = 0; r < rowsPerPage; r++) {
       final rs = r * samplesPerRow;
       final re =
@@ -848,8 +861,17 @@ class _HomeState extends State<Home> {
               : data.length;
       if (rs >= data.length) {
         rows.add(const <double>[]);
+        rowsTop.add(const <double>[]);
       } else {
-        rows.add(data.sublist(rs, re));
+        final baseRow = data.sublist(rs, re);
+        rows.add(baseRow);
+        // Build 60Hz row via stride pick just for rendering; values are already filtered per-page
+        final stride = sr ~/ displaySrTop; // 5
+        final reduced = <double>[];
+        for (int i = 0; i < baseRow.length; i += stride) {
+          reduced.add(baseRow[i]);
+        }
+        rowsTop.add(reduced);
       }
     }
 
@@ -883,8 +905,9 @@ class _HomeState extends State<Home> {
     }
 
     // Render page and update current page
-    _lastRows = rows;
-    myBigGraphKey.currentState?.renderMultiRowPage(rows);
+    _lastRows = rows; // keep full-res cached for detail
+    // Render overview using 60Hz rows
+    myBigGraphKey.currentState?.renderMultiRowPage(rowsTop);
     setState(() {
       _currentPage = pageIndex;
     });
