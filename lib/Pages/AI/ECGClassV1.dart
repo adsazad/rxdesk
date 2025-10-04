@@ -3,6 +3,31 @@ import 'dart:math';
 import 'package:holtersync/Services/StandardScaler.dart';
 import 'package:tflite_flutter/tflite_flutter.dart' as tfl;
 
+/// Configuration for the rule-based PVC detector
+class PVCDetectorConfig {
+  // QRS duration threshold to consider a beat "wide" (ms)
+  final double wideQrsMs;
+  // A beat is premature if preRR < prematureFactor * medianRR
+  final double prematureFactor;
+  // A compensatory pause is flagged if postRR > compPauseFactor * medianRR
+  final double compPauseFactor;
+  // Allowable relative error on (preRR + postRR) ≈ 2*medianRR
+  final double compSumSlack;
+  // Morphology correlation threshold vs running normal template
+  final double morphCorrThreshold;
+  // Samples per window around R (total), should match segmentSize
+  final int windowSamples;
+
+  const PVCDetectorConfig({
+    this.wideQrsMs = 120.0,
+    this.prematureFactor = 0.8,
+    this.compPauseFactor = 1.2,
+    this.compSumSlack = 0.15,
+    this.morphCorrThreshold = 0.85,
+    this.windowSamples = 200,
+  });
+}
+
 class ECGClassv1 {
   var aoiInterpreter;
 
@@ -38,6 +63,28 @@ class ECGClassv1 {
   late tfl.Interpreter interpreter;
   late StandardScaler scalerOne;
   late StandardScaler scalerTwo;
+
+  // Sampling rate (Hz) used by the rule-based features (QRS width, RR, etc.)
+  double fsHz = 250.0;
+  // Toggle rule-based PVC detection
+  bool enablePVCRuleDetector = false;
+  // If true, PVC beats detected by the rule engine will override AI PVC/non-PVC
+  bool overrideAIForPVC = true;
+  PVCDetectorConfig pvcConfig = const PVCDetectorConfig();
+
+  void setSampleRateHz(double fs) {
+    fsHz = fs;
+  }
+
+  void setPVCDetectionConfig({
+    bool? enable,
+    bool? overrideAI,
+    PVCDetectorConfig? config,
+  }) {
+    if (enable != null) enablePVCRuleDetector = enable;
+    if (overrideAI != null) overrideAIForPVC = overrideAI;
+    if (config != null) pvcConfig = config;
+  }
 
   // Factory constructor to handle async initialization
   ECGClassv1._();
@@ -229,6 +276,47 @@ class ECGClassv1 {
     print(areaOfInterests);
     // return areaOfInterests;
     List<dynamic> predictions = modelTwo(areaOfInterests);
+
+    // Rule-based PVC override logic
+    if (enablePVCRuleDetector) {
+      try {
+        final pvcEvents = detectPVCs(
+          data,
+          List<int>.from(rPeak as List),
+          fs: fsHz,
+          window: pvcConfig.windowSamples,
+        );
+        final pvcIdx = pvcEvents.map((e) => e['i'] as int).toSet();
+
+        // Build an index for quick lookup by beat index
+        final Map<int, int> predIdxByBeat = {};
+        for (int k = 0; k < predictions.length; k++) {
+          final bIdx = predictions[k]['index'];
+          if (bIdx is int) predIdxByBeat[bIdx] = k;
+        }
+
+        for (final i in pvcIdx) {
+          final k = predIdxByBeat[i];
+          if (k == null) continue;
+          // Override AI classification for PVC beats if configured
+          if (overrideAIForPVC) {
+            predictions[k]['classification'] = 'PVC';
+            // Boost confidence to reflect rule-based decision while preserving max
+            final oldConf =
+                (predictions[k]['confidence'] as num?)?.toDouble() ?? 0.0;
+            predictions[k]['confidence'] = max(0.95, oldConf);
+            predictions[k]['source'] = 'rule-pvc';
+            predictions[k]['pvcRule'] = true;
+          } else {
+            // Add a flag but keep AI decision
+            predictions[k]['pvcRule'] = true;
+          }
+        }
+      } catch (e) {
+        // Fail-safe: never break AI pipeline on rule engine issues
+        // print('PVC rule engine error: $e');
+      }
+    }
 
     return predictions;
   }
@@ -424,5 +512,198 @@ class ECGClassv1 {
     }
 
     return filteredPredictions;
+  }
+
+  /// Rule-based PVC detector (non-AI). Returns events with beat index and features.
+  /// Each event contains: { type: 'PVC', i: beatIndex, rSample, tSec, qrsMs, preRR, postRR, corr, ... }
+  List<Map<String, dynamic>> detectPVCs(
+    List<double> ecg,
+    List<int> rPeaks, {
+    required double fs,
+    int? window,
+  }) {
+    final events = <Map<String, dynamic>>[];
+    if (ecg.isEmpty || rPeaks.length < 3) return events;
+
+    final win = (window ?? pvcConfig.windowSamples);
+
+    // RR stats
+    final rr = <double>[];
+    for (int i = 1; i < rPeaks.length; i++) {
+      rr.add((rPeaks[i] - rPeaks[i - 1]) / fs);
+    }
+    final medianRR = _median(rr);
+    if (medianRR <= 0) return events;
+
+    // Morphology template window radius (±80 ms around R)
+    final tplRad = (0.08 * fs).round();
+    List<double>? normalTpl;
+    const double corrUpdateAlpha = 0.15;
+
+    for (int i = 1; i < rPeaks.length - 1; i++) {
+      final r = rPeaks[i];
+      final half = (win / 2).round();
+      final start = max(0, r - half);
+      final end = min(ecg.length, r + half);
+      final seg = ecg.sublist(start, end);
+      if (seg.length < 40) continue; // too short
+      final smooth = movingAverage(seg, windowSize: 5);
+      final rInSeg = r - start;
+
+      // QRS width (ms)
+      final qrsMs = _qrsWidthMs(smooth, rInSeg, fs);
+
+      // RR timing
+      final preRR = (rPeaks[i] - rPeaks[i - 1]) / fs;
+      final postRR = (rPeaks[i + 1] - rPeaks[i]) / fs;
+
+      // Morphology correlation vs running normal template
+      double corr = 1.0;
+      final cStart = max(0, rInSeg - tplRad);
+      final cEnd = min(smooth.length, rInSeg + tplRad);
+      if (cEnd > cStart) {
+        final cand = smooth.sublist(cStart, cEnd);
+        if (cand.length >= 16) {
+          if (normalTpl == null || normalTpl.length != cand.length) {
+            normalTpl = List<double>.from(cand);
+          } else {
+            corr = _normCorr(normalTpl, cand);
+          }
+        }
+      }
+
+      final isWide = qrsMs >= pvcConfig.wideQrsMs;
+      final isPremature = preRR < pvcConfig.prematureFactor * medianRR;
+      final hasCompPause =
+          ((preRR + postRR) - 2 * medianRR).abs() <
+              pvcConfig.compSumSlack * medianRR ||
+          postRR > pvcConfig.compPauseFactor * medianRR;
+      final morphAbnormal = corr < pvcConfig.morphCorrThreshold;
+
+      final isPVC =
+          (isWide && (isPremature || hasCompPause)) ||
+          (isPremature && morphAbnormal);
+
+      // Update normal template with likely normal narrow beats
+      if (!isPVC && qrsMs <= (pvcConfig.wideQrsMs - 10.0)) {
+        final nStart = max(0, rInSeg - tplRad);
+        final nEnd = min(smooth.length, rInSeg + tplRad);
+        if (nEnd > nStart) {
+          final cand = smooth.sublist(nStart, nEnd);
+          if (cand.length >= 16) {
+            if (normalTpl == null || normalTpl.length != cand.length) {
+              normalTpl = List<double>.from(cand);
+            } else {
+              for (int k = 0; k < normalTpl.length; k++) {
+                normalTpl[k] =
+                    (1 - corrUpdateAlpha) * normalTpl[k] +
+                    corrUpdateAlpha * cand[k];
+              }
+            }
+          }
+        }
+      }
+
+      if (isPVC) {
+        events.add({
+          'type': 'PVC',
+          'i': i,
+          'rSample': r,
+          'tSec': r / fs,
+          'qrsMs': qrsMs,
+          'preRR': preRR,
+          'postRR': postRR,
+          'corr': corr,
+          'isWide': isWide,
+          'isPremature': isPremature,
+          'hasCompPause': hasCompPause,
+          'morphAbnormal': morphAbnormal,
+        });
+      }
+    }
+
+    return events;
+  }
+
+  // Estimate QRS width using slope-threshold delineation around R.
+  double _qrsWidthMs(List<double> seg, int rIdx, double fs) {
+    if (seg.isEmpty) return 0.0;
+    final n = seg.length;
+    if (n < 3) return 0.0;
+    // First difference magnitude
+    final d = List<double>.filled(max(1, n - 1), 0.0);
+    for (int i = 0; i < d.length; i++) {
+      d[i] = (seg[i + 1] - seg[i]).abs();
+    }
+
+    final mad = _median(List<double>.from(d));
+    final thr = max(1e-6, 3.0 * mad); // robust slope threshold
+
+    // Search left
+    int left = rIdx.clamp(1, n - 2);
+    int run = 0;
+    const stable = 5;
+    for (int i = left - 1; i >= 1; i--) {
+      if (d[i] < thr) {
+        run++;
+        if (run >= stable) {
+          left = i;
+          break;
+        }
+      } else {
+        run = 0;
+      }
+    }
+
+    // Search right
+    int right = rIdx.clamp(1, n - 2);
+    run = 0;
+    for (int i = right; i < d.length - 1; i++) {
+      if (d[i] < thr) {
+        run++;
+        if (run >= stable) {
+          right = i;
+          break;
+        }
+      } else {
+        run = 0;
+      }
+    }
+
+    // Clamp width to reasonable bounds (60–200 ms)
+    final minW = (0.06 * fs).round();
+    final maxW = (0.20 * fs).round();
+    final widthSamples = (right - left).abs().clamp(minW, maxW);
+    return 1000.0 * widthSamples / fs;
+  }
+
+  double _median(List<double> a) {
+    if (a.isEmpty) return 0.0;
+    final b = List<double>.from(a)..sort();
+    final n = b.length;
+    return (n % 2 == 1) ? b[n ~/ 2] : 0.5 * (b[n ~/ 2 - 1] + b[n ~/ 2]);
+  }
+
+  // Normalized correlation (zero-mean, unit-norm)
+  double _normCorr(List<double> a, List<double> b) {
+    final n = min(a.length, b.length);
+    if (n == 0) return 0.0;
+    double meanA = 0, meanB = 0;
+    for (int i = 0; i < n; i++) {
+      meanA += a[i];
+      meanB += b[i];
+    }
+    meanA /= n;
+    meanB /= n;
+    double num = 0, denA = 0, denB = 0;
+    for (int i = 0; i < n; i++) {
+      final xa = a[i] - meanA;
+      final xb = b[i] - meanB;
+      num += xa * xb;
+      denA += xa * xa;
+      denB += xb * xb;
+    }
+    final den = sqrt(max(denA * denB, 1e-12));
+    return (num / den).clamp(-1.0, 1.0);
   }
 }

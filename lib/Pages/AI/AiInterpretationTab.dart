@@ -32,28 +32,28 @@ class _AiInterpretationTabState extends State<AiInterpretationTab> {
 
   Future<void> _init() async {
     // Load cached consolidated report and predictions if available
-    final prefs = await SharedPreferences.getInstance();
-    final cKey = 'aireport-c-$_guidKey';
-    final aKey = 'aireport-a-$_guidKey';
-    final c = prefs.getString(cKey);
-    final a = prefs.getString(aKey);
-    if (!mounted) return;
-    if (c != null && a != null) {
-      setState(() {
-        _consolidatedReport = c;
-        _preds = jsonDecode(a);
-      });
-      return;
-    }
-    // If nothing cached, try to show current holter conditions (if any)
-    if (widget.holter.conditions is List &&
-        (widget.holter.conditions as List).isNotEmpty) {
-      setState(() {
-        _preds = (widget.holter.conditions as List);
-        _consolidatedReport =
-            _preds.isEmpty ? 'Normal Sinus Rhythm' : 'Abnormal ECG';
-      });
-    }
+    // final prefs = await SharedPreferences.getInstance();
+    // final cKey = 'aireport-c-$_guidKey';
+    // final aKey = 'aireport-a-$_guidKey';
+    // final c = prefs.getString(cKey);
+    // final a = prefs.getString(aKey);
+    // if (!mounted) return;
+    // if (c != null && a != null) {
+    //   setState(() {
+    //     _consolidatedReport = c;
+    //     _preds = jsonDecode(a);
+    //   });
+    //   return;
+    // }
+    // // If nothing cached, try to show current holter conditions (if any)
+    // if (widget.holter.conditions is List &&
+    //     (widget.holter.conditions as List).isNotEmpty) {
+    //   setState(() {
+    //     _preds = (widget.holter.conditions as List);
+    //     _consolidatedReport =
+    //         _preds.isEmpty ? 'Normal Sinus Rhythm' : 'Abnormal ECG';
+    //   });
+    // }
   }
 
   Future<void> _runAiInterpretation() async {
