@@ -520,6 +520,42 @@ class HolterReportGenerator {
     return filteredData;
   }
 
+  /// Simple baseline correction using a centered moving-average detrend.
+  /// This estimates the slow baseline wander over a given window and subtracts
+  /// it from the signal. Keeps the length unchanged and is O(n).
+  List<double> _baselineCorrect(
+    List<double> data, {
+    int samplingRate = 300,
+    double windowSec = 0.6,
+  }) {
+    final n = data.length;
+    if (n == 0) return data;
+
+    int window = (windowSec * samplingRate).round();
+    if (window < 1) window = 1;
+    // Prefer an odd window for symmetric centering
+    if (window % 2 == 0) window += 1;
+    final half = window ~/ 2;
+
+    // Prefix sum for fast sliding mean
+    final prefix = List<double>.filled(n + 1, 0.0);
+    for (int i = 0; i < n; i++) {
+      prefix[i + 1] = prefix[i] + data[i];
+    }
+
+    final out = List<double>.filled(n, 0.0);
+    for (int i = 0; i < n; i++) {
+      int l = i - half;
+      if (l < 0) l = 0;
+      int r = i + half;
+      if (r >= n) r = n - 1;
+      final len = (r - l + 1);
+      final baseline = (prefix[r + 1] - prefix[l]) / len;
+      out[i] = data[i] - baseline;
+    }
+    return out;
+  }
+
   void updateChartData1(double val) {
     int tempPos = 0;
     //    dot moving code
@@ -834,8 +870,13 @@ class HolterReportGenerator {
       if (bytesPerSample == 8) {
         // Raw Float64 stream
         final floats = Float64List.view(readBytes.buffer, 0, safeLength);
-        // Apply same filtering used elsewhere in this class
-        return filterData(floats.toList());
+        // Apply filtering and baseline correction
+        final filtered = filterData(floats.toList());
+        return _baselineCorrect(
+          filtered,
+          samplingRate: sampleRate,
+          windowSec: 0.6,
+        );
       } else {
         // 5-channel; take ECG at channel offset 0
         final bd = ByteData.sublistView(readBytes);
@@ -844,8 +885,13 @@ class HolterReportGenerator {
           final off = i * bytesPerSample;
           ecg[i] = bd.getFloat64(off + 0, Endian.little);
         }
-        // Apply same filtering used elsewhere in this class
-        return filterData(ecg);
+        // Apply filtering and baseline correction
+        final filtered = filterData(ecg);
+        return _baselineCorrect(
+          filtered,
+          samplingRate: sampleRate,
+          windowSec: 0.6,
+        );
       }
     } finally {
       await raf.close();
