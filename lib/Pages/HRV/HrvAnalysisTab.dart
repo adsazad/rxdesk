@@ -1,8 +1,10 @@
 import 'dart:io';
+import 'dart:ui' show FontFeature;
 
 import 'package:fl_chart/fl_chart.dart';
 import 'package:flutter/material.dart';
 import 'package:holtersync/Services/EcgBPMCalculator.dart';
+import 'package:holtersync/Services/FFTProcessor.dart';
 import 'package:holtersync/Services/HolterReportGenerator.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:share_plus/share_plus.dart';
@@ -34,6 +36,12 @@ class _HrvAnalysisTabState extends State<HrvAnalysisTab> {
   double sd1 = 0;
   double sd2 = 0;
   double stressIndex = 0;
+
+  // Frequency-domain (FFT/PSD) state
+  bool _fftReady = false;
+  double vlfPower = 0, lfPower = 0, hfPower = 0;
+  double vlfPct = 0, lfPct = 0, hfPct = 0;
+  double lfHfRatio = 0, lfNu = 0, hfNu = 0;
 
   @override
   void initState() {
@@ -77,6 +85,36 @@ class _HrvAnalysisTabState extends State<HrvAnalysisTab> {
     sd1 = (sd["sd1"] as num).toDouble();
     sd2 = (sd["sd2"] as num).toDouble();
     stressIndex = _calc.calculateStressIndex(rr);
+
+    // Frequency domain: compute PSD + band powers
+    try {
+      if (rr.length < 8) {
+        // Not enough RR intervals for a meaningful PSD
+        _fftReady = false;
+      } else {
+        final fft = FFTProcessor();
+        // meanRR is in seconds; FFTProcessor expects RRMean in seconds (converts inside)
+        // init is async, returns a map of results
+        fft.init(rr, meanRR).then((res) {
+          if (res is Map) {
+            setState(() {
+              vlfPower = (res['vlfPower'] as num).toDouble();
+              lfPower = (res['lfPower'] as num).toDouble();
+              hfPower = (res['hfPower'] as num).toDouble();
+              vlfPct = (res['vlfPercentage'] as num).toDouble();
+              lfPct = (res['lfPercentage'] as num).toDouble();
+              hfPct = (res['hfPercentage'] as num).toDouble();
+              lfHfRatio = (res['lfHfRatio'] as num).toDouble();
+              lfNu = (res['lfNu'] as num).toDouble();
+              hfNu = (res['hfNu'] as num).toDouble();
+              _fftReady = true;
+            });
+          }
+        });
+      }
+    } catch (_) {
+      // Ignore FFT failures silently for now
+    }
     setState(() {});
   }
 
@@ -90,31 +128,7 @@ class _HrvAnalysisTabState extends State<HrvAnalysisTab> {
     await Share.shareXFiles([XFile(file.path)], text: 'RR intervals (ms)');
   }
 
-  Widget _statTile(String label, String value) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(8),
-        border: Border.all(color: Colors.black12),
-      ),
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        crossAxisAlignment: CrossAxisAlignment.center,
-        children: [
-          Text(
-            label,
-            style: const TextStyle(fontSize: 12, color: Colors.black54),
-          ),
-          const SizedBox(height: 4),
-          Text(
-            value,
-            style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
-          ),
-        ],
-      ),
-    );
-  }
+  // Removed _statTile: metrics are now shown in tables
 
   Widget _rrSeriesChart() {
     if (rr.isEmpty) return const SizedBox.shrink();
@@ -124,16 +138,27 @@ class _HrvAnalysisTabState extends State<HrvAnalysisTab> {
             .entries
             .map((e) => FlSpot(e.key.toDouble(), (e.value * 1000)))
             .toList();
-    final minY = (spots.map((e) => e.y).reduce((a, b) => a < b ? a : b));
-    final maxY = (spots.map((e) => e.y).reduce((a, b) => a > b ? a : b));
+    // Clamp Y-axis to "normal" HR range to avoid long pauses shrinking detail
+    // Normal HR range assumed 40–180 bpm => RR range ~1500ms to ~333ms
+    const double hrMin = 40.0; // bpm
+    const double hrMax = 180.0; // bpm
+    final double rrMsMin = 60000.0 / hrMax; // ~333ms
+    final double rrMsMax = 60000.0 / hrMin; // ~1500ms
+
     return SizedBox(
-      height: 180,
+      height: 240,
       child: LineChart(
         LineChartData(
           minX: 0,
           maxX: (spots.isNotEmpty) ? spots.length.toDouble() - 1 : 1,
-          minY: minY * 0.95,
-          maxY: maxY * 1.05,
+          minY: rrMsMin,
+          maxY: rrMsMax,
+          clipData: const FlClipData(
+            left: true,
+            top: true,
+            right: true,
+            bottom: true,
+          ),
           gridData: FlGridData(show: true),
           titlesData: FlTitlesData(
             leftTitles: AxisTitles(
@@ -187,19 +212,38 @@ class _HrvAnalysisTabState extends State<HrvAnalysisTab> {
     if (xs.isEmpty || ys.isEmpty) return const SizedBox.shrink();
     final spots = <ScatterSpot>[];
     for (int i = 0; i < xs.length; i++) {
-      spots.add(ScatterSpot(xs[i] * 1000, ys[i] * 1000));
+      spots.add(
+        ScatterSpot(
+          xs[i] * 1000,
+          ys[i] * 1000,
+          dotPainter: FlDotCirclePainter(
+            radius: 2,
+            color: Colors.red,
+            strokeColor: Colors.red,
+            strokeWidth: 0,
+          ),
+        ),
+      );
     }
-    final all = spots.map((e) => e.x).toList() + spots.map((e) => e.y).toList();
-    final minVal = all.reduce((a, b) => a < b ? a : b) * 0.95;
-    final maxVal = all.reduce((a, b) => a > b ? a : b) * 1.05;
+    // Clamp axes to normal HR-derived RR range (ms) like the tachogram
+    const double hrMin = 40.0; // bpm
+    const double hrMax = 180.0; // bpm
+    final double rrMsMin = 60000.0 / hrMax; // ~333ms
+    final double rrMsMax = 60000.0 / hrMin; // ~1500ms
     return SizedBox(
-      height: 220,
+      height: 240,
       child: ScatterChart(
         ScatterChartData(
-          minX: minVal,
-          maxX: maxVal,
-          minY: minVal,
-          maxY: maxVal,
+          minX: rrMsMin,
+          maxX: rrMsMax,
+          minY: rrMsMin,
+          maxY: rrMsMax,
+          clipData: const FlClipData(
+            left: true,
+            top: true,
+            right: true,
+            bottom: true,
+          ),
           gridData: FlGridData(show: true),
           titlesData: FlTitlesData(
             leftTitles: AxisTitles(
@@ -238,6 +282,163 @@ class _HrvAnalysisTabState extends State<HrvAnalysisTab> {
     );
   }
 
+  // PSD chart intentionally removed per request – metrics only
+  Widget _timeMetricsDataTable() {
+    final numericStyle = const TextStyle(
+      fontFeatures: [FontFeature.tabularFigures()],
+    );
+    return DataTable(
+      headingRowHeight: 36,
+      columns: const [
+        DataColumn(label: Text('Metric')),
+        DataColumn(label: Text('Value'), numeric: true),
+      ],
+      rows: [
+        DataRow(
+          cells: [
+            const DataCell(Text('Avg BPM')),
+            DataCell(Text(bpmAvg.toStringAsFixed(1), style: numericStyle)),
+          ],
+        ),
+        DataRow(
+          cells: [
+            const DataCell(Text('Min BPM')),
+            DataCell(Text(bpmMin.toStringAsFixed(0), style: numericStyle)),
+          ],
+        ),
+        DataRow(
+          cells: [
+            const DataCell(Text('Max BPM')),
+            DataCell(Text(bpmMax.toStringAsFixed(0), style: numericStyle)),
+          ],
+        ),
+        DataRow(
+          cells: [
+            const DataCell(Text('Mean RR (ms)')),
+            DataCell(
+              Text((meanRR * 1000).toStringAsFixed(0), style: numericStyle),
+            ),
+          ],
+        ),
+        DataRow(
+          cells: [
+            const DataCell(Text('SDNN (ms)')),
+            DataCell(
+              Text((stdRR * 1000).toStringAsFixed(0), style: numericStyle),
+            ),
+          ],
+        ),
+        DataRow(
+          cells: [
+            const DataCell(Text('RMSSD (ms)')),
+            DataCell(Text(rmssd.toStringAsFixed(1), style: numericStyle)),
+          ],
+        ),
+        DataRow(
+          cells: [
+            const DataCell(Text('pNN50 (%)')),
+            DataCell(
+              Text(nn50['pnn50']!.toStringAsFixed(1), style: numericStyle),
+            ),
+          ],
+        ),
+        DataRow(
+          cells: [
+            const DataCell(Text('RR Triangular Index')),
+            DataCell(Text(rrti.toStringAsFixed(2), style: numericStyle)),
+          ],
+        ),
+        DataRow(
+          cells: [
+            const DataCell(Text('SD1 (ms)')),
+            DataCell(Text(sd1.toStringAsFixed(1), style: numericStyle)),
+          ],
+        ),
+        DataRow(
+          cells: [
+            const DataCell(Text('SD2 (ms)')),
+            DataCell(Text(sd2.toStringAsFixed(1), style: numericStyle)),
+          ],
+        ),
+        DataRow(
+          cells: [
+            const DataCell(Text('Stress Index')),
+            DataCell(Text(stressIndex.toStringAsFixed(0), style: numericStyle)),
+          ],
+        ),
+      ],
+    );
+  }
+
+  Widget _freqMetricsDataTable() {
+    final numericStyle = const TextStyle(
+      fontFeatures: [FontFeature.tabularFigures()],
+    );
+    return DataTable(
+      headingRowHeight: 36,
+      columns: const [
+        DataColumn(label: Text('Metric')),
+        DataColumn(label: Text('Value'), numeric: true),
+      ],
+      rows: [
+        DataRow(
+          cells: [
+            const DataCell(Text('VLF power')),
+            DataCell(Text(vlfPower.toStringAsFixed(2), style: numericStyle)),
+          ],
+        ),
+        DataRow(
+          cells: [
+            const DataCell(Text('LF power')),
+            DataCell(Text(lfPower.toStringAsFixed(2), style: numericStyle)),
+          ],
+        ),
+        DataRow(
+          cells: [
+            const DataCell(Text('HF power')),
+            DataCell(Text(hfPower.toStringAsFixed(2), style: numericStyle)),
+          ],
+        ),
+        DataRow(
+          cells: [
+            const DataCell(Text('VLF %')),
+            DataCell(Text(vlfPct.toStringAsFixed(1), style: numericStyle)),
+          ],
+        ),
+        DataRow(
+          cells: [
+            const DataCell(Text('LF %')),
+            DataCell(Text(lfPct.toStringAsFixed(1), style: numericStyle)),
+          ],
+        ),
+        DataRow(
+          cells: [
+            const DataCell(Text('HF %')),
+            DataCell(Text(hfPct.toStringAsFixed(1), style: numericStyle)),
+          ],
+        ),
+        DataRow(
+          cells: [
+            const DataCell(Text('LF/HF')),
+            DataCell(Text(lfHfRatio.toStringAsFixed(2), style: numericStyle)),
+          ],
+        ),
+        DataRow(
+          cells: [
+            const DataCell(Text('LFnu')),
+            DataCell(Text(lfNu.toStringAsFixed(1), style: numericStyle)),
+          ],
+        ),
+        DataRow(
+          cells: [
+            const DataCell(Text('HFnu')),
+            DataCell(Text(hfNu.toStringAsFixed(1), style: numericStyle)),
+          ],
+        ),
+      ],
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final hasData = rr.isNotEmpty;
@@ -264,69 +465,110 @@ class _HrvAnalysisTabState extends State<HrvAnalysisTab> {
                       ],
                     ),
                     const SizedBox(height: 8),
-                    Wrap(
-                      spacing: 8,
-                      runSpacing: 8,
+                    const SizedBox(height: 12),
+                    Row(
+                      crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        _statTile('Avg BPM', bpmAvg.toStringAsFixed(1)),
-                        _statTile('Min BPM', bpmMin.toStringAsFixed(0)),
-                        _statTile('Max BPM', bpmMax.toStringAsFixed(0)),
-                        _statTile(
-                          'Mean RR (ms)',
-                          (meanRR * 1000).toStringAsFixed(0),
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: const [
+                              Text(
+                                'RR tachogram (ms)',
+                                style: TextStyle(fontWeight: FontWeight.w600),
+                              ),
+                            ],
+                          ),
                         ),
-                        _statTile(
-                          'SDNN (ms)',
-                          (stdRR * 1000).toStringAsFixed(0),
-                        ),
-                        _statTile('RMSSD', rmssd.toStringAsFixed(1)),
-                        _statTile(
-                          'pNN50 (%)',
-                          nn50['pnn50']!.toStringAsFixed(1),
-                        ),
-                        _statTile(
-                          'RR Triangular Index',
-                          rrti.toStringAsFixed(2),
-                        ),
-                        _statTile('SD1 (ms)', sd1.toStringAsFixed(1)),
-                        _statTile('SD2 (ms)', sd2.toStringAsFixed(1)),
-                        _statTile(
-                          "Stress Index",
-                          stressIndex.toStringAsFixed(0),
+                        SizedBox(width: 12),
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: const [
+                              Text(
+                                'Poincaré plot (ms vs ms)',
+                                style: TextStyle(fontWeight: FontWeight.w600),
+                              ),
+                            ],
+                          ),
                         ),
                       ],
                     ),
-                    const SizedBox(height: 12),
-                    const Text(
-                      'RR series (ms)',
-                      style: TextStyle(fontWeight: FontWeight.w600),
+                    const SizedBox(height: 6),
+                    Row(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Expanded(child: _rrSeriesChart()),
+                        const SizedBox(width: 12),
+                        Expanded(child: _poincareChart()),
+                      ],
                     ),
-                    _rrSeriesChart(),
-                    const SizedBox(height: 12),
-                    const Text(
-                      'Poincaré plot (ms vs ms)',
-                      style: TextStyle(fontWeight: FontWeight.w600),
-                    ),
-                    _poincareChart(),
                     const SizedBox(height: 24),
-                    // Optional frequency domain section can be wired if FFT utilities are added.
-                    Card(
-                      color: Colors.orange.shade50,
-                      child: Padding(
-                        padding: const EdgeInsets.all(12.0),
-                        child: Row(
-                          children: const [
-                            Icon(Icons.info_outline, size: 18),
-                            SizedBox(width: 8),
-                            Expanded(
-                              child: Text(
-                                'Frequency-domain (PSD, LF/HF) can be shown if you add your FFT utilities. See notes below.',
-                                style: TextStyle(fontSize: 12),
+                    Row(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Expanded(
+                          child: Card(
+                            elevation: 1,
+                            child: Padding(
+                              padding: const EdgeInsets.all(12.0),
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  const Text(
+                                    'Time-domain metrics',
+                                    style: TextStyle(
+                                      fontWeight: FontWeight.w600,
+                                    ),
+                                  ),
+                                  const SizedBox(height: 8),
+                                  SingleChildScrollView(
+                                    scrollDirection: Axis.horizontal,
+                                    child: _timeMetricsDataTable(),
+                                  ),
+                                ],
                               ),
                             ),
-                          ],
+                          ),
                         ),
-                      ),
+                        const SizedBox(width: 12),
+                        Expanded(
+                          child: Card(
+                            elevation: 1,
+                            child: Padding(
+                              padding: const EdgeInsets.all(12.0),
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  const Text(
+                                    'Frequency-domain metrics',
+                                    style: TextStyle(
+                                      fontWeight: FontWeight.w600,
+                                    ),
+                                  ),
+                                  const SizedBox(height: 8),
+                                  _fftReady
+                                      ? SingleChildScrollView(
+                                        scrollDirection: Axis.horizontal,
+                                        child: _freqMetricsDataTable(),
+                                      )
+                                      : const Padding(
+                                        padding: EdgeInsets.symmetric(
+                                          vertical: 8.0,
+                                        ),
+                                        child: Text(
+                                          'Not enough data for frequency analysis',
+                                          style: TextStyle(
+                                            color: Colors.black54,
+                                          ),
+                                        ),
+                                      ),
+                                ],
+                              ),
+                            ),
+                          ),
+                        ),
+                      ],
                     ),
                   ],
                 ),
