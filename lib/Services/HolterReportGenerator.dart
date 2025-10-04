@@ -834,7 +834,8 @@ class HolterReportGenerator {
       if (bytesPerSample == 8) {
         // Raw Float64 stream
         final floats = Float64List.view(readBytes.buffer, 0, safeLength);
-        return floats.toList();
+        // Apply same filtering used elsewhere in this class
+        return filterData(floats.toList());
       } else {
         // 5-channel; take ECG at channel offset 0
         final bd = ByteData.sublistView(readBytes);
@@ -843,7 +844,8 @@ class HolterReportGenerator {
           final off = i * bytesPerSample;
           ecg[i] = bd.getFloat64(off + 0, Endian.little);
         }
-        return ecg;
+        // Apply same filtering used elsewhere in this class
+        return filterData(ecg);
       }
     } finally {
       await raf.close();
