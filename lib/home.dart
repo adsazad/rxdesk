@@ -37,7 +37,7 @@ class _HomeState extends State<Home> {
   TabController? _tabController;
 
   // Paging: 20 rows x 60 seconds each
-  static const int rowsPerPage = 20;
+  static const int rowsPerPage = 30;
   static const int secondsPerRow = 60;
   static const int sr = 300; // base sampling rate for all calculations
   static const int samplesPerRow = secondsPerRow * sr; // 18,000 per row
@@ -587,6 +587,7 @@ class _HomeState extends State<Home> {
               children: [
                 // Top overview graph (smaller)
                 MyBigGraphV2(
+                  lineStrokeWidth: 0.5,
                   key: myBigGraphKey,
                   showXAxisLabels: false,
                   showYAxisLabels: false,

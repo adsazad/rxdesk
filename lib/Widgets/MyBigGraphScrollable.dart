@@ -36,6 +36,8 @@ class MyBigGraphV2 extends StatefulWidget {
   final bool enableHorizontalScroll;
   // Optional: pixels per sample when horizontally scrolling
   final double pixelsPerSample;
+  // NEW: configurable line stroke width for plotted lines (default preserves existing width)
+  final double lineStrokeWidth;
 
   const MyBigGraphV2({
     super.key,
@@ -59,6 +61,7 @@ class MyBigGraphV2 extends StatefulWidget {
     this.showYAxisLabels = true,
     this.enableHorizontalScroll = false,
     this.pixelsPerSample = 1.0,
+    this.lineStrokeWidth = 1.2,
   });
 
   @override
@@ -1414,7 +1417,10 @@ class MyBigGraphV2State extends State<MyBigGraphV2> {
                       spots: segment1,
                       isCurved: false,
                       color: Colors.black,
-                      barWidth: 1.2,
+                      barWidth:
+                          (widget.plot[i]["lineStrokeWidth"] ??
+                                  widget.lineStrokeWidth)
+                              .toDouble(),
                       dotData: FlDotData(show: false),
                     ),
                   );
@@ -1425,7 +1431,10 @@ class MyBigGraphV2State extends State<MyBigGraphV2> {
                       spots: segment2,
                       isCurved: false,
                       color: Colors.black,
-                      barWidth: 1.2,
+                      barWidth:
+                          (widget.plot[i]["lineStrokeWidth"] ??
+                                  widget.lineStrokeWidth)
+                              .toDouble(),
                       dotData: FlDotData(show: false),
                     ),
                   );
