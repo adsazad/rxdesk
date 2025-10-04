@@ -37,8 +37,8 @@ class _HomeState extends State<Home> {
   TabController? _tabController;
 
   // Paging: 10 rows x 30 seconds each @ 300Hz = 90,000 samples per page
-  static const int rowsPerPage = 10;
-  static const int secondsPerRow = 30;
+  static const int rowsPerPage = 20;
+  static const int secondsPerRow = 60;
   static const int sr = 300;
   static const int samplesPerRow = secondsPerRow * sr; // 9000
   static const int samplesPerPage = rowsPerPage * samplesPerRow; // 90,000
@@ -112,8 +112,8 @@ class _HomeState extends State<Home> {
       "name": "ECG",
       "boxValue": 4096 / 12,
       "unit": "mV",
-      "minDisplay": -(4096 / 12) * 1,
-      "maxDisplay": (4096 / 12) * 1,
+      "minDisplay": -(4096 / 12) * 0.5,
+      "maxDisplay": (4096 / 12) * 0.5,
       "scale": 3,
       "gain": 1.0,
       "filterConfig": {"filterOn": false, "lpf": 3, "hpf": 5, "notch": 1},
@@ -179,8 +179,8 @@ class _HomeState extends State<Home> {
                 "name": "ECG ${i + 1}",
                 "boxValue": 4096 / 12,
                 "unit": "mV",
-                "minDisplay": -(4096 / 12) * 1,
-                "maxDisplay": (4096 / 12) * 1,
+                "minDisplay": -(4096 / 12) * 0.5,
+                "maxDisplay": (4096 / 12) * 0.5,
                 "scale": 3,
                 "gain": 1.0,
                 "filterConfig": {
@@ -585,6 +585,8 @@ class _HomeState extends State<Home> {
                 // Top overview graph (smaller)
                 MyBigGraphV2(
                   key: myBigGraphKey,
+                  showXAxisLabels: false,
+                  showYAxisLabels: false,
                   isImported: true,
                   onCycleComplete: () {},
                   streamConfig: const [],
@@ -611,7 +613,7 @@ class _HomeState extends State<Home> {
                   samplingRate: 300,
                   minY: -(4096 / 12) * 5,
                   maxY: (4096 / 12) * 25,
-                  chartHeight: 320, // slightly taller to fit labels
+                  chartHeight: 480, // further increased height for overview
                   showLeftConsole: false,
                   onRowTap: (rowIdx) async {
                     // Map row tap to the absolute sample range for that row on current page
@@ -661,6 +663,8 @@ class _HomeState extends State<Home> {
                     child:
                         _detailData.isNotEmpty
                             ? MyBigGraphV2(
+                              showXAxisLabels: false,
+                              showYAxisLabels: false,
                               key: detailGraphKey,
                               isImported: true,
                               onCycleComplete: () {},
@@ -706,7 +710,8 @@ class _HomeState extends State<Home> {
                               samplingRate: 300,
                               minY: -(4096 / 12) * 5,
                               maxY: (4096 / 12) * 25,
-                              chartHeight: 520, // a bit larger for detail
+                              chartHeight:
+                                  300, // further decreased height for detail
                             )
                             : Center(
                               child: Text(
@@ -854,8 +859,8 @@ class _HomeState extends State<Home> {
               "boxValue": 4096 / 12,
               "unit": "mV",
               // "minDisplay": (-4096 / 12) * 1,
-              "minDisplay": -(4096 / 12) * 1,
-              "maxDisplay": (4096 / 12) * 1,
+              "minDisplay": -(4096 / 12) * 0.5,
+              "maxDisplay": (4096 / 12) * 0.5,
               "scale": 3,
               "gain": 1.0,
               "filterConfig": {

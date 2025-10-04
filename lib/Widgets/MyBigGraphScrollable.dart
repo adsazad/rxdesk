@@ -28,6 +28,9 @@ class MyBigGraphV2 extends StatefulWidget {
   final double? chartHeight;
   // NEW: allow hiding left console (channel controls)
   final bool showLeftConsole;
+  // NEW: axis label visibility controls
+  final bool showXAxisLabels;
+  final bool showYAxisLabels;
 
   const MyBigGraphV2({
     super.key,
@@ -47,6 +50,8 @@ class MyBigGraphV2 extends StatefulWidget {
     this.onRowTap,
     this.chartHeight,
     this.showLeftConsole = true,
+    this.showXAxisLabels = true,
+    this.showYAxisLabels = true,
   });
 
   @override
@@ -1277,9 +1282,13 @@ class MyBigGraphV2State extends State<MyBigGraphV2> {
           titlesData: FlTitlesData(
             leftTitles: AxisTitles(
               sideTitles: SideTitles(
-                showTitles: true,
-                reservedSize: 40,
-                getTitlesWidget: (value, meta) => _buildYAxisLabelSynced(value),
+                showTitles: widget.showYAxisLabels,
+                reservedSize: widget.showYAxisLabels ? 40 : 0,
+                getTitlesWidget:
+                    (value, meta) =>
+                        widget.showYAxisLabels
+                            ? _buildYAxisLabelSynced(value)
+                            : const SizedBox.shrink(),
                 interval: 1,
               ),
             ),
@@ -1287,11 +1296,13 @@ class MyBigGraphV2State extends State<MyBigGraphV2> {
             topTitles: AxisTitles(sideTitles: SideTitles(showTitles: false)),
             bottomTitles: AxisTitles(
               sideTitles: SideTitles(
-                showTitles: true,
-                reservedSize: 40,
+                showTitles: widget.showXAxisLabels,
+                reservedSize: widget.showXAxisLabels ? 40 : 0,
                 interval: widget.samplingRate * 1,
                 getTitlesWidget: (value, meta) {
-                  return _buildTimeLabel(value);
+                  return widget.showXAxisLabels
+                      ? _buildTimeLabel(value)
+                      : const SizedBox.shrink();
                 },
               ),
             ),
