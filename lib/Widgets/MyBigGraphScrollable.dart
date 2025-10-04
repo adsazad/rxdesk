@@ -1,3 +1,4 @@
+import 'dart:math' as math;
 import 'package:auto_size_text/auto_size_text.dart';
 import 'package:fl_chart/fl_chart.dart';
 import 'package:flutter/cupertino.dart';
@@ -31,6 +32,10 @@ class MyBigGraphV2 extends StatefulWidget {
   // NEW: axis label visibility controls
   final bool showXAxisLabels;
   final bool showYAxisLabels;
+  // NEW: enable horizontal scrolling to avoid compressed plots
+  final bool enableHorizontalScroll;
+  // Optional: pixels per sample when horizontally scrolling
+  final double pixelsPerSample;
 
   const MyBigGraphV2({
     super.key,
@@ -52,6 +57,8 @@ class MyBigGraphV2 extends StatefulWidget {
     this.showLeftConsole = true,
     this.showXAxisLabels = true,
     this.showYAxisLabels = true,
+    this.enableHorizontalScroll = false,
+    this.pixelsPerSample = 1.0,
   });
 
   @override
@@ -1488,12 +1495,15 @@ class MyBigGraphV2State extends State<MyBigGraphV2> {
               final bool hasData =
                   currentData.isNotEmpty && currentData[0].isNotEmpty;
 
-              final double calculatedWidth =
+              // Compute content width in samples and scale to pixels
+              double samplesWidth =
                   widget.isImported
                       ? (hasData
-                          ? currentData[0].last.x * 0.4
+                          ? (currentData[0].last.x + 1)
                           : widget.windowSize.toDouble())
-                      : widget.windowSize.toDouble() * 0.5;
+                      : widget.windowSize.toDouble();
+              final double calculatedWidth =
+                  samplesWidth * widget.pixelsPerSample;
 
               // Detect taps to infer which row (channel) was tapped
               final double chartHeight =
@@ -1510,9 +1520,32 @@ class MyBigGraphV2State extends State<MyBigGraphV2> {
                     widget.onRowTap!(idx);
                   }
                 },
-                child: SizedBox(
-                  width: calculatedWidth,
-                  child: _chart(currentData),
+                child: LayoutBuilder(
+                  builder: (context, constraints) {
+                    final viewportWidth = constraints.maxWidth;
+                    if (widget.enableHorizontalScroll) {
+                      final contentWidth = math.max(
+                        calculatedWidth,
+                        viewportWidth,
+                      );
+                      return Scrollbar(
+                        thumbVisibility: true,
+                        child: SingleChildScrollView(
+                          scrollDirection: Axis.horizontal,
+                          child: SizedBox(
+                            width: contentWidth,
+                            child: _chart(currentData),
+                          ),
+                        ),
+                      );
+                    } else {
+                      // Fit to viewport
+                      return SizedBox(
+                        width: viewportWidth,
+                        child: _chart(currentData),
+                      );
+                    }
+                  },
                 ),
               );
             },

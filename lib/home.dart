@@ -40,12 +40,7 @@ class _HomeState extends State<Home> {
   static const int rowsPerPage = 20;
   static const int secondsPerRow = 60;
   static const int sr = 300; // base sampling rate for all calculations
-  // For top graph, we fetch downsampled 60Hz for 1-minute rows (3600 samples/row)
-  static const int displaySrTop = 60; // only for fetching for top overview
-  static const int samplesPerRow =
-      secondsPerRow * sr; // 18,000 per row at 300Hz
-  static const int samplesPerRowTop =
-      secondsPerRow * displaySrTop; // 3,600 at 60Hz
+  static const int samplesPerRow = secondsPerRow * sr; // 18,000 per row
   static const int samplesPerPage =
       rowsPerPage * samplesPerRow; // page measured in base samples
   int _currentPage = 0;
@@ -601,19 +596,19 @@ class _HomeState extends State<Home> {
                       plotConfig.length == 1
                           ? plotConfig
                           : plotConfig, // will be 10 rows after first page load
-                  // Window size should match the number of points per row we render in the top chart (60Hz*60s)
-                  windowSize: samplesPerRowTop,
+                  // Use full-resolution window (300Hz * 60s)
+                  windowSize: samplesPerRow,
                   verticalLineConfigs: [
-                    {
-                      'seconds': 0.5,
-                      'stroke': 0.5,
-                      'color': Colors.blueAccent.withOpacity(0.2),
-                    },
-                    {
-                      'seconds': 1.0,
-                      'stroke': 0.8,
-                      'color': Colors.redAccent.withOpacity(0.2),
-                    },
+                    // {
+                    //   'seconds': 0.5,
+                    //   'stroke': 0.5,
+                    //   'color': Colors.blueAccent.withOpacity(0.2),
+                    // },
+                    // {
+                    //   'seconds': 1.0,
+                    //   'stroke': 0.8,
+                    //   'color': Colors.redAccent.withOpacity(0.2),
+                    // },
                   ],
                   horizontalInterval: 4096 / 12,
                   verticalInterval: 8,
@@ -632,13 +627,8 @@ class _HomeState extends State<Home> {
                             ? samplesPerRow
                             : (_totalSamples - rowStart);
                     if (rowLen <= 0) return;
-                    // Fetch from holter (already filtered in getEcgSamples)
-                    // Fetch 60Hz decimated for the overview for speed
-                    final data = await _holter.getEcgSamples(
-                      rowStart,
-                      rowLen,
-                      targetSamplingRate: displaySrTop,
-                    );
+                    // Fetch from holter at full resolution (already filtered)
+                    final data = await _holter.getEcgSamples(rowStart, rowLen);
                     if (!mounted) return;
                     setState(() {
                       _selectedRowIndex = rowIdx;
@@ -707,6 +697,8 @@ class _HomeState extends State<Home> {
                               ],
                               // Detail remains full resolution at 300Hz per row
                               windowSize: samplesPerRow,
+                              enableHorizontalScroll: true,
+                              pixelsPerSample: 0.5,
                               verticalLineConfigs: [
                                 {
                                   'seconds': 0.5,
@@ -845,12 +837,9 @@ class _HomeState extends State<Home> {
         (startSample + samplesPerPage <= _totalSamples)
             ? samplesPerPage
             : (_totalSamples - startSample);
-    // Fetch full-resolution data for this page for detail graph usage when needed,
-    // but for the overview rendering we will also build a downsampled copy per row.
+    // Fetch full-resolution data for this page
     final data = await _holter.getEcgSamples(startSample, length);
-    // Split into rows at base rate for detail cache and a parallel 60Hz version for the top graph rendering
     List<List<double>> rows = [];
-    List<List<double>> rowsTop = [];
     for (int r = 0; r < rowsPerPage; r++) {
       final rs = r * samplesPerRow;
       final re =
@@ -859,17 +848,8 @@ class _HomeState extends State<Home> {
               : data.length;
       if (rs >= data.length) {
         rows.add(const <double>[]);
-        rowsTop.add(const <double>[]);
       } else {
-        final baseRow = data.sublist(rs, re);
-        rows.add(baseRow);
-        // Build 60Hz row by simple stride picking. We rely on Holter for filtering/baseline.
-        final stride = sr ~/ displaySrTop; // 5 for 300->60
-        final reduced = <double>[];
-        for (int i = 0; i < baseRow.length; i += stride) {
-          reduced.add(baseRow[i]);
-        }
-        rowsTop.add(reduced);
+        rows.add(data.sublist(rs, re));
       }
     }
 
@@ -903,9 +883,8 @@ class _HomeState extends State<Home> {
     }
 
     // Render page and update current page
-    _lastRows = rows; // keep full-res rows as cache for detail
-    // Render the overview using the 60Hz rows to reduce points
-    myBigGraphKey.currentState?.renderMultiRowPage(rowsTop);
+    _lastRows = rows;
+    myBigGraphKey.currentState?.renderMultiRowPage(rows);
     setState(() {
       _currentPage = pageIndex;
     });
