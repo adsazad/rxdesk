@@ -1,4 +1,5 @@
 import 'dart:io';
+import 'dart:isolate';
 import 'dart:typed_data';
 
 import 'package:flutter/foundation.dart';
@@ -748,6 +749,71 @@ class HolterReportGenerator {
     await _runHolterOnFile(fileName!);
   }
 
+  /// Run initialization and analysis on a background isolate to avoid blocking the UI thread.
+  /// Emits coarse progress updates via [onProgress] where p is 0..1 and stage is a short label.
+  Future<void> initWithRecordingIdOnBackground(
+    AppDatabase db,
+    int recordingId, {
+    void Function(double p, String stage)? onProgress,
+  }) async {
+    // Resolve file path on main isolate (DB is not sendable to isolates)
+    final recording =
+        await (db.select(db.recordings)
+          ..where((tbl) => tbl.id.equals(recordingId))).getSingleOrNull();
+    if (recording == null) {
+      throw Exception('Recording not found for id: $recordingId');
+    }
+    final String filePath = recording.filePath;
+    if (filePath.isEmpty) {
+      throw Exception('Recording file path is empty for id: $recordingId');
+    }
+
+    final receivePort = ReceivePort();
+    await Isolate.spawn<_HolterIsolateParams>(
+      _holterAnalyzeEntry,
+      _HolterIsolateParams(
+        sendPort: receivePort.sendPort,
+        filePath: filePath,
+        sampleRate: sampleRate,
+      ),
+      errorsAreFatal: true,
+    );
+
+    await for (final msg in receivePort) {
+      if (msg is Map && msg['type'] == 'progress') {
+        final p = (msg['p'] as num?)?.toDouble() ?? 0.0;
+        final stage = (msg['stage'] as String?) ?? '';
+        onProgress?.call(p, stage);
+      } else if (msg is Map && msg['type'] == 'done') {
+        // Apply analysis results to this instance on main isolate
+        final result = msg['result'] as Map;
+        fileName = filePath;
+        allRrIndexes = (result['rr'] as List).cast<int>();
+        allRrIntervals =
+            (result['rrIntervals'] as List)
+                .map((e) => (e as num).toDouble())
+                .toList();
+        avrBpm = (result['avrBpm'] as num?)?.toDouble() ?? 0.0;
+        minBpm = (result['minBpm'] as num?)?.toDouble() ?? 0.0;
+        maxBpm = (result['maxBpm'] as num?)?.toDouble() ?? 0.0;
+        conditions = result['conditions'];
+        rawDataFullLength = (result['rawLen'] as num?)?.toInt() ?? 0;
+        // Prepare filters for later getEcgSamples() calls on UI isolate
+        filterBuff = List<double>.filled(FILT_BUF_SIZE, 0.0);
+        baselineFilterBuff = List<double>.filled(FILT_BUF_SIZE, 0.0);
+        filterClass = FilterClass();
+        baselineFilterClass = FilterClass();
+        filterClass!.init(sampleRate, 3, 5, 1, 2, 0, 0.65, 5, 2, 6);
+        baselineFilterClass!.init(sampleRate, 12, 7, 1, 2, 0, 0.65, 5, 2, 6);
+        receivePort.close();
+        break;
+      } else if (msg is Map && msg['type'] == 'error') {
+        receivePort.close();
+        throw Exception(msg['message'] as String? ?? 'Unknown analysis error');
+      }
+    }
+  }
+
   /// Initialize directly with a file path (bypasses prefs/guid and DB).
   Future<void> initWithFile(String filePath) async {
     fileName = filePath;
@@ -980,5 +1046,94 @@ class HolterReportGenerator {
     } finally {
       await raf.close();
     }
+  }
+}
+
+class _HolterIsolateParams {
+  final SendPort sendPort;
+  final String filePath;
+  final int sampleRate;
+  _HolterIsolateParams({
+    required this.sendPort,
+    required this.filePath,
+    required this.sampleRate,
+  });
+}
+
+void _holterAnalyzeEntry(_HolterIsolateParams params) async {
+  final send = params.sendPort;
+  try {
+    send.send({'type': 'progress', 'p': 0.02, 'stage': 'Opening file'});
+    final file = File(params.filePath);
+    final fileLength = await file.length();
+    if (fileLength == 0) {
+      throw Exception('Recording file is empty');
+    }
+
+    final worker = HolterReportGenerator();
+    worker.sampleRate = params.sampleRate;
+    worker.filterBuff = List<double>.filled(worker.FILT_BUF_SIZE, 0.0);
+    worker.baselineFilterBuff = List<double>.filled(worker.FILT_BUF_SIZE, 0.0);
+    worker.filterClass = FilterClass();
+    worker.baselineFilterClass = FilterClass();
+    worker.filterClass!.init(worker.sampleRate, 3, 5, 1, 2, 0, 0.65, 5, 2, 6);
+    worker.baselineFilterClass!.init(
+      worker.sampleRate,
+      12,
+      7,
+      1,
+      2,
+      0,
+      0.65,
+      5,
+      2,
+      6,
+    );
+
+    // Process in 3 parts sequentially to emit progress
+    final partSize = (fileLength / 3).ceil();
+
+    send.send({'type': 'progress', 'p': 0.10, 'stage': 'Reading 1/3'});
+    final p1 = await worker.readFileInChunks(file, 0, partSize);
+    send.send({'type': 'progress', 'p': 0.25, 'stage': 'Analyzing 1/3'});
+    worker.processWindowData(p1);
+
+    final p2Start = partSize;
+    final p2End = (partSize * 2).clamp(0, fileLength);
+    send.send({'type': 'progress', 'p': 0.45, 'stage': 'Reading 2/3'});
+    final p2 = await worker.readFileInChunks(file, p2Start, p2End);
+    send.send({'type': 'progress', 'p': 0.60, 'stage': 'Analyzing 2/3'});
+    worker.processWindowData(p2);
+
+    final p3Start = (partSize * 2);
+    final p3End = fileLength;
+    send.send({'type': 'progress', 'p': 0.80, 'stage': 'Reading 3/3'});
+    final p3 = await worker.readFileInChunks(file, p3Start, p3End);
+    send.send({'type': 'progress', 'p': 0.90, 'stage': 'Analyzing 3/3'});
+    worker.processWindowData(p3);
+
+    // Compute stats
+    final rrIntervals = EcgBPMCalculator().convertRRIndexesToInterval(
+      worker.allRrIndexes,
+    );
+    final avg = EcgBPMCalculator().getAverageBPM(rrIntervals);
+    final max = EcgBPMCalculator().getMaxBPM(rrIntervals);
+    final min = EcgBPMCalculator().getMinBPM(rrIntervals);
+    final cond = worker.detectConditions(rrIntervals, worker.allRrIndexes);
+
+    send.send({
+      'type': 'done',
+      'result': {
+        'rr': worker.allRrIndexes,
+        'rrIntervals': rrIntervals,
+        'avrBpm': avg,
+        'minBpm': min,
+        'maxBpm': max,
+        'conditions': cond,
+        'rawLen': worker.rawDataFullLength,
+      },
+    });
+  } catch (e) {
+    send.send({'type': 'error', 'message': e.toString()});
   }
 }

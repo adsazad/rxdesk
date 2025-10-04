@@ -6,6 +6,7 @@ import 'dart:typed_data';
 import 'package:drift/drift.dart' as drift;
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/services.dart';
 import 'package:holtersync/Pages/GlobalSettings.dart';
 import 'package:holtersync/Pages/AI/AiInterpretationTab.dart';
@@ -133,6 +134,7 @@ class _HomeState extends State<Home> {
   double importProgressPercent = 0.0;
   double currentImportDisplayIndex = 0;
   // AI running state now managed inside AiInterpretationTab
+  bool _progressDialogOpen = false;
 
   @override
   void didChangeDependencies() {
@@ -451,12 +453,30 @@ class _HomeState extends State<Home> {
   }
 
   Future<void> _runHolterFromRecordingId(int recordingId) async {
+    final db = Provider.of<AppDatabase>(context, listen: false);
+    final ValueNotifier<String> msg = ValueNotifier<String>(
+      'Starting analysis…',
+    );
     try {
-      final db = Provider.of<AppDatabase>(context, listen: false);
-      await _holter.initWithRecordingId(db, recordingId);
+      // Show a blocking progress dialog while initializing (can take time)
+      _showBlockingProgressDialog(
+        title: 'Preparing recording',
+        message:
+            'Please wait while we load and analyze the data...\n(This may take a minute)',
+        messageListenable: msg,
+      );
+
+      // Run heavy analysis off the UI thread
+      await _holter.initWithRecordingIdOnBackground(
+        db,
+        recordingId,
+        onProgress: (p, stage) {
+          final pct = (p * 100).clamp(0, 100).toStringAsFixed(0);
+          msg.value = '$pct% • $stage';
+        },
+      );
+
       _totalSamples = await _holter.getTotalEcgSamples();
-      // ignore: avoid_print
-      print("Holter samples: $_totalSamples");
       // optional: warm up filters minimally
       final warm = await _holter.getEcgSamples(0, 1000);
       for (final v in warm) {
@@ -468,6 +488,86 @@ class _HomeState extends State<Home> {
       print('Holter analysis failed: $e');
       // ignore: avoid_print
       print(st);
+      if (mounted) {
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text('Failed to load recording: $e')));
+      }
+    } finally {
+      // Ensure we close the progress dialog
+      _closeBlockingProgressDialog();
+    }
+  }
+
+  void _showBlockingProgressDialog({
+    String title = 'Loading',
+    String message = 'Please wait...',
+    ValueListenable<String>? messageListenable,
+  }) {
+    _progressDialogOpen = true;
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      useRootNavigator: true,
+      builder: (ctx) {
+        return WillPopScope(
+          onWillPop: () async => false,
+          child: AlertDialog(
+            title: Text(title),
+            content: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  children: const [
+                    SizedBox(
+                      width: 24,
+                      height: 24,
+                      child: CircularProgressIndicator(strokeWidth: 2.5),
+                    ),
+                    SizedBox(width: 12),
+                    Expanded(child: SizedBox()),
+                  ],
+                ),
+                const SizedBox(height: 12),
+                if (messageListenable != null)
+                  ValueListenableBuilder<String>(
+                    valueListenable: messageListenable,
+                    builder:
+                        (_, value, __) => Text(
+                          value,
+                          style: const TextStyle(
+                            fontSize: 12,
+                            color: Colors.black54,
+                          ),
+                        ),
+                  )
+                else
+                  Text(
+                    message,
+                    style: const TextStyle(fontSize: 12, color: Colors.black54),
+                  ),
+              ],
+            ),
+          ),
+        );
+      },
+    );
+  }
+
+  void _closeBlockingProgressDialog() {
+    if (!_progressDialogOpen) return;
+    if (!mounted) {
+      _progressDialogOpen = false;
+      return;
+    }
+    // Try to pop the dialog route explicitly (not maybePop)
+    try {
+      Navigator.of(context, rootNavigator: true).pop();
+    } catch (_) {
+      // ignore if already closed
+    } finally {
+      _progressDialogOpen = false;
     }
   }
 
