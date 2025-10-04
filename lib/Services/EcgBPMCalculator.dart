@@ -36,8 +36,13 @@ class EcgBPMCalculator {
   List<double> extractECGChannel(List<List<double>> rawData, {int index = 0}) {
     return rawData.map((row) => row.length > index ? row[index] : 0.0).toList();
   }
+
   /// Lightweight stats: Only extract R-peaks using Pan-Tompkins
-  List<int> getStatsLite(List<List<double>> rawData, {int index = 0, int sampleRate = 300}) {
+  List<int> getStatsLite(
+    List<List<double>> rawData, {
+    int index = 0,
+    int sampleRate = 300,
+  }) {
     this.ecgIndex = index;
     this.samplingRate = sampleRate;
     realEcgData = extractECGChannel(rawData, index: index);
@@ -45,9 +50,12 @@ class EcgBPMCalculator {
     return rPeaks;
   }
 
-
   /// Full ECG analysis with detailed metrics and intervals
-  Map<String, dynamic> getStats(List<List<double>> rawData, {int index = 0, int sampleRate = 300}) {
+  Map<String, dynamic> getStats(
+    List<List<double>> rawData, {
+    int index = 0,
+    int sampleRate = 300,
+  }) {
     this.ecgIndex = index;
     this.samplingRate = sampleRate;
     realEcgData = extractECGChannel(rawData, index: index);
@@ -57,7 +65,10 @@ class EcgBPMCalculator {
     baseline = getBaseLine(smoothLine);
     bottomLine = findBottomLine(smoothLine);
 
-    double RRInterval = calculateRRInterval(realEcgData, sampleRate: sampleRate);
+    double RRInterval = calculateRRInterval(
+      realEcgData,
+      sampleRate: sampleRate,
+    );
     double BPM = calculateBPM(RRInterval);
 
     qPeaks = findQPeaks(realEcgData);
@@ -81,13 +92,18 @@ class EcgBPMCalculator {
     // double averageSAmplitude = calculateSAverageAmplitude();
 
     int secondRPeakIndex = rPeaks.length > 1 ? rPeaks[1] : -1;
-    double secondRPeakValue = secondRPeakIndex >= 0 ? ecgData[secondRPeakIndex] : 0;
+    double secondRPeakValue =
+        secondRPeakIndex >= 0 ? ecgData[secondRPeakIndex] : 0;
     int secondTPeakIndex = tPeaks.length > 1 ? tPeaks[1] : -1;
-    double secondTPeakValue = secondTPeakIndex >= 0 ? ecgData[secondTPeakIndex] : 0;
+    double secondTPeakValue =
+        secondTPeakIndex >= 0 ? ecgData[secondTPeakIndex] : 0;
     int secondPPeakIndex = pPeaks.length > 1 ? pPeaks[1] : -1;
-    double secondPPeakValue = secondPPeakIndex >= 0 ? ecgData[secondPPeakIndex] : 0;
+    double secondPPeakValue =
+        secondPPeakIndex >= 0 ? ecgData[secondPPeakIndex] : 0;
 
-    double averageBpm = getAverageBPM(convertRRIndexesToInterval(rPeaks, sampleRate: sampleRate));
+    double averageBpm = getAverageBPM(
+      convertRRIndexesToInterval(rPeaks, sampleRate: sampleRate),
+    );
     double timeLengthSecond = (ecgData.length / samplingRate);
 
     // var pvcBeats = detectAllPVCsFinal();
@@ -132,7 +148,6 @@ class EcgBPMCalculator {
       // "pvcBeats": pvcBeats,
     };
   }
-
 
   calculateQRSInterval() {
     List<double> valQrs = [];
@@ -322,7 +337,8 @@ class EcgBPMCalculator {
     // Check if there are at least one P-peak and one R-peak
     if (pPeaks.isEmpty || rPeaks.isEmpty) {
       throw Exception(
-          "Insufficient P-peaks or R-peaks to calculate PR interval");
+        "Insufficient P-peaks or R-peaks to calculate PR interval",
+      );
     }
 
     // Calculate PR interval using the first P-peak and R-peak
@@ -466,11 +482,11 @@ class EcgBPMCalculator {
     return bpm;
   }
 
-  double calculateRRInterval(List<double> ecgData,{int sampleRate = 300}) {
+  double calculateRRInterval(List<double> ecgData, {int sampleRate = 300}) {
     this.samplingRate = sampleRate;
     // print("RR Interval Calculator");
     // Find R-peaks in the ECG signal
-    rPeaks = findRPeaksPanTompkins(ecgData,sampleRate: samplingRate);
+    rPeaks = findRPeaksPanTompkins(ecgData, sampleRate: samplingRate);
 
     // Check if there are at least three R-peaks
     if (rPeaks.length <= 1) {
@@ -486,7 +502,10 @@ class EcgBPMCalculator {
     return rrInterval;
   }
 
-  List<int> findRPeaksPanTompkins(List<double> ecgData,{int sampleRate = 300}) {
+  List<int> findRPeaksPanTompkins(
+    List<double> ecgData, {
+    int sampleRate = 300,
+  }) {
     this.samplingRate = sampleRate;
     List<int> rPeaks = PanThonkins().getRPeaks(ecgData, samplingRate);
     // print("RPEAKS");
@@ -736,7 +755,9 @@ class EcgBPMCalculator {
     for (int sPeak in sPeaks) {
       int windowStart = max(0, sPeak);
       int windowEnd = min(
-          ecgData.length - 1, sPeak + 120); // Adjust the window size as needed
+        ecgData.length - 1,
+        sPeak + 120,
+      ); // Adjust the window size as needed
 
       int maxIndex = windowStart;
       double maxValue = ecgData[windowStart];
@@ -849,7 +870,10 @@ class EcgBPMCalculator {
     return std;
   }
 
-  double getAverageBPM(List<double> rrIntervalsSeconds,{int sampleRate = 300}) {
+  double getAverageBPM(
+    List<double> rrIntervalsSeconds, {
+    int sampleRate = 300,
+  }) {
     this.samplingRate = sampleRate;
     double sum = 0;
     int count = 0;
@@ -948,8 +972,10 @@ class EcgBPMCalculator {
     return {"x": x, "y": y};
   }
 
-  List<double> filterEctopicBeats(List<double> rrIntervals,
-      {double thresholdPercentage = 35.0}) {
+  List<double> filterEctopicBeats(
+    List<double> rrIntervals, {
+    double thresholdPercentage = 35.0,
+  }) {
     // Early exit if list is too short to process
     if (rrIntervals.length < 2) return rrIntervals;
 
@@ -971,14 +997,16 @@ class EcgBPMCalculator {
     return filteredRRIntervals;
   }
 
-//   RR Triangular Index
+  //   RR Triangular Index
   double calculateRRTriangularIndex(List<double> rrIntervalsMs) {
     if (rrIntervalsMs.isEmpty) {
       throw Exception('RR intervals list cannot be empty.');
     }
 
-    Map<double, int> histogram =
-    _createHistogram(rrIntervalsMs, binSize: 7.8125); // Bin size in ms
+    Map<double, int> histogram = _createHistogram(
+      rrIntervalsMs,
+      binSize: 7.8125,
+    ); // Bin size in ms
 
     int maxCount = histogram.values.reduce((a, b) => a > b ? a : b);
     int totalCount = rrIntervalsMs.length;
@@ -1056,10 +1084,11 @@ class EcgBPMCalculator {
       double a = (x3 * (y2 - y1) + x2 * (y1 - y3) + x1 * (y3 - y2)) / denom;
       double b =
           (x3 * x3 * (y1 - y2) + x2 * x2 * (y3 - y1) + x1 * x1 * (y2 - y3)) /
-              denom;
-      double c = (x2 * x3 * (x2 - x3) * y1 +
-          x3 * x1 * (x3 - x1) * y2 +
-          x1 * x2 * (x1 - x2) * y3) /
+          denom;
+      double c =
+          (x2 * x3 * (x2 - x3) * y1 +
+              x3 * x1 * (x3 - x1) * y2 +
+              x1 * x2 * (x1 - x2) * y3) /
           denom;
 
       // Interpolate at midpoint between x2 and x3
@@ -1075,14 +1104,17 @@ class EcgBPMCalculator {
   }
 
   List<double> interpolateLiniar(
-      List<double> times, List<double> values, double frequency) {
+    List<double> times,
+    List<double> values,
+    double frequency,
+  ) {
     if (times.isEmpty || values.isEmpty || times.length != values.length) {
       return [];
     }
 
     double interval = 1 / frequency;
     List<double> newTimes = [
-      for (double t = times.first; t <= times.last; t += interval) t
+      for (double t = times.first; t <= times.last; t += interval) t,
     ];
     List<double> interpolatedValues = [];
 
@@ -1225,7 +1257,9 @@ class EcgBPMCalculator {
   }
 
   Map<String, Map> computeFrequencyBandPowers(
-      List<double> psd, int interpolatedDataLength) {
+    List<double> psd,
+    int interpolatedDataLength,
+  ) {
     // Assume the effective sampling rate
     double fs = 2; // Hz of the interpolation
     double N = 512;
@@ -1277,20 +1311,20 @@ class EcgBPMCalculator {
       'TotalPower': {"Power": totalPower},
       'ULF': {
         'Power': ulfPower,
-        'Peak': {'Power': ulfPeakPower, 'Frequency': ulfPeakFreq}
+        'Peak': {'Power': ulfPeakPower, 'Frequency': ulfPeakFreq},
       },
       'VLF': {
         'Power': vlfPower,
-        'Peak': {'Power': vlfPeakPower, 'Frequency': vlfPeakFreq}
+        'Peak': {'Power': vlfPeakPower, 'Frequency': vlfPeakFreq},
       },
       'LF': {
         'Power': lfPower,
-        'Peak': {'Power': lfPeakPower, 'Frequency': lfPeakFreq}
+        'Peak': {'Power': lfPeakPower, 'Frequency': lfPeakFreq},
       },
       'HF': {
         'Power': hfPower,
-        'Peak': {'Power': hfPeakPower, 'Frequency': hfPeakFreq}
-      }
+        'Peak': {'Power': hfPeakPower, 'Frequency': hfPeakFreq},
+      },
     };
   }
 
@@ -1317,12 +1351,11 @@ class EcgBPMCalculator {
 
   List<double> calculateFrequencyBins(int numDataPoints, double samplingRate) {
     int numFrequencyBins = (numDataPoints ~/ 2) + 1; // Include zero frequency
-    double nyquistFrequency = samplingRate / 2;
     double frequencyResolution = samplingRate / numDataPoints;
 
     List<double> frequencyBins = List.generate(
       numFrequencyBins,
-          (index) => frequencyResolution * index,
+      (index) => frequencyResolution * index,
     );
 
     return frequencyBins;
@@ -1458,15 +1491,17 @@ class EcgBPMCalculator {
     }
 
     // Step 2: Determine the Mode (Mo)
-    var modeEntry =
-    rrHistogram.entries.reduce((a, b) => a.value > b.value ? a : b);
+    var modeEntry = rrHistogram.entries.reduce(
+      (a, b) => a.value > b.value ? a : b,
+    );
     int modeBin = modeEntry.key;
     // print("MBIN");
     // print(modeBin);
     double mbinStart = minRR + modeBin * binWidth;
     double mbinEnd = mbinStart + binWidth;
     // print("${mbinStart}-${mbinEnd}");
-    double mode = ((mbinStart + mbinEnd) / 2) /
+    double mode =
+        ((mbinStart + mbinEnd) / 2) /
         1000.0; // Convert to seconds, use bin center
     // print("Mode");
     // print(mode);
@@ -1568,8 +1603,9 @@ class EcgBPMCalculator {
 
       // If tachycardia condition is met, add it to the array
       if (tachycardiaMet) {
-        bool conditionExists =
-        conditions.any((condition) => condition["name"] == "Tachycardia");
+        bool conditionExists = conditions.any(
+          (condition) => condition["name"] == "Tachycardia",
+        );
 
         if (!conditionExists) {
           conditions.add({"name": "Tachycardia", "index": i});
@@ -1578,8 +1614,9 @@ class EcgBPMCalculator {
 
       // If bradycardia condition is met, add it to the array
       if (bradycardiaMet) {
-        bool conditionExists =
-        conditions.any((condition) => condition["name"] == "Bradycardia");
+        bool conditionExists = conditions.any(
+          (condition) => condition["name"] == "Bradycardia",
+        );
 
         if (!conditionExists) {
           conditions.add({"name": "Bradycardia", "index": i});
@@ -1597,8 +1634,10 @@ class EcgBPMCalculator {
 
   //   Extract every qrs comples from r point as center
   Map<String, List<List<double>>> extractQRSComplexes(
-      List<int> rrIndexes, List<double> ecgData,
-      {int windowSize = 200}) {
+    List<int> rrIndexes,
+    List<double> ecgData, {
+    int windowSize = 200,
+  }) {
     List<List<double>> qrsComplexes = [];
     List<List<double>> nonComplex = [];
     int halfPoint = windowSize ~/ 2;
@@ -1606,7 +1645,6 @@ class EcgBPMCalculator {
     int previousEnd = 0; // To keep track of the end of the last QRS complex
 
     for (var entry in rrIndexes.asMap().entries) {
-      int i = entry.key;
       int rPeak = entry.value;
       int start = rPeak - halfPoint;
       int end = rPeak + halfPoint;
@@ -1629,8 +1667,10 @@ class EcgBPMCalculator {
 
     // Handle the case where there is ECG data after the last QRS complex
     if (previousEnd < ecgData.length) {
-      List<double> nonComplexSegment =
-      ecgData.sublist(previousEnd, ecgData.length);
+      List<double> nonComplexSegment = ecgData.sublist(
+        previousEnd,
+        ecgData.length,
+      );
       nonComplex.add(nonComplexSegment);
     }
 
@@ -1638,7 +1678,9 @@ class EcgBPMCalculator {
   }
 
   List<List<double>> extractQRSComplexesV2(
-      List<int> rrIndexes, List<double> ecgData) {
+    List<int> rrIndexes,
+    List<double> ecgData,
+  ) {
     List<List<double>> qrsComplexes = [];
 
     for (int i = 0; i < rrIndexes.length; i++) {
@@ -1688,9 +1730,10 @@ class EcgBPMCalculator {
 
   int calculateHarvardBPM(List<int> rrIndexes, int startSample, int endSample) {
     // Filter RR intervals within the range of samples
-    List<int> rrInRange = rrIndexes
-        .where((index) => index >= startSample && index < endSample)
-        .toList();
+    List<int> rrInRange =
+        rrIndexes
+            .where((index) => index >= startSample && index < endSample)
+            .toList();
 
     // Ensure there are enough R peaks to calculate BPM
     if (rrInRange.length < 2) {
@@ -1711,7 +1754,10 @@ class EcgBPMCalculator {
     return (60 / averageRRInterval).round();
   }
 
-  Map<String, dynamic> calculateHarvardStepTest(List<int> rrIndexes,{int sampleRate = 300}) {
+  Map<String, dynamic> calculateHarvardStepTest(
+    List<int> rrIndexes, {
+    int sampleRate = 300,
+  }) {
     // Sampling rate in Hz
     this.samplingRate = sampleRate;
     // Calculate start and end samples for each time segment
@@ -1726,13 +1772,13 @@ class EcgBPMCalculator {
     int bpm1 = 0;
     int bpm2 = 0;
     int bpm3 = 0;
-    if (rrIndexes[rrIndexes.length -1] > end1) {
+    if (rrIndexes[rrIndexes.length - 1] > end1) {
       bpm1 = calculateHarvardBPM(rrIndexes, start1, end1);
     }
-    if (rrIndexes[rrIndexes.length-1] > end2) {
+    if (rrIndexes[rrIndexes.length - 1] > end2) {
       bpm2 = calculateHarvardBPM(rrIndexes, start2, end2);
     }
-    if (rrIndexes[rrIndexes.length-1] > end3) {
+    if (rrIndexes[rrIndexes.length - 1] > end3) {
       bpm3 = calculateHarvardBPM(rrIndexes, start3, end3);
     }
     // Use 0 for missing data in fitness index calculation
@@ -1741,9 +1787,10 @@ class EcgBPMCalculator {
     int hr3 = bpm3 > 0 ? bpm3 : 0;
 
     // Calculate Fitness Index if all HR values are available
-    int fitnessIndex = (hr1 > 0 && hr2 > 0 && hr3 > 0)
-        ? (300 * 100 ~/ (2 * (hr1 + hr2 + hr3)))
-        : -1; // Return -1 if any HR is missing
+    int fitnessIndex =
+        (hr1 > 0 && hr2 > 0 && hr3 > 0)
+            ? (300 * 100 ~/ (2 * (hr1 + hr2 + hr3)))
+            : -1; // Return -1 if any HR is missing
 
     // Return both BPMs and Fitness Index
     return {
@@ -1772,17 +1819,26 @@ class EcgBPMCalculator {
     for (int i = 0; i < QStarts.length && i < SEnds.length; i++) {
       int qStartIndex = QStarts[i]["index"];
       int sEndIndex = SEnds[i]["index"];
-      double qrsDuration = (sEndIndex - qStartIndex) / samplingRate * 1000; // ms
+      double qrsDuration =
+          (sEndIndex - qStartIndex) / samplingRate * 1000; // ms
       qrsDurations.add(qrsDuration);
     }
 
-    double avgQRS = qrsDurations.sublist(0, min(5, qrsDurations.length)).reduce((a, b) => a + b) / min(5, qrsDurations.length);
+    double avgQRS =
+        qrsDurations
+            .sublist(0, min(5, qrsDurations.length))
+            .reduce((a, b) => a + b) /
+        min(5, qrsDurations.length);
     double avgRAmplitude = calculateRAverageAmplitude();
 
-    List<double> rrIntervals = convertRRIndexesToInterval(rPeaks, sampleRate: samplingRate);
+    List<double> rrIntervals = convertRRIndexesToInterval(
+      rPeaks,
+      sampleRate: samplingRate,
+    );
 
     for (int i = 1; i < min(qrsDurations.length, rrIntervals.length) - 1; i++) {
-      double currentQRS = qrsDurations[i + 1]; // 🛠️ Look at the next beat's QRS
+      double currentQRS =
+          qrsDurations[i + 1]; // 🛠️ Look at the next beat's QRS
       double rrPrev = rrIntervals[i - 1];
       double rrThis = rrIntervals[i];
       double rrNext = rrIntervals[i + 1];
@@ -1792,10 +1848,16 @@ class EcgBPMCalculator {
       bool qrsWideEnough = currentQRS > qrsWideThresholdMs;
       bool qrsRelativelyWider = currentQRS > qrsRelativeThreshold * avgQRS;
       bool earlyBeat = rrThis < earlyRRThreshold * rrPrev;
-      bool amplitudeDifferent = (rAmplitudeMv - avgRAmplitude).abs() / avgRAmplitude > amplitudeDeviationThreshold;
+      bool amplitudeDifferent =
+          (rAmplitudeMv - avgRAmplitude).abs() / avgRAmplitude >
+          amplitudeDeviationThreshold;
       bool compensatoryPause = rrNext > compensatoryRRThreshold * rrPrev;
 
-      bool pvcByMorphology = qrsWideEnough && qrsRelativelyWider && amplitudeDifferent && earlyBeat;
+      bool pvcByMorphology =
+          qrsWideEnough &&
+          qrsRelativelyWider &&
+          amplitudeDifferent &&
+          earlyBeat;
       bool pvcByRROnly = earlyBeat && compensatoryPause;
 
       if (pvcByMorphology) {
@@ -1808,7 +1870,7 @@ class EcgBPMCalculator {
           "rrPrev": rrPrev,
           "rrThis": rrThis,
           "rrNext": rrNext,
-          "confidence": "High"
+          "confidence": "High",
         });
       } else if (pvcByRROnly) {
         pvcBeats.add({
@@ -1820,14 +1882,13 @@ class EcgBPMCalculator {
           "rrPrev": rrPrev,
           "rrThis": rrThis,
           "rrNext": rrNext,
-          "confidence": "Medium"
+          "confidence": "Medium",
         });
       }
     }
     print(pvcBeats);
     return pvcBeats;
   }
-
 
   List<Map<String, dynamic>> detectPVCsFinalCombined({
     double qrsWideThresholdMs = 130,
@@ -1847,19 +1908,27 @@ class EcgBPMCalculator {
     for (int i = 0; i < QStarts.length && i < SEnds.length; i++) {
       int qStartIndex = QStarts[i]["index"];
       int sEndIndex = SEnds[i]["index"];
-      double qrsDuration = (sEndIndex - qStartIndex) / samplingRate * 1000; // milliseconds
+      double qrsDuration =
+          (sEndIndex - qStartIndex) / samplingRate * 1000; // milliseconds
       qrsDurations.add(qrsDuration);
     }
 
-    double avgQRS = qrsDurations.sublist(0, min(5, qrsDurations.length)).reduce((a, b) => a + b) / min(5, qrsDurations.length);
+    double avgQRS =
+        qrsDurations
+            .sublist(0, min(5, qrsDurations.length))
+            .reduce((a, b) => a + b) /
+        min(5, qrsDurations.length);
 
-    List<double> rrIntervals = convertRRIndexesToInterval(rPeaks, sampleRate: samplingRate);
+    List<double> rrIntervals = convertRRIndexesToInterval(
+      rPeaks,
+      sampleRate: samplingRate,
+    );
 
     for (int i = 1; i < min(qrsDurations.length, rrIntervals.length - 1); i++) {
       double currentQRS = qrsDurations[i];
       double rrPrev = rrIntervals[i - 1];
       double rrThis = rrIntervals[i];
-      double rrNext = rrIntervals[i + 1];
+      // rrNext not needed in this strict QRS + Early RR step
 
       bool qrsWideEnough = currentQRS > qrsWideThresholdMs;
       bool qrsRelativelyWider = currentQRS > qrsRelativeThreshold * avgQRS;
@@ -1872,7 +1941,7 @@ class EcgBPMCalculator {
           "qrsDuration": currentQRS,
           "averageQrsDuration": avgQRS,
           "rrThis": rrThis,
-          "confidence": "High"
+          "confidence": "High",
         });
       }
     }
@@ -1894,7 +1963,7 @@ class EcgBPMCalculator {
             "rrPrev": rrPrev,
             "rrThis": rrThis,
             "rrNext": rrNext,
-            "confidence": "Medium"
+            "confidence": "Medium",
           });
         }
       }
@@ -1919,19 +1988,25 @@ class EcgBPMCalculator {
     for (int i = 0; i < QStarts.length && i < SEnds.length; i++) {
       int qStartIndex = QStarts[i]["index"];
       int sEndIndex = SEnds[i]["index"];
-      double qrsDuration = (sEndIndex - qStartIndex) / samplingRate * 1000; // milliseconds
+      double qrsDuration =
+          (sEndIndex - qStartIndex) / samplingRate * 1000; // milliseconds
       qrsDurations.add(qrsDuration);
     }
 
     // Calculate average QRS duration
-    double avgQRS = qrsDurations.sublist(0, min(5, qrsDurations.length)).reduce((a, b) => a + b) / min(5, qrsDurations.length);
+    double avgQRS =
+        qrsDurations
+            .sublist(0, min(5, qrsDurations.length))
+            .reduce((a, b) => a + b) /
+        min(5, qrsDurations.length);
 
     for (int i = 0; i < qrsDurations.length; i++) {
       double currentQRS = qrsDurations[i];
 
       bool isPVC = false;
 
-      if ((currentQRS / avgQRS > qrsRelativeThreshold && currentQRS > qrsWideThreshold) ||
+      if ((currentQRS / avgQRS > qrsRelativeThreshold &&
+              currentQRS > qrsWideThreshold) ||
           (currentQRS < qrsNarrowThreshold && currentQRS > 0)) {
         isPVC = true;
       }
@@ -1941,7 +2016,7 @@ class EcgBPMCalculator {
           "rPeakIndex": rPeaks[i],
           "qrsDuration": currentQRS,
           "averageQrsDuration": avgQRS,
-          "confidence": "High (QRS Width Rule)"
+          "confidence": "High (QRS Width Rule)",
         });
       }
     }
@@ -1949,8 +2024,7 @@ class EcgBPMCalculator {
     return pvcBeats;
   }
 
-
-  convertRRIndexesToInterval(List<int> rrIndexes,{int sampleRate = 300}) {
+  convertRRIndexesToInterval(List<int> rrIndexes, {int sampleRate = 300}) {
     this.samplingRate = sampleRate;
     List<double> rrIntervals = [];
     for (int i = 0; i < rrIndexes.length - 1; i++) {
@@ -1971,12 +2045,22 @@ class EcgBPMCalculator {
   }) {
     List<Map<String, dynamic>> pvcBeats = [];
 
-    if (rPeaks.length < 5 || QStarts.length < 5 || SEnds.length < 5 || pPeaks.length < 5) {
+    if (rPeaks.length < 5 ||
+        QStarts.length < 5 ||
+        SEnds.length < 5 ||
+        pPeaks.length < 5) {
       return pvcBeats;
     }
 
-    List<double> rrIntervals = convertRRIndexesToInterval(rPeaks, sampleRate: samplingRate);
-    Map<String, List<List<double>>> qrsData = extractQRSComplexes(rPeaks, realEcgData, windowSize: 150);
+    List<double> rrIntervals = convertRRIndexesToInterval(
+      rPeaks,
+      sampleRate: samplingRate,
+    );
+    Map<String, List<List<double>>> qrsData = extractQRSComplexes(
+      rPeaks,
+      realEcgData,
+      windowSize: 150,
+    );
     List<List<double>> qrsComplexes = qrsData["complexes"] ?? [];
 
     if (qrsComplexes.isEmpty) {
@@ -1984,13 +2068,22 @@ class EcgBPMCalculator {
     }
 
     // Build normal template
-    List<double> normalTemplate = _averageQRS(qrsComplexes.sublist(0, min(5, qrsComplexes.length)));
+    List<double> normalTemplate = _averageQRS(
+      qrsComplexes.sublist(0, min(5, qrsComplexes.length)),
+    );
 
     // Calculate normal R amplitude
     List<double> rAmplitudes = rPeaks.map((idx) => realEcgData[idx]).toList();
-    double averageR = rAmplitudes.sublist(0, min(5, rAmplitudes.length)).reduce((a, b) => a + b) / min(5, rAmplitudes.length);
+    double averageR =
+        rAmplitudes
+            .sublist(0, min(5, rAmplitudes.length))
+            .reduce((a, b) => a + b) /
+        min(5, rAmplitudes.length);
 
-    int minLength = min(min(rrIntervals.length - 1, qrsComplexes.length), min(QStarts.length, SEnds.length));
+    int minLength = min(
+      min(rrIntervals.length - 1, qrsComplexes.length),
+      min(QStarts.length, SEnds.length),
+    );
 
     for (int i = 1; i < minLength; i++) {
       double rrBefore = rrIntervals[i - 1];
@@ -1998,15 +2091,16 @@ class EcgBPMCalculator {
       double rrAfter = rrIntervals[i + 1];
 
       double thisAmplitude = rAmplitudes[i];
-      bool amplitudeHigh = thisAmplitude > amplitudeMultiplierThreshold * averageR;
+      bool amplitudeHigh =
+          thisAmplitude > amplitudeMultiplierThreshold * averageR;
 
       // Compensatory pause
       bool hasCompensatoryPause = rrAfter > compensatoryPauseRatio * rrBefore;
 
       // Morphology comparison
       double correlation = _calculateCrossCorrelation(
-          normalTemplate,
-          qrsComplexes[i]
+        normalTemplate,
+        qrsComplexes[i],
       );
       bool morphologyDifferent = correlation < correlationThreshold;
 
@@ -2023,7 +2117,8 @@ class EcgBPMCalculator {
         double pAmplitude = realEcgData[pPeakBeforeR] - bottomLine[0];
         pAmplitude = pAmplitude * (6 / 4096); // convert to mV
 
-        if (pAmplitude.abs() < 0.05) { // 0.05 mV threshold for P-wave disappearance
+        if (pAmplitude.abs() < 0.05) {
+          // 0.05 mV threshold for P-wave disappearance
           pWaveMissing = true;
         }
       } catch (e) {
@@ -2039,7 +2134,8 @@ class EcgBPMCalculator {
       if (hasCompensatoryPause) score++;
       if (pWaveMissing) score++;
 
-      if (score >= 2) {  // If 2 or more conditions match
+      if (score >= 2) {
+        // If 2 or more conditions match
         pvcBeats.add({
           "rPeakIndex": rPeaks[i],
           "amplitude": thisAmplitude,
@@ -2050,7 +2146,8 @@ class EcgBPMCalculator {
           "rrAfter": rrAfter,
           "correlation": correlation,
           "pWaveMissing": pWaveMissing,
-          "confidence": score >= 4 ? "Very High" : (score == 3 ? "High" : "Medium")
+          "confidence":
+              score >= 4 ? "Very High" : (score == 3 ? "High" : "Medium"),
         });
       }
     }
@@ -2059,7 +2156,10 @@ class EcgBPMCalculator {
   }
 
   // Cross-correlation between two signals
-  double _calculateCrossCorrelation(List<double> signal1, List<double> signal2) {
+  double _calculateCrossCorrelation(
+    List<double> signal1,
+    List<double> signal2,
+  ) {
     int n = min(signal1.length, signal2.length);
     double mean1 = signal1.sublist(0, n).reduce((a, b) => a + b) / n;
     double mean2 = signal2.sublist(0, n).reduce((a, b) => a + b) / n;
@@ -2077,7 +2177,7 @@ class EcgBPMCalculator {
     return numerator / sqrt(denominator1 * denominator2);
   }
 
-// Average a list of QRS complexes to create a "normal template"
+  // Average a list of QRS complexes to create a "normal template"
   List<double> _averageQRS(List<List<double>> qrsList) {
     if (qrsList.isEmpty) return [];
 
@@ -2096,6 +2196,4 @@ class EcgBPMCalculator {
 
     return average;
   }
-
-
 }

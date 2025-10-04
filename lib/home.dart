@@ -10,6 +10,7 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/services.dart';
 import 'package:holtersync/Pages/GlobalSettings.dart';
 import 'package:holtersync/Pages/AI/AiInterpretationTab.dart';
+import 'package:holtersync/Pages/HRV/HrvAnalysisTab.dart';
 import 'package:holtersync/Pages/RecordingsListPage.dart';
 import 'package:holtersync/Pages/patient/list.dart';
 import 'package:holtersync/Pages/patient/patientAdd.dart';
@@ -1017,7 +1018,7 @@ class _HomeState extends State<Home> {
   @override
   Widget build(BuildContext context) {
     return DefaultTabController(
-      length: 2,
+      length: 3,
       child: Scaffold(
         appBar: AppBar(
           backgroundColor: Colors.blue.shade700,
@@ -1044,6 +1045,7 @@ class _HomeState extends State<Home> {
                     tabs: const [
                       Tab(text: 'Viewer'),
                       Tab(text: 'AI interpretation'),
+                      Tab(text: 'HRV analysis'),
                     ],
                   ),
                 ),
@@ -1055,6 +1057,7 @@ class _HomeState extends State<Home> {
           children: [
             _KeepAlive(child: _buildViewerTab()),
             _KeepAlive(child: _buildAiTab()),
+            _KeepAlive(child: HrvAnalysisTab(holter: _holter)),
           ],
         ),
       ),

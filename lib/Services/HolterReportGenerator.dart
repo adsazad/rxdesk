@@ -65,6 +65,74 @@ class HolterReportGenerator {
     };
   }
 
+  /// Scans the entire recording for R-peaks using parsed ECG samples from
+  /// [getEcgSamples], applying a small overlap between chunks to avoid
+  /// losing beats at boundaries. Populates [allRrIndexes] and [allRrIntervals].
+  Future<void> analyzeFullRecordingRPeaks({
+    int chunkSeconds = 300, // 5 minutes
+    int overlapSeconds = 2, // 2 seconds overlap
+    void Function(double p)? onProgress,
+  }) async {
+    if (fileName == null || fileName!.isEmpty) {
+      throw StateError('HolterReportGenerator not initialized with a file');
+    }
+
+    final total = await getTotalEcgSamples();
+    if (total <= 0) {
+      allRrIndexes = [];
+      allRrIntervals = [];
+      rawDataFullLength = 0;
+      return;
+    }
+
+    // Reset series
+    allRrIndexes = [];
+    allRrIntervals = [];
+    rawDataFullLength = total;
+
+    // Ensure filter buffers are initialized for streaming filtering inside getEcgSamples
+    Pos = 0;
+    filterBuff = List<double>.filled(FILT_BUF_SIZE, 0.0);
+
+    final fs = sampleRate;
+    final int chunk = (chunkSeconds * fs).clamp(1, total);
+    final int overlap = (overlapSeconds * fs).clamp(0, chunk);
+
+    int start = 0;
+    int lastAccepted = -0x3fffffff;
+
+    while (start < total) {
+      final bool hasOverlap = (start + chunk + overlap) <= total;
+      final int len = hasOverlap ? (chunk + overlap) : (total - start);
+
+      // Read filtered ECG for this segment (handles raw vs 5-channel automatically)
+      final ecg = await getEcgSamples(start, len);
+
+      // Detect local R-peaks and map to global indices
+      final local = PanThonkins().getRPeaks(ecg, fs);
+      for (final lp in local) {
+        final g = start + lp;
+        // De-dup in overlap and enforce a 200ms refractory
+        if (g <= lastAccepted) continue;
+        if (allRrIndexes.isNotEmpty && (g - allRrIndexes.last) < (0.2 * fs)) {
+          continue;
+        }
+        allRrIndexes.add(g);
+        lastAccepted = g;
+      }
+
+      // Advance by chunk size; we purposely keep an overlap at the END of this
+      // segment that will be re-visited at the START of the next segment
+      start += chunk;
+      onProgress?.call((start / total).clamp(0.0, 1.0));
+    }
+
+    allRrIntervals = EcgBPMCalculator().convertRRIndexesToInterval(
+      allRrIndexes,
+      sampleRate: fs,
+    );
+  }
+
   factory HolterReportGenerator.fromJson(Map<String, dynamic> json) {
     return HolterReportGenerator()
       ..avrBpm = (json['avgBpm'] ?? 0.0).toDouble()
@@ -828,48 +896,12 @@ class HolterReportGenerator {
   }
 
   Future<void> _runHolterOnFile(String filePath) async {
-    // file = File(fileName.toString());
-    //
-    // await readFileInChunks(file);
-    print(filePath);
-    final file = File(filePath);
-    final fileLength = await file.length();
-    final partSize = (fileLength / 3).ceil();
-
-    Future<List<double>> part1 = readFileInChunks(file, 0, partSize);
-    Future<List<double>> part2 = readFileInChunks(file, partSize, partSize * 2);
-    Future<List<double>> part3 = readFileInChunks(
-      file,
-      partSize * 2,
-      fileLength,
-    );
-
-    // Wait for all parts to complete
-    List<List<double>> results = await Future.wait([part1, part2, part3]);
-    // print("PRESULTS");
-    // print(results);
-    // Process each part's results to extract RR intervals
-    for (var result in results) {
-      processWindowData(result);
-    }
-    allRrIntervals = EcgBPMCalculator().convertRRIndexesToInterval(
-      allRrIndexes,
-    );
-
-    // Stitch the RR intervals together
-    // allRrIntervals = stitchIntervals();
-
-    // Process remaining data if the final chunk didn't trigger the condition
-    if (windowEcgData.isNotEmpty) {
-      // processWindowData();
-    }
-
+    // Use robust scanner that parses ECG and applies overlap-safe peak picking
+    await analyzeFullRecordingRPeaks();
     avrBpm = EcgBPMCalculator().getAverageBPM(allRrIntervals);
     maxBpm = EcgBPMCalculator().getMaxBPM(allRrIntervals);
     minBpm = EcgBPMCalculator().getMinBPM(allRrIntervals);
     conditions = detectConditions(allRrIntervals, allRrIndexes);
-
-    print("RAWDATALEN: ${rawDataFullLength}");
   }
 
   /// Returns ECG samples for a given range [startSample, startSample+lengthSamples).
@@ -1072,6 +1104,7 @@ void _holterAnalyzeEntry(_HolterIsolateParams params) async {
 
     final worker = HolterReportGenerator();
     worker.sampleRate = params.sampleRate;
+    worker.fileName = params.filePath;
     worker.filterBuff = List<double>.filled(worker.FILT_BUF_SIZE, 0.0);
     worker.baselineFilterBuff = List<double>.filled(worker.FILT_BUF_SIZE, 0.0);
     worker.filterClass = FilterClass();
@@ -1090,32 +1123,19 @@ void _holterAnalyzeEntry(_HolterIsolateParams params) async {
       6,
     );
 
-    // Process in 3 parts sequentially to emit progress
-    final partSize = (fileLength / 3).ceil();
-
-    send.send({'type': 'progress', 'p': 0.10, 'stage': 'Reading 1/3'});
-    final p1 = await worker.readFileInChunks(file, 0, partSize);
-    send.send({'type': 'progress', 'p': 0.25, 'stage': 'Analyzing 1/3'});
-    worker.processWindowData(p1);
-
-    final p2Start = partSize;
-    final p2End = (partSize * 2).clamp(0, fileLength);
-    send.send({'type': 'progress', 'p': 0.45, 'stage': 'Reading 2/3'});
-    final p2 = await worker.readFileInChunks(file, p2Start, p2End);
-    send.send({'type': 'progress', 'p': 0.60, 'stage': 'Analyzing 2/3'});
-    worker.processWindowData(p2);
-
-    final p3Start = (partSize * 2);
-    final p3End = fileLength;
-    send.send({'type': 'progress', 'p': 0.80, 'stage': 'Reading 3/3'});
-    final p3 = await worker.readFileInChunks(file, p3Start, p3End);
-    send.send({'type': 'progress', 'p': 0.90, 'stage': 'Analyzing 3/3'});
-    worker.processWindowData(p3);
-
-    // Compute stats
-    final rrIntervals = EcgBPMCalculator().convertRRIndexesToInterval(
-      worker.allRrIndexes,
+    send.send({'type': 'progress', 'p': 0.08, 'stage': 'Scanning R-peaks'});
+    await worker.analyzeFullRecordingRPeaks(
+      chunkSeconds: 300,
+      overlapSeconds: 2,
+      onProgress:
+          (p) => send.send({
+            'type': 'progress',
+            'p': 0.08 + 0.85 * p,
+            'stage': 'Scanning R-peaks',
+          }),
     );
+
+    final rrIntervals = worker.allRrIntervals;
     final avg = EcgBPMCalculator().getAverageBPM(rrIntervals);
     final max = EcgBPMCalculator().getMaxBPM(rrIntervals);
     final min = EcgBPMCalculator().getMinBPM(rrIntervals);
