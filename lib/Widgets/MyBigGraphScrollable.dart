@@ -23,6 +23,12 @@ class MyBigGraphV2 extends StatefulWidget {
   final bool isImported;
   final ValueListenable<List<int>>?
   markerIndices; // NEW (global indices of peaks)
+  // NEW: highlight ranges for coloring segments (list of maps: {start:int, end:int})
+  final ValueListenable<List<Map<String, int>>>? highlightRanges;
+  // NEW: color to use for highlighted segments
+  final Color? highlightColor;
+  // NEW: per-channel highlight ranges (one list per channel)
+  final ValueListenable<List<List<Map<String, int>>>>? channelHighlightRanges;
   // NEW: callback when a user taps inside the chart to select a row (channel)
   final void Function(int rowIndex)? onRowTap;
   // NEW: allow parent to control chart height (fallback to previous default)
@@ -54,6 +60,9 @@ class MyBigGraphV2 extends StatefulWidget {
     this.onStreamResult,
     this.onCycleComplete,
     this.markerIndices, // NEW
+    this.highlightRanges,
+    this.highlightColor,
+    this.channelHighlightRanges,
     this.onRowTap,
     this.chartHeight,
     this.showLeftConsole = true,
@@ -159,6 +168,12 @@ class MyBigGraphV2State extends State<MyBigGraphV2> {
     if (widget.markerIndices != null) {
       widget.markerIndices!.addListener(_onMarkerUpdate);
     }
+    if (widget.highlightRanges != null) {
+      widget.highlightRanges!.addListener(_onHighlightUpdate);
+    }
+    if (widget.channelHighlightRanges != null) {
+      widget.channelHighlightRanges!.addListener(_onHighlightUpdate);
+    }
   }
 
   void _refreshMultiFilter() {
@@ -186,6 +201,14 @@ class MyBigGraphV2State extends State<MyBigGraphV2> {
     if (oldWidget.markerIndices != widget.markerIndices) {
       oldWidget.markerIndices?.removeListener(_onMarkerUpdate);
       widget.markerIndices?.addListener(_onMarkerUpdate);
+    }
+    if (oldWidget.highlightRanges != widget.highlightRanges) {
+      oldWidget.highlightRanges?.removeListener(_onHighlightUpdate);
+      widget.highlightRanges?.addListener(_onHighlightUpdate);
+    }
+    if (oldWidget.channelHighlightRanges != widget.channelHighlightRanges) {
+      oldWidget.channelHighlightRanges?.removeListener(_onHighlightUpdate);
+      widget.channelHighlightRanges?.addListener(_onHighlightUpdate);
     }
 
     // If the plot channel count changed (e.g., switch from 1 to 10 rows), reinitialize buffers
@@ -238,11 +261,17 @@ class MyBigGraphV2State extends State<MyBigGraphV2> {
   @override
   void dispose() {
     widget.markerIndices?.removeListener(_onMarkerUpdate);
+    widget.highlightRanges?.removeListener(_onHighlightUpdate);
+    widget.channelHighlightRanges?.removeListener(_onHighlightUpdate);
     super.dispose();
   }
 
   void _onMarkerUpdate() {
     setState(() {}); // trigger rebuild to show new marker lines
+  }
+
+  void _onHighlightUpdate() {
+    setState(() {}); // trigger rebuild to recolor segments
   }
 
   List<VerticalLine> _generateMarkerLines() {
@@ -278,6 +307,50 @@ class MyBigGraphV2State extends State<MyBigGraphV2> {
         dashArray: [4, 3],
       );
     }).toList();
+  }
+
+  // Merge and clip highlight ranges to current window/series length
+  List<Map<String, int>> _mergedHighlightRanges(
+    int maxIndexExclusive, {
+    List<Map<String, int>>? source,
+  }) {
+    final raw = source ?? widget.highlightRanges?.value ?? const [];
+    if (raw.isEmpty) return const [];
+    // Normalize, clip and sort
+    final List<Map<String, int>> ranges = [];
+    for (final r in raw) {
+      final s = r['start'] ?? 0;
+      final e = r['end'] ?? -1;
+      if (e < 0) continue;
+      int cs = s;
+      int ce = e;
+      if (cs > ce) {
+        final t = cs;
+        cs = ce;
+        ce = t;
+      }
+      if (ce <= 0 || cs >= maxIndexExclusive) continue;
+      if (cs < 0) cs = 0;
+      if (ce >= maxIndexExclusive) ce = maxIndexExclusive - 1;
+      ranges.add({'start': cs, 'end': ce});
+    }
+    if (ranges.isEmpty) return const [];
+    ranges.sort((a, b) => (a['start']!).compareTo(b['start']!));
+    // Merge overlapping/adjacent
+    final List<Map<String, int>> merged = [];
+    var cur = Map<String, int>.from(ranges.first);
+    for (int i = 1; i < ranges.length; i++) {
+      final r = ranges[i];
+      if (r['start']! <= cur['end']! + 1) {
+        // overlap or adjacent
+        if (r['end']! > cur['end']!) cur['end'] = r['end']!;
+      } else {
+        merged.add(Map<String, int>.from(cur));
+        cur = Map<String, int>.from(r);
+      }
+    }
+    merged.add(cur);
+    return merged;
   }
 
   // Modify _generateVerticalLines() call site inside LineChartData -> extraLinesData:
@@ -1438,6 +1511,43 @@ class MyBigGraphV2State extends State<MyBigGraphV2> {
                       dotData: FlDotData(show: false),
                     ),
                   );
+                }
+
+                // Overlay highlight segments (imported/detail mode only)
+                if (widget.isImported &&
+                    (widget.highlightRanges != null ||
+                        widget.channelHighlightRanges != null)) {
+                  final maxIndexExclusive = shiftedSpots.length;
+                  List<Map<String, int>>? source;
+                  if (widget.channelHighlightRanges != null) {
+                    final per = widget.channelHighlightRanges!.value;
+                    if (i >= 0 && i < per.length) source = per[i];
+                  }
+                  final merged = _mergedHighlightRanges(
+                    maxIndexExclusive,
+                    source: source,
+                  );
+                  final Color hlColor = widget.highlightColor ?? Colors.orange;
+                  for (final r in merged) {
+                    final int s = r['start']!;
+                    final int e = r['end']!;
+                    if (s < 0 || s >= maxIndexExclusive) continue;
+                    if (e < 0 || e >= maxIndexExclusive) continue;
+                    final sub = shiftedSpots.sublist(s, e + 1);
+                    if (sub.isEmpty) continue;
+                    bars.add(
+                      LineChartBarData(
+                        spots: sub,
+                        isCurved: false,
+                        color: hlColor,
+                        barWidth:
+                            (widget.plot[i]["lineStrokeWidth"] ??
+                                    widget.lineStrokeWidth)
+                                .toDouble(),
+                        dotData: FlDotData(show: false),
+                      ),
+                    );
+                  }
                 }
 
                 return bars;

@@ -54,6 +54,16 @@ class _HomeState extends State<Home> {
   // Detail graph state
   int? _selectedRowIndex; // 0..rowsPerPage-1
   List<double> _detailData = const [];
+  // Per-row highlight ranges for current page (one list per row)
+  List<List<Map<String, int>>> _pageRowHighlights = const [];
+  // Highlight ranges for the detail graph (list of {start,end} local indices)
+  final ValueNotifier<List<Map<String, int>>> _detailHighlightRanges =
+      ValueNotifier<List<Map<String, int>>>([]);
+  // Notifier for overview (top) chart per-row highlight ranges at 60 Hz
+  final ValueNotifier<List<List<Map<String, int>>>> _pageHighlightsVN =
+      ValueNotifier<List<List<Map<String, int>>>>(
+        List.generate(rowsPerPage, (_) => <Map<String, int>>[]),
+      );
 
   int get _totalPages =>
       _totalSamples > 0
@@ -67,6 +77,126 @@ class _HomeState extends State<Home> {
     final s = total % 60;
     String two(int n) => n.toString().padLeft(2, '0');
     return '${two(h)}:${two(m)}:${two(s)}';
+  }
+
+  // Build contiguous highlight ranges inside the selected 60s row for any detected conditions
+  void _updateDetailHighlights({required int rowStart, required int rowLen}) {
+    final conds = _holter.conditions;
+    if (conds is! List || conds.isEmpty) {
+      _detailHighlightRanges.value = const [];
+      return;
+    }
+    final int rowEnd = rowStart + rowLen; // exclusive
+    // Collect all condition sample indices within this window
+    final Set<int> points = {};
+    for (final c in conds) {
+      final idxList = c is Map ? c['index'] : null;
+      if (idxList is List) {
+        for (final g in idxList) {
+          if (g is int && g >= rowStart && g < rowEnd) {
+            points.add(g - rowStart); // local X within row
+          }
+        }
+      }
+    }
+    if (points.isEmpty) {
+      _detailHighlightRanges.value = const [];
+      return;
+    }
+    // Expand each point into a short segment (±150 ms) so it is visible
+    const int pad = 45; // 150ms at 300Hz
+    final List<Map<String, int>> ranges =
+        points.map((p) {
+          final int s = (p - pad).clamp(0, rowLen - 1);
+          final int e = (p + pad).clamp(0, rowLen - 1);
+          return {'start': s, 'end': e};
+        }).toList();
+    // Merge overlapping/adjacent ranges
+    ranges.sort((a, b) => a['start']!.compareTo(b['start']!));
+    final List<Map<String, int>> merged = [];
+    Map<String, int>? cur;
+    for (final r in ranges) {
+      if (cur == null) {
+        cur = Map<String, int>.from(r);
+      } else if (r['start']! <= cur['end']! + 1) {
+        if (r['end']! > cur['end']!) cur['end'] = r['end']!;
+      } else {
+        merged.add(cur);
+        cur = Map<String, int>.from(r);
+      }
+    }
+    if (cur != null) merged.add(cur);
+    _detailHighlightRanges.value = merged;
+  }
+
+  // Build per-row highlight ranges for the entire current page from global condition indices
+  List<List<Map<String, int>>> _buildPageRowHighlights(
+    int pageStartSample,
+    int pageLength,
+  ) {
+    final result = List.generate(rowsPerPage, (_) => <Map<String, int>>[]);
+    final conds = _holter.conditions;
+    if (conds is! List || conds.isEmpty) return result;
+
+    final int pageEnd = pageStartSample + pageLength; // exclusive
+    // Collect per-row points
+    final List<Set<int>> perRowPoints = List.generate(
+      rowsPerPage,
+      (_) => <int>{},
+    );
+    for (final c in conds) {
+      final idxList = c is Map ? c['index'] : null;
+      if (idxList is List) {
+        for (final g in idxList) {
+          if (g is int && g >= pageStartSample && g < pageEnd) {
+            final rel = g - pageStartSample;
+            final row = rel ~/ samplesPerRow;
+            final local = rel % samplesPerRow;
+            if (row >= 0 && row < rowsPerPage) perRowPoints[row].add(local);
+          }
+        }
+      }
+    }
+
+    // Expand and merge per row
+    const int pad = 45; // ~150ms
+    for (int r = 0; r < rowsPerPage; r++) {
+      if (perRowPoints[r].isEmpty) continue;
+      final points = perRowPoints[r].toList()..sort();
+      final ranges = <Map<String, int>>[];
+      for (final p in points) {
+        final s = (p - pad).clamp(0, samplesPerRow - 1);
+        final e = (p + pad).clamp(0, samplesPerRow - 1);
+        ranges.add({'start': s, 'end': e});
+      }
+      // merge
+      ranges.sort((a, b) => a['start']!.compareTo(b['start']!));
+      final merged = <Map<String, int>>[];
+      Map<String, int>? cur;
+      for (final rr in ranges) {
+        if (cur == null) {
+          cur = Map<String, int>.from(rr);
+        } else if (rr['start']! <= cur['end']! + 1) {
+          if (rr['end']! > cur['end']!) cur['end'] = rr['end']!;
+        } else {
+          merged.add(cur);
+          cur = Map<String, int>.from(rr);
+        }
+      }
+      if (cur != null) merged.add(cur);
+      // Scale to 60 Hz overview: divide indices by stride 5 and clamp
+      final stride = sr ~/ displaySrTop; // 5
+      final scaled = <Map<String, int>>[];
+      for (final m in merged) {
+        int ss = (m['start']! / stride).floor();
+        int ee = (m['end']! / stride).ceil();
+        if (ss < 0) ss = 0;
+        if (ee >= samplesPerRowTop) ee = samplesPerRowTop - 1;
+        if (ee >= ss) scaled.add({'start': ss, 'end': ee});
+      }
+      result[r] = scaled;
+    }
+    return result;
   }
 
   String get _currentPageTimeRangeText {
@@ -721,6 +851,7 @@ class _HomeState extends State<Home> {
                   maxY: (4096 / 12) * 25,
                   chartHeight: 480, // further increased height for overview
                   showLeftConsole: false,
+                  channelHighlightRanges: _pageHighlightsVN,
                   onRowTap: (rowIdx) async {
                     // Map row tap to the absolute sample range for that row on current page
                     if (_totalSamples <= 0) return;
@@ -738,6 +869,8 @@ class _HomeState extends State<Home> {
                       _selectedRowIndex = rowIdx;
                       _detailData = data;
                     });
+                    // Compute highlight ranges for selected 60s row
+                    _updateDetailHighlights(rowStart: rowStart, rowLen: rowLen);
                     // Render in detail graph (single channel) after widget mounts
                     WidgetsBinding.instance.addPostFrameCallback((_) {
                       final rows = <List<double>>[data];
@@ -774,6 +907,8 @@ class _HomeState extends State<Home> {
                               showYAxisLabels: false,
                               key: detailGraphKey,
                               isImported: true,
+                              highlightRanges: _detailHighlightRanges,
+                              highlightColor: Colors.redAccent,
                               onCycleComplete: () {},
                               streamConfig: const [],
                               onStreamResult: (_) {},
@@ -1009,6 +1144,9 @@ class _HomeState extends State<Home> {
     // Render page and update current page
     _lastRows = rows; // keep full-res cached for detail
     // Render overview using 60Hz rows
+    // Build page highlight ranges from detected conditions and render
+    _pageRowHighlights = _buildPageRowHighlights(startSample, length);
+    _pageHighlightsVN.value = _pageRowHighlights;
     myBigGraphKey.currentState?.renderMultiRowPage(rowsTop);
     setState(() {
       _currentPage = pageIndex;
