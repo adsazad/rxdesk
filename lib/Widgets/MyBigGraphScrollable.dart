@@ -316,8 +316,8 @@ class MyBigGraphV2State extends State<MyBigGraphV2> {
   }) {
     final raw = source ?? widget.highlightRanges?.value ?? const [];
     if (raw.isEmpty) return const [];
-    // Normalize, clip and sort
-    final List<Map<String, int>> ranges = [];
+    // Normalize, clip and group by color (if any)
+    final Map<int, List<Map<String, int>>> byColor = {};
     for (final r in raw) {
       final s = r['start'] ?? 0;
       final e = r['end'] ?? -1;
@@ -332,25 +332,32 @@ class MyBigGraphV2State extends State<MyBigGraphV2> {
       if (ce <= 0 || cs >= maxIndexExclusive) continue;
       if (cs < 0) cs = 0;
       if (ce >= maxIndexExclusive) ce = maxIndexExclusive - 1;
-      ranges.add({'start': cs, 'end': ce});
+      final colorInt = r['color'] ?? -1; // -1 denotes default color bucket
+      byColor.putIfAbsent(colorInt, () => <Map<String, int>>[]).add({
+        'start': cs,
+        'end': ce,
+        if (colorInt != -1) 'color': colorInt,
+      });
     }
-    if (ranges.isEmpty) return const [];
-    ranges.sort((a, b) => (a['start']!).compareTo(b['start']!));
-    // Merge overlapping/adjacent
-    final List<Map<String, int>> merged = [];
-    var cur = Map<String, int>.from(ranges.first);
-    for (int i = 1; i < ranges.length; i++) {
-      final r = ranges[i];
-      if (r['start']! <= cur['end']! + 1) {
-        // overlap or adjacent
-        if (r['end']! > cur['end']!) cur['end'] = r['end']!;
-      } else {
-        merged.add(Map<String, int>.from(cur));
-        cur = Map<String, int>.from(r);
+    if (byColor.isEmpty) return const [];
+    // Merge per color bucket
+    final List<Map<String, int>> out = [];
+    byColor.forEach((colorKey, list) {
+      if (list.isEmpty) return;
+      list.sort((a, b) => a['start']!.compareTo(b['start']!));
+      Map<String, int> cur = Map<String, int>.from(list.first);
+      for (int i = 1; i < list.length; i++) {
+        final r = list[i];
+        if (r['start']! <= cur['end']! + 1) {
+          if (r['end']! > cur['end']!) cur['end'] = r['end']!;
+        } else {
+          out.add(Map<String, int>.from(cur));
+          cur = Map<String, int>.from(r);
+        }
       }
-    }
-    merged.add(cur);
-    return merged;
+      out.add(cur);
+    });
+    return out;
   }
 
   // Modify _generateVerticalLines() call site inside LineChartData -> extraLinesData:
@@ -1535,11 +1542,13 @@ class MyBigGraphV2State extends State<MyBigGraphV2> {
                     if (e < 0 || e >= maxIndexExclusive) continue;
                     final sub = shiftedSpots.sublist(s, e + 1);
                     if (sub.isEmpty) continue;
+                    final segColor =
+                        r.containsKey('color') ? Color(r['color']!) : hlColor;
                     bars.add(
                       LineChartBarData(
                         spots: sub,
                         isCurved: false,
-                        color: hlColor,
+                        color: segColor,
                         barWidth:
                             (widget.plot[i]["lineStrokeWidth"] ??
                                     widget.lineStrokeWidth)

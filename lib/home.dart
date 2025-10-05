@@ -70,6 +70,17 @@ class _HomeState extends State<Home> {
           ? ((_totalSamples + samplesPerPage - 1) ~/ samplesPerPage)
           : 0;
 
+  // Fixed color mapping for condition names used in highlights and legend
+  Color _conditionColor(String? name) {
+    final n = (name ?? '').toLowerCase();
+    if (n.contains('tachy')) return Colors.redAccent;
+    if (n.contains('brady')) return Colors.blueAccent;
+    if (n == 'svt' || n.contains('supraventricular')) return Colors.purple;
+    if (n.contains('pause')) return Colors.orange;
+    if (n.contains('af') || n.contains('atrial fib')) return Colors.teal;
+    return Colors.amber.shade700; // default
+  }
+
   String _formatSeconds(double seconds) {
     final total = seconds.floor();
     final h = total ~/ 3600;
@@ -87,46 +98,25 @@ class _HomeState extends State<Home> {
       return;
     }
     final int rowEnd = rowStart + rowLen; // exclusive
-    // Collect all condition sample indices within this window
-    final Set<int> points = {};
-    for (final c in conds) {
-      final idxList = c is Map ? c['index'] : null;
-      if (idxList is List) {
-        for (final g in idxList) {
-          if (g is int && g >= rowStart && g < rowEnd) {
-            points.add(g - rowStart); // local X within row
-          }
-        }
-      }
-    }
-    if (points.isEmpty) {
-      _detailHighlightRanges.value = const [];
-      return;
-    }
-    // Expand each point into a short segment (±150 ms) so it is visible
+    // Build colored highlight ranges per condition
     const int pad = 45; // 150ms at 300Hz
-    final List<Map<String, int>> ranges =
-        points.map((p) {
-          final int s = (p - pad).clamp(0, rowLen - 1);
-          final int e = (p + pad).clamp(0, rowLen - 1);
-          return {'start': s, 'end': e};
-        }).toList();
-    // Merge overlapping/adjacent ranges
-    ranges.sort((a, b) => a['start']!.compareTo(b['start']!));
-    final List<Map<String, int>> merged = [];
-    Map<String, int>? cur;
-    for (final r in ranges) {
-      if (cur == null) {
-        cur = Map<String, int>.from(r);
-      } else if (r['start']! <= cur['end']! + 1) {
-        if (r['end']! > cur['end']!) cur['end'] = r['end']!;
-      } else {
-        merged.add(cur);
-        cur = Map<String, int>.from(r);
+    final List<Map<String, int>> coloredRanges = [];
+    for (final c in conds) {
+      if (c is! Map) continue;
+      final name = c['name'] as String?;
+      final colorInt = _conditionColor(name).value;
+      final idxList = c['index'];
+      if (idxList is! List) continue;
+      for (final g in idxList) {
+        if (g is! int) continue;
+        if (g < rowStart || g >= rowEnd) continue;
+        final local = g - rowStart;
+        final int s = (local - pad).clamp(0, rowLen - 1);
+        final int e = (local + pad).clamp(0, rowLen - 1);
+        coloredRanges.add({'start': s, 'end': e, 'color': colorInt});
       }
     }
-    if (cur != null) merged.add(cur);
-    _detailHighlightRanges.value = merged;
+    _detailHighlightRanges.value = coloredRanges;
   }
 
   // Build per-row highlight ranges for the entire current page from global condition indices
@@ -139,62 +129,48 @@ class _HomeState extends State<Home> {
     if (conds is! List || conds.isEmpty) return result;
 
     final int pageEnd = pageStartSample + pageLength; // exclusive
-    // Collect per-row points
-    final List<Set<int>> perRowPoints = List.generate(
-      rowsPerPage,
-      (_) => <int>{},
-    );
-    for (final c in conds) {
-      final idxList = c is Map ? c['index'] : null;
-      if (idxList is List) {
-        for (final g in idxList) {
-          if (g is int && g >= pageStartSample && g < pageEnd) {
-            final rel = g - pageStartSample;
-            final row = rel ~/ samplesPerRow;
-            final local = rel % samplesPerRow;
-            if (row >= 0 && row < rowsPerPage) perRowPoints[row].add(local);
-          }
-        }
-      }
-    }
-
-    // Expand and merge per row
+    // For each condition, collect per-row points and create colored ranges
     const int pad = 45; // ~150ms
-    for (int r = 0; r < rowsPerPage; r++) {
-      if (perRowPoints[r].isEmpty) continue;
-      final points = perRowPoints[r].toList()..sort();
-      final ranges = <Map<String, int>>[];
-      for (final p in points) {
-        final s = (p - pad).clamp(0, samplesPerRow - 1);
-        final e = (p + pad).clamp(0, samplesPerRow - 1);
-        ranges.add({'start': s, 'end': e});
+    for (final c in conds) {
+      if (c is! Map) continue;
+      final name = c['name'] as String?;
+      final colorInt = _conditionColor(name).value;
+      final idxList = c['index'];
+      if (idxList is! List) continue;
+      // per-row points for this condition
+      final List<Set<int>> perRowPoints = List.generate(
+        rowsPerPage,
+        (_) => <int>{},
+      );
+      for (final g in idxList) {
+        if (g is! int) continue;
+        if (g < pageStartSample || g >= pageEnd) continue;
+        final rel = g - pageStartSample;
+        final row = rel ~/ samplesPerRow;
+        final local = rel % samplesPerRow;
+        if (row >= 0 && row < rowsPerPage) perRowPoints[row].add(local);
       }
-      // merge
-      ranges.sort((a, b) => a['start']!.compareTo(b['start']!));
-      final merged = <Map<String, int>>[];
-      Map<String, int>? cur;
-      for (final rr in ranges) {
-        if (cur == null) {
-          cur = Map<String, int>.from(rr);
-        } else if (rr['start']! <= cur['end']! + 1) {
-          if (rr['end']! > cur['end']!) cur['end'] = rr['end']!;
-        } else {
-          merged.add(cur);
-          cur = Map<String, int>.from(rr);
+      // Expand and scale per row for this condition, then append to result
+      for (int r = 0; r < rowsPerPage; r++) {
+        if (perRowPoints[r].isEmpty) continue;
+        final points = perRowPoints[r].toList()..sort();
+        final ranges = <Map<String, int>>[];
+        for (final p in points) {
+          final s = (p - pad).clamp(0, samplesPerRow - 1);
+          final e = (p + pad).clamp(0, samplesPerRow - 1);
+          ranges.add({'start': s, 'end': e, 'color': colorInt});
+        }
+        // Scale to 60 Hz overview
+        final stride = sr ~/ displaySrTop; // 5
+        for (final m in ranges) {
+          int ss = (m['start']! / stride).floor();
+          int ee = (m['end']! / stride).ceil();
+          if (ss < 0) ss = 0;
+          if (ee >= samplesPerRowTop) ee = samplesPerRowTop - 1;
+          if (ee >= ss)
+            result[r].add({'start': ss, 'end': ee, 'color': colorInt});
         }
       }
-      if (cur != null) merged.add(cur);
-      // Scale to 60 Hz overview: divide indices by stride 5 and clamp
-      final stride = sr ~/ displaySrTop; // 5
-      final scaled = <Map<String, int>>[];
-      for (final m in merged) {
-        int ss = (m['start']! / stride).floor();
-        int ee = (m['end']! / stride).ceil();
-        if (ss < 0) ss = 0;
-        if (ee >= samplesPerRowTop) ee = samplesPerRowTop - 1;
-        if (ee >= ss) scaled.add({'start': ss, 'end': ee});
-      }
-      result[r] = scaled;
     }
     return result;
   }
@@ -879,6 +855,9 @@ class _HomeState extends State<Home> {
                   },
                 ),
                 const SizedBox(height: 8),
+                // Legend mapping colors to condition names
+                _conditionsLegend(),
+                const SizedBox(height: 4),
                 if (_detailData.isNotEmpty)
                   Align(
                     alignment: Alignment.centerLeft,
@@ -1070,6 +1049,58 @@ class _HomeState extends State<Home> {
           ),
         ),
       ],
+    );
+  }
+
+  // Small legend row showing which color corresponds to which detected condition
+  Widget _conditionsLegend() {
+    final conds = _holter.conditions;
+    if (conds is! List || conds.isEmpty) return const SizedBox.shrink();
+    final names = <String>{};
+    for (final c in conds) {
+      if (c is Map && c['name'] is String) {
+        final n = (c['name'] as String).trim();
+        if (n.isNotEmpty) names.add(n);
+      }
+    }
+    if (names.isEmpty) return const SizedBox.shrink();
+    return Align(
+      alignment: Alignment.centerLeft,
+      child: SingleChildScrollView(
+        scrollDirection: Axis.horizontal,
+        child: Wrap(
+          spacing: 10,
+          runSpacing: 4,
+          children: names.map((n) => _legendItem(n)).toList(),
+        ),
+      ),
+    );
+  }
+
+  Widget _legendItem(String name) {
+    final color = _conditionColor(name);
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: Colors.black12),
+        boxShadow: const [
+          BoxShadow(color: Colors.black12, blurRadius: 1, offset: Offset(0, 1)),
+        ],
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Container(
+            width: 10,
+            height: 10,
+            decoration: BoxDecoration(color: color, shape: BoxShape.circle),
+          ),
+          const SizedBox(width: 6),
+          Text(name, style: const TextStyle(fontSize: 12)),
+        ],
+      ),
     );
   }
 
