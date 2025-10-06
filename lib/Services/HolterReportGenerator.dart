@@ -7,11 +7,9 @@ import 'package:holtersync/Pages/AI/ECGClassV1.dart';
 import 'package:holtersync/Services/EcgBPMCalculator.dart';
 import 'package:holtersync/Services/FilterClass.dart';
 import 'package:holtersync/Services/PanThomkins.dart';
-import 'package:holtersync/Services/StandardScaler.dart';
 import 'package:holtersync/data/local/database.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-import 'package:tflite_flutter/tflite_flutter.dart';
 
 class HolterReportGenerator {
   String? guid;
@@ -237,55 +235,54 @@ class HolterReportGenerator {
 
   aiReporter() async {
     print("running ai reporter");
+    // Initialize AI classifier using shared pipeline (ignore + PVC rule logic)
     aiClasser = await ECGClassv1.create();
-    Interpreter interpreter = aiClasser!.interpreter;
-    StandardScaler scalerTwo = aiClasser!.scalerTwo;
-    processedIndex = 0;
-    print("allRrIndexes length: ${allRrIndexes.length}");
-    for (int i = 0; i < allRrIndexes.length; i++) {
-      int index = allRrIndexes[i];
-      List<double> slice = await getSlice200(index);
-      print("SLICELEN: ${slice.length}");
-      if (slice.length == 200) {
-        slice = filterData(slice);
-        slice = aiClasser!.movingAverage(slice);
-        slice = scalerTwo.transform(slice);
-        List<List<List<double>>> input = [
-          slice.map((e) => [e]).toList(),
-        ];
-        List<List<double>> output = List.generate(
-          1,
-          (_) => List.filled(14, 0.0),
-        );
-        interpreter.run(input, output);
-        int maxIndex = output[0].indexWhere(
-          (e) => e == output[0].reduce((a, b) => a > b ? a : b),
-        );
+    aiClasser!.setSampleRateHz(sampleRate.toDouble());
+    aiClasser!.setPVCDetectionConfig(enable: true, overrideAI: true);
 
-        String label = aiClasser!.classLabels[maxIndex];
-        int conIndex = conditions.indexWhere(
-          (element) => element["name"] == label,
-        );
-        var confidenceScore = output[0][maxIndex];
-        if (label != 'normal') {
-          if (confidenceScore > 0.5) {
-            if (conIndex != -1) {
-              conditions[conIndex]["index"].add(index);
-            } else {
-              conditions.add({
-                "name": label,
-                "index": [index],
-              });
-            }
-          }
-        }
-      }
-
-      processedIndex++;
-      final double progressPercent =
-          (processedIndex / allRrIndexes.length) * 100;
-      progress.value = "${progressPercent.toStringAsFixed(2)}%";
+    // Load full ECG trace once to feed the predictor (predict extracts 200-sample windows itself)
+    final total = await getTotalEcgSamples();
+    if (total <= 0 || allRrIndexes.isEmpty) {
+      aiReport = [];
+      return;
     }
+
+    // Progress setup
+    processedIndex = 0;
+    progress.value = "0.00%";
+
+    // Fetch ECG data at native rate with filtering/baseline correction
+    final ecg = await getEcgSamples(0, total);
+
+    // Run shared predictor; returns list of segment predictions with classification, start/end, confidence, etc.
+    final List<dynamic> preds = await aiClasser!.predict(ecg, allRrIndexes);
+    aiReport = preds; // keep raw predictions if needed for debugging/UI
+
+    // Aggregate into Holter conditions structure for UI tabs and highlighting
+    final Map<String, List<int>> idxByName = {};
+    for (final p in preds) {
+      final String? cls = p['classification']?.toString();
+      if (cls == null || cls == 'AOL') continue; // skip helper tag
+      final int? s = (p['start'] as num?)?.toInt();
+      final int? e = (p['end'] as num?)?.toInt();
+      if (s == null || e == null) continue;
+      final int center = ((s + e) / 2).round();
+      (idxByName[cls] ??= <int>[]).add(center);
+    }
+
+    // Convert to list of { name, index: [centers...] }
+    final List<Map<String, dynamic>> grouped = [];
+    idxByName.forEach((name, indices) {
+      if (indices.isEmpty) return;
+      // ensure sorted and unique-ish indices (optional de-dup if overlapping)
+      indices.sort();
+      grouped.add({'name': name, 'index': indices});
+    });
+    conditions = grouped;
+
+    // Finalize progress
+    processedIndex = allRrIndexes.length.toDouble();
+    progress.value = "100.00%";
   }
 
   Future<List<double>> getSlice200(int index) async {

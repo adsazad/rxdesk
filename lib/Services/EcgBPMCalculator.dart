@@ -106,7 +106,7 @@ class EcgBPMCalculator {
     );
     double timeLengthSecond = (ecgData.length / samplingRate);
 
-    // var pvcBeats = detectAllPVCsFinal();
+    var pvcBeats = detectAllPVCsFinal();
 
     return {
       "timeLengthSecond": timeLengthSecond,
@@ -145,7 +145,7 @@ class EcgBPMCalculator {
       "secondTPeakValue": secondTPeakValue,
       "secondPPeakIndex": secondPPeakIndex,
       "secondPPeakValue": secondPPeakValue,
-      // "pvcBeats": pvcBeats,
+      "pvcBeats": pvcBeats,
     };
   }
 

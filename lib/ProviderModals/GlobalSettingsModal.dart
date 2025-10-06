@@ -275,40 +275,88 @@ class GlobalSettingsModal with ChangeNotifier {
   }
 
   fromJson(json) {
-    var arr = jsonDecode(json);
-    autoRecordOnOff = arr["autoRecordOnOff"];
-    filterOnOf = arr["filterOnOf"];
-    highPass = arr["highPass"];
-    lowPass = arr["lowPass"];
-    notch = arr["notch"];
-    gridLine = arr["gridLine"];
-    appMode = arr["appMode"];
-    sampleRate = arr['sampleRate'];
+    final dynamic parsed = (json is String) ? jsonDecode(json) : json;
+    if (parsed is! Map) {
+      notifyListeners();
+      return;
+    }
+    final Map<String, dynamic> arr = Map<String, dynamic>.from(parsed);
+
+    autoRecordOnOff = _toBool(arr["autoRecordOnOff"], autoRecordOnOff);
+    filterOnOf = _toBool(arr["filterOnOf"], filterOnOf);
+    highPass = _toInt(arr["highPass"], highPass);
+    lowPass = _toInt(arr["lowPass"], lowPass);
+    notch = _toBool(arr["notch"], notch);
+    gridLine = _toBool(arr["gridLine"], gridLine);
+    appMode = arr["appMode"]?.toString() ?? appMode;
+    sampleRate = arr['sampleRate']?.toString() ?? sampleRate;
     if (arr["com"] != null) {
       com = arr["com"];
     }
-    voltage1 = arr["voltage1"];
-    value1 = arr["value1"];
-    voltage2 = arr["voltage2"];
-    value2 = arr["value2"];
-    applyConversion = arr['applyConversion'];
-    tidalMeasuredReference = arr["tidalMeasuredReference"] ?? 0.0;
-    tidalActualReference = arr["tidalActualReference"] ?? 0.0;
-    tidalScalingFactor = arr["tidalScalingFactor"] ?? 1.0;
-    hospitalName = arr["hospitalName"] ?? '';
-    hospitalAddress = arr["hospitalAddress"] ?? '';
-    hospitalContact = arr["hospitalContact"] ?? '';
-    hospitalEmail = arr["hospitalEmail"] ?? '';
-    deviceType = arr["deviceType"] ?? "none";
-    machineCom = arr["machineCom"] ?? "none";
-    ergoProtocol = arr["ergoProtocol"] ?? "Ramp Protocol";
-    treadmillProtocol = arr["treadmillProtocol"] ?? "Bruce";
-    atDetectionMethod = arr["atDetectionMethod"] ?? "VO2 max";
-    transportDelayMs = arr["transportDelayMs"] ?? 0;
-    transportDelayO2Ms = arr["transportDelayO2Ms"] ?? 0;
-    transportDelayCO2Ms = arr["transportDelayCO2Ms"] ?? 0;
-    breathCalibrationMarker = arr["breathCalibrationMarker"] ?? false;
+    voltage1 = _toDouble(arr["voltage1"], voltage1);
+    value1 = _toDouble(arr["value1"], value1);
+    voltage2 = _toDouble(arr["voltage2"], voltage2);
+    value2 = _toDouble(arr["value2"], value2);
+    applyConversion = _toBool(arr['applyConversion'], applyConversion);
+    tidalMeasuredReference = _toDouble(
+      arr["tidalMeasuredReference"],
+      tidalMeasuredReference,
+    );
+    tidalActualReference = _toDouble(
+      arr["tidalActualReference"],
+      tidalActualReference,
+    );
+    tidalScalingFactor = _toDouble(
+      arr["tidalScalingFactor"],
+      tidalScalingFactor,
+    );
+    hospitalName = arr["hospitalName"]?.toString() ?? hospitalName;
+    hospitalAddress = arr["hospitalAddress"]?.toString() ?? hospitalAddress;
+    hospitalContact = arr["hospitalContact"]?.toString() ?? hospitalContact;
+    hospitalEmail = arr["hospitalEmail"]?.toString() ?? hospitalEmail;
+    deviceType = arr["deviceType"]?.toString() ?? deviceType;
+    machineCom = arr["machineCom"]?.toString() ?? machineCom;
+    ergoProtocol = arr["ergoProtocol"]?.toString() ?? ergoProtocol;
+    treadmillProtocol =
+        arr["treadmillProtocol"]?.toString() ?? treadmillProtocol;
+    atDetectionMethod =
+        arr["atDetectionMethod"]?.toString() ?? atDetectionMethod;
+    transportDelayMs = _toInt(arr["transportDelayMs"], transportDelayMs);
+    transportDelayO2Ms = _toInt(arr["transportDelayO2Ms"], transportDelayO2Ms);
+    transportDelayCO2Ms = _toInt(
+      arr["transportDelayCO2Ms"],
+      transportDelayCO2Ms,
+    );
+    breathCalibrationMarker = _toBool(
+      arr["breathCalibrationMarker"],
+      breathCalibrationMarker,
+    );
 
     notifyListeners();
+  }
+
+  // --- Safe converters ----------------------------------------------------
+  bool _toBool(dynamic v, bool fallback) {
+    if (v == null) return fallback;
+    if (v is bool) return v;
+    if (v is num) return v != 0;
+    final s = v.toString().toLowerCase();
+    if (s == 'true') return true;
+    if (s == 'false') return false;
+    return fallback;
+  }
+
+  int _toInt(dynamic v, int fallback) {
+    if (v == null) return fallback;
+    if (v is int) return v;
+    if (v is num) return v.toInt();
+    return int.tryParse(v.toString()) ?? fallback;
+  }
+
+  double _toDouble(dynamic v, double fallback) {
+    if (v == null) return fallback;
+    if (v is double) return v;
+    if (v is num) return v.toDouble();
+    return double.tryParse(v.toString()) ?? fallback;
   }
 }

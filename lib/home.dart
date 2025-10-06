@@ -78,6 +78,8 @@ class _HomeState extends State<Home> {
     if (n == 'svt' || n.contains('supraventricular')) return Colors.purple;
     if (n.contains('pause')) return Colors.orange;
     if (n.contains('af') || n.contains('atrial fib')) return Colors.teal;
+    // pvc
+    if (n.contains('pvc')) return Colors.blue.shade700;
     return Colors.amber.shade700; // default
   }
 

@@ -64,10 +64,31 @@ class ECGClassv1 {
   late StandardScaler scalerOne;
   late StandardScaler scalerTwo;
 
+  // Classifications to ignore. Any prediction with a label in this set
+  // will be filtered out from model outputs and summary.
+  final Set<String> ignoredClassifications = <String>{'Normal', "Abnormal ECG"};
+
+  // Replace the ignored set with the provided labels
+  void setIgnoredClassifications(Iterable<String> labels) {
+    ignoredClassifications
+      ..clear()
+      ..addAll(labels);
+  }
+
+  // Add a single classification to ignore
+  void addIgnoredClassification(String label) {
+    ignoredClassifications.add(label);
+  }
+
+  // Remove a single classification from ignore
+  void removeIgnoredClassification(String label) {
+    ignoredClassifications.remove(label);
+  }
+
   // Sampling rate (Hz) used by the rule-based features (QRS width, RR, etc.)
   double fsHz = 250.0;
   // Toggle rule-based PVC detection
-  bool enablePVCRuleDetector = false;
+  bool enablePVCRuleDetector = true;
   // If true, PVC beats detected by the rule engine will override AI PVC/non-PVC
   bool overrideAIForPVC = true;
   PVCDetectorConfig pvcConfig = const PVCDetectorConfig();
@@ -131,6 +152,11 @@ class ECGClassv1 {
       double confidence = prediction['confidence'];
       print(label);
       print(confidence);
+
+      // Skip ignored classifications in consolidation
+      if (ignoredClassifications.contains(label)) {
+        continue;
+      }
 
       if (confidence >= 0.7) {
         if (label == 'Normal') {
@@ -272,13 +298,14 @@ class ECGClassv1 {
       areaOfInterests[i]["end"] = areaOfInterests[i]["end"];
       // areaOfInterests[i]["confidence"] = areaOfInterests[i]["confidence"];
     }
-    print("AREA OF INTEREST");
-    print(areaOfInterests);
+    // print("AREA OF INTEREST");
+    // print(areaOfInterests);
     // return areaOfInterests;
     List<dynamic> predictions = modelTwo(areaOfInterests);
 
     // Rule-based PVC override logic
     if (enablePVCRuleDetector) {
+      print("PVC RULE ENGINE STARTING");
       try {
         final pvcEvents = detectPVCs(
           data,
@@ -286,6 +313,8 @@ class ECGClassv1 {
           fs: fsHz,
           window: pvcConfig.windowSamples,
         );
+        print("PVC EVENTS DETECTED");
+        print(pvcEvents);
         final pvcIdx = pvcEvents.map((e) => e['i'] as int).toSet();
 
         // Build an index for quick lookup by beat index
@@ -316,6 +345,15 @@ class ECGClassv1 {
         // Fail-safe: never break AI pipeline on rule engine issues
         // print('PVC rule engine error: $e');
       }
+    }
+    // Apply final filtering: drop any predictions that are in the ignore list
+    if (ignoredClassifications.isNotEmpty) {
+      predictions =
+          predictions
+              .where(
+                (p) => !ignoredClassifications.contains(p['classification']),
+              )
+              .toList();
     }
 
     return predictions;
@@ -367,10 +405,10 @@ class ECGClassv1 {
 
     var inputShape = interpreter.getInputTensor(0).shape;
     var outputShape = interpreter.getOutputTensor(0).shape;
-    print("INPUTSHAPE");
-    print(inputShape);
-    print("OUTPUTSHAPE");
-    print(outputShape);
+    // print("INPUTSHAPE");
+    // print(inputShape);
+    // print("OUTPUTSHAPE");
+    // print(outputShape);
     // List<String> classLabels = ["NA","Noise", "Normal", "PVC"];
 
     for (int i = 0; i < segments.length; i++) {
@@ -409,8 +447,10 @@ class ECGClassv1 {
         // print(classLabels[maxIndex]);
         String classification = classLabels[maxIndex];
         print("Class AI: ${classification}: ${output[0][maxIndex]}");
-        print(segments[i]);
-        if (classification != "NA") {
+        // print(segments[i]);
+        // Skip NA and any ignored classifications
+        if (classification != "NA" &&
+            !ignoredClassifications.contains(classification)) {
           predictions.add({
             "start": segments[i]["start"],
             "end": segments[i]["end"],
