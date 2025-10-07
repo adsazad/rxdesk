@@ -324,6 +324,11 @@ class _HomeState extends State<Home> {
   // Import state
   bool _isImportingHolter = false;
   double _holterImportProgress = 0.0;
+  // Better progress: cancel + ETA
+  bool _cancelImport = false;
+  DateTime? _importStart;
+  String _importEtaLabel = '';
+  DateTime? _lastImportUiTick;
 
   File? importedFile;
   bool isImported = false;
@@ -431,6 +436,9 @@ class _HomeState extends State<Home> {
     setState(() {
       _isImportingHolter = true;
       _holterImportProgress = 0.0;
+      _cancelImport = false;
+      _importEtaLabel = '';
+      _importStart = DateTime.now();
     });
 
     try {
@@ -444,11 +452,36 @@ class _HomeState extends State<Home> {
       }
       final srcFile = File(res.files.single.path!);
       final raw = await srcFile.readAsBytes();
+      if (_cancelImport) {
+        if (mounted) {
+          setState(() {
+            _isImportingHolter = false;
+            _importEtaLabel = '';
+          });
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('Import canceled.')),
+          );
+        }
+        return;
+      }
 
       // Decode ECG from raw (0x55 0xAA frames: 25 samples per frame, stride 8)
       final List<double> ecg = <double>[];
       int i = 0;
       while (i < raw.length - 1) {
+        if (_cancelImport) {
+          if (mounted) {
+            setState(() {
+              _isImportingHolter = false;
+              _holterImportProgress = 0.0;
+              _importEtaLabel = '';
+            });
+            ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(content: Text('Import canceled.')),
+            );
+          }
+          return;
+        }
         if (raw[i] == 0x55 && raw[i + 1] == 0xAA) {
           int f2 = i + 2, f3 = i + 3;
           for (int j = 0; j < 25; j++) {
@@ -472,7 +505,21 @@ class _HomeState extends State<Home> {
         }
         if (raw.isNotEmpty) {
           _holterImportProgress = i / raw.length;
-          if (mounted) setState(() {});
+          // compute ETA based on elapsed and progress
+          if (_importStart != null && _holterImportProgress > 0.0) {
+            final now = DateTime.now();
+            final elapsed = now.difference(_importStart!);
+            final remainingFraction = (1.0 - _holterImportProgress) / _holterImportProgress;
+            final eta = Duration(milliseconds: (elapsed.inMilliseconds * remainingFraction).round());
+            _importEtaLabel = _formatEta(eta);
+            // Throttle UI updates to ~20fps
+            if (_lastImportUiTick == null || now.difference(_lastImportUiTick!).inMilliseconds >= 50) {
+              _lastImportUiTick = now;
+              if (mounted) setState(() {});
+            }
+          } else {
+            if (mounted) setState(() {});
+          }
         }
       }
 
@@ -550,6 +597,10 @@ class _HomeState extends State<Home> {
         setState(() {
           _isImportingHolter = false;
           _holterImportProgress = 1.0;
+          _importEtaLabel = '';
+          _cancelImport = false;
+          _importStart = null;
+          _lastImportUiTick = null;
         });
       }
     } catch (e) {
@@ -557,9 +608,29 @@ class _HomeState extends State<Home> {
         ScaffoldMessenger.of(
           context,
         ).showSnackBar(SnackBar(content: Text('Failed to import holter: $e')));
-        setState(() => _isImportingHolter = false);
+        setState(() {
+          _isImportingHolter = false;
+          _importEtaLabel = '';
+          _cancelImport = false;
+          _importStart = null;
+          _lastImportUiTick = null;
+        });
       }
     }
+  }
+
+  String _formatEta(Duration d) {
+    if (d.isNegative) return '';
+    final h = d.inHours;
+    final m = d.inMinutes % 60;
+    final s = d.inSeconds % 60;
+    if (h > 0) {
+      return '${h}h ${m.toString().padLeft(2, '0')}m ${s.toString().padLeft(2, '0')}s left';
+    }
+    if (m > 0) {
+      return '${m}m ${s.toString().padLeft(2, '0')}s left';
+    }
+    return '${s}s left';
   }
 
   // Import an existing .bin by path and feed ECG-only to graph
@@ -804,13 +875,24 @@ class _HomeState extends State<Home> {
               icon: Icons.upload_file,
               label:
                   _isImportingHolter
-                      ? 'Importing ${(100 * _holterImportProgress).toStringAsFixed(0)}%'
+                      ? 'Importing ${(100 * _holterImportProgress).toStringAsFixed(0)}%${_importEtaLabel.isNotEmpty ? ' • ' + _importEtaLabel : ''}'
                       : 'Load New Holter',
               onPressed: () {
                 if (_isImportingHolter) return;
                 _importNewHolterFile();
               },
             ),
+            if (_isImportingHolter)
+              _toolbarButton(
+                icon: Icons.close,
+                label: 'Cancel Import',
+                onPressed: () {
+                  if (!_isImportingHolter) return;
+                  setState(() {
+                    _cancelImport = true;
+                  });
+                },
+              ),
             _toolbarButton(
               icon: Icons.settings,
               label: 'Settings',
