@@ -19,6 +19,10 @@ class ReportPreviewPageLite extends StatefulWidget {
   final Map<String, dynamic>? recordingInfo; // optional extra info (e.g., file path)
   // Holter analyzer with computed metrics and RR intervals
   final HolterReportGenerator holter;
+  // Optional pre-rendered overview (compressed graph) image in PNG bytes
+  final Uint8List? overviewPng;
+  // Optional multiple overview pages
+  final List<Uint8List>? overviewPngPages;
 
   const ReportPreviewPageLite({
     super.key,
@@ -27,6 +31,8 @@ class ReportPreviewPageLite extends StatefulWidget {
     this.recordedAt,
     this.recordingInfo,
     required this.holter,
+    this.overviewPng,
+    this.overviewPngPages,
   });
 
   @override
@@ -90,10 +96,8 @@ class _ReportPreviewPageLiteState extends State<ReportPreviewPageLite> {
     final reportDate = DateTime.now().toString().split(' ').first;
     final recordedAt = widget.recordedAt?.toString() ?? '-';
 
-    pdf.addPage(
-      pw.MultiPage(
-        pageFormat: format,
-        build: (context) => [
+    // A helper for the shared header and info blocks used on the first page
+    List<pw.Widget> _buildHeaderAndInfo() => [
           // Header with hospital info and logo
           pw.Row(
             mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
@@ -185,14 +189,71 @@ class _ReportPreviewPageLiteState extends State<ReportPreviewPageLite> {
               if (nn50 != null) 'NN50 (#)': nn50.toStringAsFixed(0),
             }),
           ],
+          if (widget.overviewPng != null) ...[
+            pw.SizedBox(height: 12),
+            pw.Text('Overview (compressed graph)', style: pw.TextStyle(fontSize: 12, fontWeight: pw.FontWeight.bold)),
+            pw.SizedBox(height: 6),
+            pw.Container(
+              decoration: const pw.BoxDecoration(border: pw.Border.fromBorderSide(pw.BorderSide(color: PdfColors.grey400))),
+              padding: const pw.EdgeInsets.all(4),
+              child: pw.Image(pw.MemoryImage(widget.overviewPng!), fit: pw.BoxFit.fitWidth),
+            ),
+          ],
           pw.SizedBox(height: 16),
           pw.Divider(color: PdfColors.grey400),
           pw.SizedBox(height: 6),
           pw.Text('Graphs and analysis will appear here in future versions.',
               style: const pw.TextStyle(fontSize: 10, color: PdfColors.grey600)),
-        ],
+        ];
+
+    // First page: headers, patient info, summaries, and optionally first overview image
+    pdf.addPage(
+      pw.MultiPage(
+        pageFormat: format,
+        build: (context) {
+          final body = <pw.Widget>[];
+          body.addAll(_buildHeaderAndInfo());
+          // If multiple pages were provided, show the first here; others get their own pages
+          if (widget.overviewPng != null && (widget.overviewPngPages == null || widget.overviewPngPages!.isEmpty)) {
+            body.add(pw.SizedBox(height: 12));
+            body.add(pw.Text('Overview (compressed graph)', style: pw.TextStyle(fontSize: 12, fontWeight: pw.FontWeight.bold)));
+            body.add(pw.SizedBox(height: 6));
+            final availW = format.availableWidth;
+            final availH = format.availableHeight;
+            final imgH = availH * 0.6; // keep within page to avoid overflow
+            body.add(pw.Container(
+              decoration: const pw.BoxDecoration(border: pw.Border.fromBorderSide(pw.BorderSide(color: PdfColors.grey400))),
+              padding: const pw.EdgeInsets.all(4),
+              child: pw.SizedBox(
+                width: availW,
+                height: imgH,
+                child: pw.Image(pw.MemoryImage(widget.overviewPng!), fit: pw.BoxFit.contain),
+              ),
+            ));
+          } else if (widget.overviewPngPages != null && widget.overviewPngPages!.isNotEmpty) {
+            // Stitch all overview images sequentially (no per-image page breaks)
+            final availW = format.availableWidth;
+            final availH = format.availableHeight;
+            final imgH = availH * 0.55; // fit multiple per page if needed
+            for (int i = 0; i < widget.overviewPngPages!.length; i++) {
+              if (i == 0) body.add(pw.SizedBox(height: 12));
+              body.add(pw.Container(
+                // No border to visually stitch images together
+                padding: const pw.EdgeInsets.only(bottom: 2),
+                child: pw.SizedBox(
+                  width: availW,
+                  height: imgH,
+                  child: pw.Image(pw.MemoryImage(widget.overviewPngPages![i]), fit: pw.BoxFit.contain),
+                ),
+              ));
+            }
+          }
+          return body;
+        },
       ),
     );
+
+    // No separate pages for overviews; they are stitched within the MultiPage above
 
     return pdf.save();
   }

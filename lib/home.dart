@@ -2,11 +2,13 @@ import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
 import 'dart:typed_data';
+import 'dart:ui' as ui;
 
 import 'package:drift/drift.dart' as drift;
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/foundation.dart';
+import 'package:flutter/rendering.dart';
 import 'package:flutter/services.dart';
 import 'package:holtersync/Pages/GlobalSettings.dart';
 import 'package:holtersync/Pages/AI/AiInterpretationTab.dart';
@@ -54,6 +56,7 @@ class Home extends StatefulWidget {
 class _HomeState extends State<Home> {
   final GlobalKey<MyBigGraphV2State> myBigGraphKey = GlobalKey();
   final GlobalKey<MyBigGraphV2State> detailGraphKey = GlobalKey();
+  final GlobalKey _overviewRepaintKey = GlobalKey();
   final HolterReportGenerator _holter = HolterReportGenerator();
   TabController? _tabController;
 
@@ -95,6 +98,19 @@ class _HomeState extends State<Home> {
         orElse: () => _pageCache.keys.first,
       );
       _pageCache.remove(toRemove);
+    }
+  }
+
+  // Capture the compressed overview graph as a PNG image (bytes)
+  Future<Uint8List?> _captureOverviewPng({double pixelRatio = 2.0}) async {
+    try {
+      final boundary = _overviewRepaintKey.currentContext?.findRenderObject() as RenderRepaintBoundary?;
+      if (boundary == null) return null;
+      final ui.Image image = await boundary.toImage(pixelRatio: pixelRatio);
+      final byteData = await image.toByteData(format: ui.ImageByteFormat.png);
+      return byteData?.buffer.asUint8List();
+    } catch (_) {
+      return null;
     }
   }
 
@@ -898,7 +914,7 @@ class _HomeState extends State<Home> {
               _toolbarButton(
                 icon: Icons.picture_as_pdf,
                 label: 'Report',
-                onPressed: () {
+                onPressed: () async {
                   // Build minimal patient and recording info for report headers
                   final patient = Provider.of<DefaultPatientModal>(
                     context,
@@ -914,6 +930,32 @@ class _HomeState extends State<Home> {
                     if (_holter.fileName != null && _holter.fileName!.isNotEmpty)
                       'File': _holter.fileName,
                   };
+                  // Capture ALL overview pages as PNGs for embedding into PDF
+                  final List<Uint8List> overviewPages = [];
+                  final int originalPage = _currentPage;
+                  final ValueNotifier<String> msg = ValueNotifier<String>('Preparing...');
+                  _showBlockingProgressDialog(
+                    title: 'Preparing Report',
+                    message: 'Capturing overview pages...',
+                    messageListenable: msg,
+                  );
+                  try {
+                    final totalPages = _totalPages;
+                    for (int p = 0; p < totalPages; p++) {
+                      msg.value = 'Rendering page ${p + 1} of $totalPages...';
+                      await _loadPage(p);
+                      // Ensure the frame paints
+                      await Future<void>.delayed(const Duration(milliseconds: 60));
+                      final img = await _captureOverviewPng(pixelRatio: 2.5);
+                      if (img != null) overviewPages.add(img);
+                    }
+                    // Restore original page for user
+                    if (_isValidPage(originalPage)) {
+                      await _loadPage(originalPage);
+                    }
+                  } finally {
+                    _closeBlockingProgressDialog();
+                  }
                   Navigator.of(context).push(
                     MaterialPageRoute(
                       builder: (_) => ReportPreviewPageLite(
@@ -922,6 +964,7 @@ class _HomeState extends State<Home> {
                         recordedAt: DateTime.now(),
                         recordingInfo: info,
                         holter: _holter,
+                        overviewPngPages: overviewPages.isEmpty ? null : overviewPages,
                       ),
                     ),
                   );
@@ -998,7 +1041,9 @@ class _HomeState extends State<Home> {
             child: Column(
               children: [
                 // Top overview graph (smaller)
-                MyBigGraphV2(
+                RepaintBoundary(
+                  key: _overviewRepaintKey,
+                  child: MyBigGraphV2(
                   lineStrokeWidth: 0.5,
                   key: myBigGraphKey,
                   showXAxisLabels: false,
@@ -1058,6 +1103,7 @@ class _HomeState extends State<Home> {
                       detailGraphKey.currentState?.renderMultiRowPage(rows);
                     });
                   },
+                  ),
                 ),
                 const SizedBox(height: 8),
                 // Legend mapping colors to condition names
