@@ -25,6 +25,24 @@ import 'package:provider/provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:uuid/uuid.dart';
 
+// Prefetched page payload for instant navigation
+class _PrefetchedPage {
+  final int pageIndex;
+  final int startSample;
+  final int length;
+  final List<List<double>> rowsFull; // 300 Hz full-res for detail
+  final List<List<double>> rowsTop; // 60 Hz for overview painting
+  final List<List<Map<String, int>>> highlights; // overview highlights per row (60 Hz)
+  const _PrefetchedPage({
+    required this.pageIndex,
+    required this.startSample,
+    required this.length,
+    required this.rowsFull,
+    required this.rowsTop,
+    required this.highlights,
+  });
+}
+
 class Home extends StatefulWidget {
   const Home({super.key});
 
@@ -64,6 +82,75 @@ class _HomeState extends State<Home> {
       ValueNotifier<List<List<Map<String, int>>>>(
         List.generate(rowsPerPage, (_) => <Map<String, int>>[]),
       );
+
+  final Map<int, _PrefetchedPage> _pageCache = <int, _PrefetchedPage>{};
+  final Map<int, Future<_PrefetchedPage>> _prefetching = <int, Future<_PrefetchedPage>>{};
+  static const int _maxCachePages = 5;
+  void _trimCacheKeep(int keepPage) {
+    while (_pageCache.length > _maxCachePages) {
+      // Remove the oldest entry that's not the current page
+      final toRemove = _pageCache.keys.firstWhere(
+        (k) => k != keepPage,
+        orElse: () => _pageCache.keys.first,
+      );
+      _pageCache.remove(toRemove);
+    }
+  }
+
+  bool _isValidPage(int page) => page >= 0 && page < _totalPages;
+
+  Future<_PrefetchedPage> _buildPageData(int pageIndex) async {
+    final startSample = pageIndex * samplesPerPage;
+    final int length = (startSample + samplesPerPage <= _totalSamples)
+        ? samplesPerPage
+        : (_totalSamples - startSample);
+
+    final data = await _holter.getEcgSamples(startSample, length);
+    final rowsFull = <List<double>>[];
+    final rowsTop = <List<double>>[];
+    for (int r = 0; r < rowsPerPage; r++) {
+      final rs = r * samplesPerRow;
+      final re = (rs + samplesPerRow <= data.length) ? (rs + samplesPerRow) : data.length;
+      if (rs >= data.length) {
+        rowsFull.add(const <double>[]);
+        rowsTop.add(const <double>[]);
+      } else {
+        final baseRow = data.sublist(rs, re);
+        rowsFull.add(baseRow);
+        final stride = sr ~/ displaySrTop; // e.g., 5
+        final reduced = <double>[];
+        for (int i = 0; i < baseRow.length; i += stride) {
+          reduced.add(baseRow[i]);
+        }
+        rowsTop.add(reduced);
+      }
+    }
+    final highlights = _buildPageRowHighlights(startSample, length);
+    return _PrefetchedPage(
+      pageIndex: pageIndex,
+      startSample: startSample,
+      length: length,
+      rowsFull: rowsFull,
+      rowsTop: rowsTop,
+      highlights: highlights,
+    );
+  }
+
+  void _prefetchPage(int pageIndex) {
+    if (!_isValidPage(pageIndex)) return;
+    if (_pageCache.containsKey(pageIndex)) return;
+    if (_prefetching.containsKey(pageIndex)) return;
+    final fut = _buildPageData(pageIndex).then((p) {
+      _pageCache[pageIndex] = p;
+      _trimCacheKeep(_currentPage);
+      _prefetching.remove(pageIndex);
+      return p;
+    }).catchError((e) {
+      _prefetching.remove(pageIndex);
+      return Future<_PrefetchedPage>.error(e);
+    });
+    _prefetching[pageIndex] = fut;
+  }
 
   int get _totalPages =>
       _totalSamples > 0
@@ -1158,35 +1245,16 @@ class _HomeState extends State<Home> {
     final startSample = pageIndex * samplesPerPage;
     if (startSample >= _totalSamples) return;
 
-    // Fetch page worth of samples
-    final length =
-        (startSample + samplesPerPage <= _totalSamples)
-            ? samplesPerPage
-            : (_totalSamples - startSample);
-    // Fetch full-resolution data for this page for detail
-    final data = await _holter.getEcgSamples(startSample, length);
-    List<List<double>> rows = [];
-    List<List<double>> rowsTop = [];
-    for (int r = 0; r < rowsPerPage; r++) {
-      final rs = r * samplesPerRow;
-      final re =
-          (rs + samplesPerRow <= data.length)
-              ? (rs + samplesPerRow)
-              : data.length;
-      if (rs >= data.length) {
-        rows.add(const <double>[]);
-        rowsTop.add(const <double>[]);
-      } else {
-        final baseRow = data.sublist(rs, re);
-        rows.add(baseRow);
-        // Build 60Hz row via stride pick just for rendering; values are already filtered per-page
-        final stride = sr ~/ displaySrTop; // 5
-        final reduced = <double>[];
-        for (int i = 0; i < baseRow.length; i += stride) {
-          reduced.add(baseRow[i]);
-        }
-        rowsTop.add(reduced);
-      }
+    // Use cache if available or prefetching future if in-flight
+    _PrefetchedPage pageData;
+    if (_pageCache.containsKey(pageIndex)) {
+      pageData = _pageCache[pageIndex]!;
+    } else if (_prefetching.containsKey(pageIndex)) {
+      pageData = await _prefetching[pageIndex]!;
+    } else {
+      pageData = await _buildPageData(pageIndex);
+      _pageCache[pageIndex] = pageData;
+      _trimCacheKeep(pageIndex);
     }
 
     // Ensure the graph is configured with 10 channels (one per row)
@@ -1218,16 +1286,18 @@ class _HomeState extends State<Home> {
       setState(() {});
     }
 
-    // Render page and update current page
-    _lastRows = rows; // keep full-res cached for detail
-    // Render overview using 60Hz rows
-    // Build page highlight ranges from detected conditions and render
-    _pageRowHighlights = _buildPageRowHighlights(startSample, length);
+    // Render page and update current page from prefetched data
+    _lastRows = pageData.rowsFull; // keep full-res cached for detail
+    _pageRowHighlights = pageData.highlights;
     _pageHighlightsVN.value = _pageRowHighlights;
-    myBigGraphKey.currentState?.renderMultiRowPage(rowsTop);
+    myBigGraphKey.currentState?.renderMultiRowPage(pageData.rowsTop);
     setState(() {
       _currentPage = pageIndex;
     });
+
+    // Prefetch neighbors in the background
+    _prefetchPage(pageIndex - 1);
+    _prefetchPage(pageIndex + 1);
   }
 
   @override

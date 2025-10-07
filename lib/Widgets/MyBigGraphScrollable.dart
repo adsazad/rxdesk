@@ -5,6 +5,7 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:holtersync/Services/FilterClass.dart';
 import 'package:holtersync/Services/MultiFilter.dart';
 
@@ -91,6 +92,16 @@ class MyBigGraphV2State extends State<MyBigGraphV2> {
   late Stream<dynamic> stream;
   bool _clearedForImport = false;
   int _cycleCount = 0;
+  // Horizontal scroll state for imported/large data
+  final ScrollController _hScrollCtrl = ScrollController();
+  double _lastScrollOffset = 0.0;
+  final FocusNode _focusNode = FocusNode(debugLabel: 'MyBigGraphV2Focus');
+  // Keyboard intents
+  static const _panStepFactor = 0.9; // fraction of viewport per key press
+  static final Map<ShortcutActivator, Intent> _kShortcuts = <ShortcutActivator, Intent>{
+    SingleActivator(LogicalKeyboardKey.arrowLeft): _PanLeftIntent(),
+    SingleActivator(LogicalKeyboardKey.arrowRight): _PanRightIntent(),
+  };
 
   List<MapEntry<double, String>> _yAxisLabelList = [];
 
@@ -174,6 +185,15 @@ class MyBigGraphV2State extends State<MyBigGraphV2> {
     if (widget.channelHighlightRanges != null) {
       widget.channelHighlightRanges!.addListener(_onHighlightUpdate);
     }
+
+    // Rebuild on horizontal scroll to render only visible range
+    _hScrollCtrl.addListener(() {
+      final off = _hScrollCtrl.hasClients ? _hScrollCtrl.offset : 0.0;
+      if ((off - _lastScrollOffset).abs() > 0.5) {
+        _lastScrollOffset = off;
+        if (mounted) setState(() {});
+      }
+    });
   }
 
   void _refreshMultiFilter() {
@@ -263,6 +283,8 @@ class MyBigGraphV2State extends State<MyBigGraphV2> {
     widget.markerIndices?.removeListener(_onMarkerUpdate);
     widget.highlightRanges?.removeListener(_onHighlightUpdate);
     widget.channelHighlightRanges?.removeListener(_onHighlightUpdate);
+    _hScrollCtrl.dispose();
+    _focusNode.dispose();
     super.dispose();
   }
 
@@ -1352,7 +1374,11 @@ class MyBigGraphV2State extends State<MyBigGraphV2> {
     );
   }
 
-  Widget _chart(List<List<FlSpot>> currentData) {
+  Widget _chart(
+    List<List<FlSpot>> currentData, {
+    double? minDomainX,
+    double? maxDomainX,
+  }) {
     int gapLength = 25; // Number of points to hide ahead of current index
 
     return Container(
@@ -1428,13 +1454,14 @@ class MyBigGraphV2State extends State<MyBigGraphV2> {
             ],
             horizontalLines: _generateSeparationLines(),
           ),
-          minX: 0,
-          maxX:
-              widget.isImported
-                  ? (allPlotData.isNotEmpty && allPlotData[0].isNotEmpty
-                      ? allPlotData[0].last.x
-                      : widget.windowSize.toDouble())
-                  : widget.windowSize.toDouble(),
+      minX: minDomainX ?? 0,
+      maxX: maxDomainX ?? (
+          widget.isImported
+            ? (allPlotData.isNotEmpty && allPlotData[0].isNotEmpty
+              ? allPlotData[0].last.x
+              : widget.windowSize.toDouble())
+            : widget.windowSize.toDouble()
+        ),
           minY: widget.minY,
           maxY: widget.maxY,
           lineBarsData:
@@ -1566,6 +1593,65 @@ class MyBigGraphV2State extends State<MyBigGraphV2> {
     );
   }
 
+  // Decimate a list of spots by stride to keep at most targetCount points
+  List<FlSpot> _decimateByStride(List<FlSpot> src, int targetCount) {
+    if (src.length <= targetCount || targetCount <= 0) return src;
+    final stride = (src.length / targetCount).ceil().clamp(1, src.length);
+    final out = <FlSpot>[];
+    for (int i = 0; i < src.length; i += stride) {
+      out.add(src[i]);
+    }
+    // Ensure last point is included for continuity
+    if (out.isNotEmpty && out.last.x != src.last.x) out.add(src.last);
+    return out;
+  }
+
+  Widget _chartRanged(
+    List<List<FlSpot>> currentData, {
+    required double minVisibleX,
+    required double maxVisibleX,
+    required double viewportWidth,
+  }) {
+    // Fall back to full chart in cyclic mode
+    if (!widget.isImported) {
+      return _chart(currentData);
+    }
+
+    // Build a copy of allPlotData but sliced to visible X range and decimated
+    final sliced = List.generate(widget.plot.length, (i) {
+      final src = allPlotData[i];
+      if (src.isEmpty) return <FlSpot>[];
+      final startIdx = src.indexWhere((p) => p.x >= minVisibleX);
+      if (startIdx < 0) return <FlSpot>[];
+      int endIdx = startIdx;
+      final maxX = maxVisibleX;
+      while (endIdx < src.length && src[endIdx].x <= maxX) {
+        endIdx++;
+      }
+      if (endIdx <= startIdx) return <FlSpot>[];
+      var vis = src.sublist(startIdx, endIdx);
+      // Decimate to at most ~2 points per pixel to balance detail/Perf
+      final target = (viewportWidth * 2).floor();
+      vis = _decimateByStride(vis, target);
+      return vis;
+    });
+
+    // Temporarily swap data for rendering and restore afterwards
+    final saved = allPlotData;
+    allPlotData = sliced;
+    // Keep domain fixed to full data to avoid zoom while scrolling
+    final double totalMaxX = (saved.isNotEmpty && saved[0].isNotEmpty)
+        ? saved[0].last.x
+        : widget.windowSize.toDouble();
+    final w = _chart(
+      currentData,
+      minDomainX: 0,
+      maxDomainX: totalMaxX,
+    );
+    allPlotData = saved;
+    return w;
+  }
+
   double pixelsPerSample = 1; // ✅ Tune this as needed
 
   void reset() {
@@ -1647,6 +1733,8 @@ class MyBigGraphV2State extends State<MyBigGraphV2> {
                     if (idx >= widget.plot.length) idx = widget.plot.length - 1;
                     widget.onRowTap!(idx);
                   }
+                  // Ensure keyboard shortcuts receive focus
+                  _focusNode.requestFocus();
                 },
                 child: LayoutBuilder(
                   builder: (context, constraints) {
@@ -1656,13 +1744,64 @@ class MyBigGraphV2State extends State<MyBigGraphV2> {
                         calculatedWidth,
                         viewportWidth,
                       );
-                      return Scrollbar(
-                        thumbVisibility: true,
-                        child: SingleChildScrollView(
-                          scrollDirection: Axis.horizontal,
-                          child: SizedBox(
-                            width: contentWidth,
-                            child: _chart(currentData),
+                      // Keyboard shortcuts + wheel-to-horizontal scroll
+                      return Shortcuts(
+                        shortcuts: _kShortcuts,
+                        child: Actions(
+                          actions: <Type, Action<Intent>>{
+                            _PanLeftIntent: CallbackAction<_PanLeftIntent>(
+                              onInvoke: (_) {
+                                _panBy(-viewportWidth * _panStepFactor);
+                                return null;
+                              },
+                            ),
+                            _PanRightIntent: CallbackAction<_PanRightIntent>(
+                              onInvoke: (_) {
+                                _panBy(viewportWidth * _panStepFactor);
+                                return null;
+                              },
+                            ),
+                          },
+                          child: Focus(
+                            focusNode: _focusNode,
+                            canRequestFocus: true,
+                            child: Listener(
+                              onPointerSignal: (evt) {
+                                if (evt is PointerScrollEvent) {
+                                  if (_hScrollCtrl.hasClients) {
+                                    final delta = evt.scrollDelta.dy; // vertical wheel -> horizontal scroll
+                                    final maxExtent = _hScrollCtrl.position.maxScrollExtent;
+                                    final current = _hScrollCtrl.offset;
+                                    final target = (current + delta).clamp(0.0, maxExtent);
+                                    _hScrollCtrl.jumpTo(target);
+                                  }
+                                }
+                              },
+                              child: Scrollbar(
+                                controller: _hScrollCtrl,
+                                thumbVisibility: true,
+                                child: SingleChildScrollView(
+                                  controller: _hScrollCtrl,
+                                  scrollDirection: Axis.horizontal,
+                                  child: SizedBox(
+                                    width: contentWidth,
+                                    child: Builder(
+                                      builder: (context) {
+                                        final double off = _hScrollCtrl.hasClients ? _hScrollCtrl.offset : 0.0;
+                                        final double minX = (off / widget.pixelsPerSample).clamp(0.0, double.infinity);
+                                        final double maxX = ((off + viewportWidth) / widget.pixelsPerSample).clamp(0.0, double.infinity);
+                                        return _chartRanged(
+                                          currentData,
+                                          minVisibleX: minX,
+                                          maxVisibleX: maxX,
+                                          viewportWidth: viewportWidth,
+                                        );
+                                      },
+                                    ),
+                                  ),
+                                ),
+                              ),
+                            ),
                           ),
                         ),
                       );
@@ -1683,50 +1822,23 @@ class MyBigGraphV2State extends State<MyBigGraphV2> {
     );
   }
 
-  // @override
-  // Widget build(BuildContext context) {
-  //   return Row(
-  //     children: [
-  //       _leftConsole(), // ✅ Left panel with controls
-  //       Expanded(
-  //         child: Listener(
-  //           onPointerSignal: (event) {
-  //             if (event is PointerScrollEvent) {
-  //               _scrollController.jumpTo(
-  //                 _scrollController.offset + event.scrollDelta.dy,
-  //               );
-  //             }
-  //           },
-  //           child: Scrollbar(
-  //             controller: _scrollController,
-  //             thumbVisibility: true,
-  //             child: SingleChildScrollView(
-  //               controller: _scrollController,
-  //               scrollDirection: Axis.horizontal,
-  //               child: ValueListenableBuilder<List<List<FlSpot>>>(
-  //                 valueListenable: plotNotifier,
-  //                 builder: (context, currentData, _) {
-  //                   final bool hasData =
-  //                       currentData.isNotEmpty && currentData[0].isNotEmpty;
+  void _panBy(double deltaPixels) {
+    if (!_hScrollCtrl.hasClients) return;
+    final maxExtent = _hScrollCtrl.position.maxScrollExtent;
+    final target = (_hScrollCtrl.offset + deltaPixels).clamp(0.0, maxExtent);
+    _hScrollCtrl.animateTo(
+      target,
+      duration: const Duration(milliseconds: 120),
+      curve: Curves.easeOut,
+    );
+  }
+}
 
-  //                   final double calculatedWidth =
-  //                       widget.isImported
-  //                           ? (hasData
-  //                               ? currentData[0].last.x * 0.4
-  //                               : widget.windowSize.toDouble())
-  //                           : widget.windowSize.toDouble() * 0.5;
+// Intents for keyboard panning
+class _PanLeftIntent extends Intent {
+  const _PanLeftIntent();
+}
 
-  //                   return SizedBox(
-  //                     width: calculatedWidth,
-  //                     child: _chart(currentData),
-  //                   );
-  //                 },
-  //               ),
-  //             ),
-  //           ),
-  //         ),
-  //       ),
-  //     ],
-  //   );
-  // }
+class _PanRightIntent extends Intent {
+  const _PanRightIntent();
 }
