@@ -243,26 +243,258 @@ class HolterReportGenerator {
     // Load full ECG trace once to feed the predictor (predict extracts 200-sample windows itself)
     final total = await getTotalEcgSamples();
     if (total <= 0 || allRrIndexes.isEmpty) {
-      aiReport = [];
-      return;
+      // If R-peaks are not available yet, run a quick scan here with progress
+      if (total > 0 && allRrIndexes.isEmpty) {
+        try {
+          print('AI: R-peak scan starting');
+          await analyzeFullRecordingRPeaks(
+            onProgress: (p) {
+              final pct = (p * 30.0).clamp(0.0, 30.0); // reserve first 30%
+              progress.value = '${pct.toStringAsFixed(2)}%';
+            },
+          );
+          print('AI: R-peak scan done, beats=${allRrIndexes.length}');
+        } catch (e) {
+          print('AI: R-peak scan failed: $e');
+          aiReport = [];
+          return;
+        }
+      } else {
+        aiReport = [];
+        return;
+      }
     }
 
     // Progress setup
     processedIndex = 0;
     progress.value = "0.00%";
 
-    // Fetch ECG data at native rate with filtering/baseline correction
-    final ecg = await getEcgSamples(0, total);
+  // Fetch ECG data at native rate with filtering/baseline correction
+  print('AI: loading ECG samples total=$total');
+  final ecg = await getEcgSamples(0, total);
+  print('AI: ECG loaded (${ecg.length} samples)');
 
-    // Run shared predictor; returns list of segment predictions with classification, start/end, confidence, etc.
-    final List<dynamic> preds = await aiClasser!.predict(ecg, allRrIndexes);
-    aiReport = preds; // keep raw predictions if needed for debugging/UI
+    // Process in small batches using an isolate for preprocessing (segment + scaling)
+    final List<dynamic> preds = [];
+    final int nBeats = allRrIndexes.length;
+    if (nBeats <= 0) {
+      print('AI: No R-peaks found; aborting AI.');
+      aiReport = [];
+      progress.value = '100.00%';
+      return;
+    }
+    const int batchSize = 24; // smaller batch to keep UI responsive
+    print('AI: beats=$nBeats, batchSize=$batchSize');
+    // Ensure the UI sees progress after ECG load
+    progress.value = '30.00%';
+    // Yield once before heavy loop to keep UI responsive
+    await Future<void>.delayed(Duration.zero);
+
+    // Extract scaler params to send across isolate (rootBundle not available in isolate)
+    final List<double> scaler1Mean = List<double>.from(aiClasser!.scalerOne.mean);
+    final List<double> scaler1Scale = List<double>.from(aiClasser!.scalerOne.scale);
+    final List<double> scaler2Mean = List<double>.from(aiClasser!.scalerTwo.mean);
+    final List<double> scaler2Scale = List<double>.from(aiClasser!.scalerTwo.scale);
+
+  bool useCompute = false; // Default to main-isolate to avoid isolate send errors
+  print('AI: using compute isolate: $useCompute');
+  for (int startBeat = 0; startBeat < nBeats; startBeat += batchSize) {
+      // Optional: light heartbeat log every ~200 batches
+      if (startBeat % (batchSize * 200) == 0) {
+        // ignore: avoid_print
+        print('AI: processing beats $startBeat/${nBeats}');
+      }
+      final int endBeat = (startBeat + batchSize < nBeats)
+          ? startBeat + batchSize
+          : nBeats;
+
+      // Build 200-sample raw segments locally (cheap copies), then preprocess in isolate
+      final rawSegments = <List<double>>[];
+      final rPeaksBatch = allRrIndexes.sublist(startBeat, endBeat);
+      for (final r in rPeaksBatch) {
+        int start = r - 100;
+        int end = r + 100;
+        int adjustedStart = start < 0 ? 0 : start;
+        int adjustedEnd = end > ecg.length ? ecg.length : end;
+        final int validLen = adjustedEnd - adjustedStart;
+        final seg = List<double>.filled(200, 0.0);
+        if (validLen > 0) {
+          final valid = ecg.sublist(adjustedStart, adjustedEnd);
+          seg.setRange(0, validLen, valid);
+        }
+        rawSegments.add(seg);
+      }
+
+      // Prepare segments in a background isolate (smoothing + scaling)
+      final prepArgs = <String, dynamic>{
+        'rawSegments': rawSegments,
+        'rPeaks': rPeaksBatch,
+        'scaler1Mean': scaler1Mean,
+        'scaler1Scale': scaler1Scale,
+        'scaler2Mean': scaler2Mean,
+        'scaler2Scale': scaler2Scale,
+      };
+      List<Map<String, dynamic>> areaOfInterests;
+      if (useCompute) {
+        try {
+          areaOfInterests = await compute(_prepareSegmentsForBeats, prepArgs)
+              .timeout(const Duration(seconds: 30));
+          // Diagnostic
+          // ignore: avoid_print
+          print('AI: batch ${startBeat}..${endBeat} preprocessed=${areaOfInterests.length}');
+        } catch (e) {
+          // Fallback: preprocess on main isolate and disable compute for this run
+          print('AI: compute preprocess failed/timeout (${e.runtimeType}): $e. Disabling compute; falling back to main isolate.');
+          useCompute = false;
+          areaOfInterests = [];
+          for (int i = 0; i < rawSegments.length; i++) {
+            final r = rPeaksBatch[i];
+            int start = r - 100;
+            int end = r + 100;
+            List<double> seg = rawSegments[i];
+            // Smooth + scale via aiClasser scalers
+            try {
+              seg = aiClasser!.movingAverage(seg);
+              final scaled1 = aiClasser!.scalerOne.transform(seg);
+              final scaled2 = aiClasser!.scalerTwo.transform(seg);
+              areaOfInterests.add({
+                'start': start,
+                'end': end,
+                'segment': scaled2,
+                'osegment': scaled1,
+                'classification': 'AOL',
+                'confidence': 1.0,
+              });
+            } catch (ee) {
+              // Skip problematic segment but keep going
+              print('AI: preprocess fallback failed at seg $i: $ee');
+            }
+          }
+        }
+      } else {
+        // Direct main-isolate preprocessing
+        areaOfInterests = [];
+        for (int i = 0; i < rawSegments.length; i++) {
+          final r = rPeaksBatch[i];
+          int start = r - 100;
+          int end = r + 100;
+          List<double> seg = rawSegments[i];
+          try {
+            seg = aiClasser!.movingAverage(seg);
+            final scaled1 = aiClasser!.scalerOne.transform(seg);
+            final scaled2 = aiClasser!.scalerTwo.transform(seg);
+            areaOfInterests.add({
+              'start': start,
+              'end': end,
+              'segment': scaled2,
+              'osegment': scaled1,
+              'classification': 'AOL',
+              'confidence': 1.0,
+            });
+          } catch (ee) {
+            print('AI: preprocess main-isolate failed at seg $i: $ee');
+          }
+        }
+      }
+
+      // Run model on main isolate for each segment
+      for (int i = 0; i < areaOfInterests.length; i++) {
+        final seg = areaOfInterests[i];
+        final List<double> segment = seg['segment'];
+        if (segment.length != 200) continue;
+        // Build input [1,200,1]
+        final input = [segment.map((e) => [e]).toList()];
+        final output = [List.filled(14, 0.0)];
+        try {
+          aiClasser!.interpreter.run(input, output);
+        } catch (e) {
+          print('AI: interpreter.run failed at index ${startBeat + i}: $e');
+          continue;
+        }
+        final scores = output[0];
+        int maxIndex = 0;
+        double maxVal = scores[0];
+        for (int k = 1; k < scores.length; k++) {
+          if (scores[k] > maxVal) {
+            maxVal = scores[k];
+            maxIndex = k;
+          }
+        }
+        final classification = aiClasser!.classLabels[maxIndex];
+        if (classification != 'NA' &&
+            !aiClasser!.ignoredClassifications.contains(classification)) {
+          preds.add({
+            'start': seg['start'],
+            'end': seg['end'],
+            'index': startBeat + i,
+            'classification': classification,
+            'segment': seg,
+            'confidence': maxVal,
+            'aoiConfidence': seg['confidence'] ?? 1.0,
+          });
+        }
+      }
+
+      // Update progress and yield to UI
+      processedIndex = endBeat.toDouble();
+      // Map AI loop to 30..100% to keep room for the pre-scan phase
+      final base = 30.0;
+      final pctAi = (processedIndex / nBeats * (100.0 - base));
+      final pct = (base + pctAi).clamp(0.0, 100.0);
+      progress.value = "${pct.toStringAsFixed(2)}%";
+      await Future<void>.delayed(const Duration(milliseconds: 1));
+    }
+
+    // Rule-based PVC override logic (mirror ECGClassv1.predict behavior)
+    if (aiClasser!.enablePVCRuleDetector) {
+      try {
+        final pvcEvents = aiClasser!.detectPVCs(
+          ecg,
+          List<int>.from(allRrIndexes),
+          fs: aiClasser!.fsHz,
+          window: aiClasser!.pvcConfig.windowSamples,
+        );
+        final pvcIdx = pvcEvents.map((e) => e['i'] as int).toSet();
+
+        // Map global beat index -> prediction index
+        final Map<int, int> predIdxByBeat = {};
+        for (int k = 0; k < preds.length; k++) {
+          final bIdx = preds[k]['index'];
+          if (bIdx is int) predIdxByBeat[bIdx] = k;
+        }
+
+        for (final i in pvcIdx) {
+          final k = predIdxByBeat[i];
+          if (k == null) continue;
+          if (aiClasser!.overrideAIForPVC) {
+            preds[k]['classification'] = 'PVC';
+            final oldConf = (preds[k]['confidence'] as num?)?.toDouble() ?? 0.0;
+            if (oldConf < 0.95) preds[k]['confidence'] = 0.95;
+            preds[k]['source'] = 'rule-pvc';
+            preds[k]['pvcRule'] = true;
+          } else {
+            preds[k]['pvcRule'] = true;
+          }
+        }
+      } catch (_) {
+        // Never break AI pipeline on rule engine issues
+      }
+    }
+
+    // Apply final filtering: drop ignored classifications
+    if (aiClasser!.ignoredClassifications.isNotEmpty) {
+      preds.removeWhere(
+        (p) => aiClasser!.ignoredClassifications.contains(p['classification']),
+      );
+    }
+
+    aiReport = preds;
 
     // Aggregate into Holter conditions structure for UI tabs and highlighting
     final Map<String, List<int>> idxByName = {};
     for (final p in preds) {
       final String? cls = p['classification']?.toString();
-      if (cls == null || cls == 'AOL') continue; // skip helper tag
+      if (cls == null || cls == 'AOL') continue;
       final int? s = (p['start'] as num?)?.toInt();
       final int? e = (p['end'] as num?)?.toInt();
       if (s == null || e == null) continue;
@@ -274,7 +506,6 @@ class HolterReportGenerator {
     final List<Map<String, dynamic>> grouped = [];
     idxByName.forEach((name, indices) {
       if (indices.isEmpty) return;
-      // ensure sorted and unique-ish indices (optional de-dup if overlapping)
       indices.sort();
       grouped.add({'name': name, 'index': indices});
     });
@@ -284,6 +515,78 @@ class HolterReportGenerator {
     processedIndex = allRrIndexes.length.toDouble();
     progress.value = "100.00%";
   }
+
+/// Top-level pure function to prepare 200-sample, smoothed and scaled segments.
+/// This runs in a background isolate via `compute` and MUST NOT use any plugins.
+List<Map<String, dynamic>> _prepareSegmentsForBeats(
+  Map<String, dynamic> args,
+) {
+  final List<List<double>> rawSegments =
+      (args['rawSegments'] as List).map((e) => (e as List).cast<double>()).toList();
+  final List<int> rPeaks = (args['rPeaks'] as List).cast<int>();
+  final List<double> s1m = (args['scaler1Mean'] as List).cast<double>();
+  final List<double> s1s = (args['scaler1Scale'] as List).cast<double>();
+  final List<double> s2m = (args['scaler2Mean'] as List).cast<double>();
+  final List<double> s2s = (args['scaler2Scale'] as List).cast<double>();
+
+  List<Map<String, dynamic>> out = [];
+  for (int i = 0; i < rawSegments.length; i++) {
+    final r = rPeaks[i];
+    final start = r - 100;
+    final end = r + 100;
+    List<double> seg = rawSegments[i];
+    // Smooth + scale using provided scaler params
+    seg = _movingAverage5(seg);
+    final scaled1 = _standardScale(seg, s1m, s1s);
+    final scaled2 = _standardScale(seg, s2m, s2s);
+
+    out.add({
+      'start': start,
+      'end': end,
+      'segment': scaled2, // same as ECGClassv1.post-scalerTwo
+      'osegment': scaled1,
+      'classification': 'AOL',
+      'confidence': 1.0,
+    });
+  }
+
+  return out;
+}
+
+List<double> _movingAverage5(List<double> data) {
+  final n = data.length;
+  final out = List<double>.filled(n, 0.0);
+  const w = 5;
+  final h = w ~/ 2;
+  for (int i = 0; i < n; i++) {
+    int l = i - h;
+    if (l < 0) l = 0;
+    int r = i + h;
+    if (r >= n) r = n - 1;
+    double sum = 0.0;
+    for (int j = l; j <= r; j++) sum += data[j];
+    out[i] = sum / (r - l + 1);
+  }
+  return out;
+}
+
+List<double> _standardScale(
+  List<double> input,
+  List<double> mean,
+  List<double> scale,
+) {
+  final n = input.length;
+  final out = List<double>.filled(n, 0.0);
+  for (int i = 0; i < n; i++) {
+    final m = (i < mean.length) ? mean[i] : 0.0;
+    final sRaw = (i < scale.length) ? scale[i] : 1.0;
+    final s = (sRaw.abs() < 1e-12) ? 1.0 : sRaw;
+    double v = (input[i] - m) / s;
+    if (v.isNaN || v.isInfinite) v = 0.0;
+    out[i] = v;
+  }
+  return out;
+}
 
   Future<List<double>> getSlice200(int index) async {
     int sliceBefore = 100; // Number of samples before the index

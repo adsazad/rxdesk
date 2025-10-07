@@ -1011,6 +1011,50 @@ class _HomeState extends State<Home> {
                 ],
               ),
               const SizedBox(height: 12),
+              // Show AI progress while running (between 0% and 100%)
+              ValueListenableBuilder<String>(
+                valueListenable: _holter.progress,
+                builder: (context, value, _) {
+                  final t = value.trim();
+                  final isStart = t == '0.00%';
+                  final isDone = t == '100.00%';
+                  if (isStart || isDone) return const SizedBox(height: 0);
+                  double? pct;
+                  try {
+                    pct = double.parse(t.replaceAll('%', '')) / 100.0;
+                  } catch (_) {
+                    pct = null;
+                  }
+                  return Column(
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    children: [
+                      const Text(
+                        'AI Interpretation',
+                        textAlign: TextAlign.center,
+                        style: TextStyle(
+                          fontSize: 12,
+                          color: Colors.black87,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                      const SizedBox(height: 6),
+                      LinearProgressIndicator(
+                        value: pct,
+                        minHeight: 6,
+                        backgroundColor: Colors.black12,
+                      ),
+                      const SizedBox(height: 4),
+                      Text(
+                        'Progress: $t',
+                        textAlign: TextAlign.center,
+                        style: const TextStyle(fontSize: 12),
+                      ),
+                      const SizedBox(height: 12),
+                    ],
+                  );
+                },
+              ),
+              // Stats boxes
               _statBox(
                 'Avg BPM',
                 (_holter.avrBpm > 0) ? _holter.avrBpm.toStringAsFixed(1) : '--',
