@@ -18,6 +18,7 @@ import 'package:holtersync/ProviderModals/DefaultPatientModal.dart';
 import 'package:holtersync/ProviderModals/ImportFileProvider.dart';
 import 'package:holtersync/Services/HolterReportGenerator.dart';
 import 'package:holtersync/Widgets/MyBigGraphScrollable.dart';
+import 'package:holtersync/ReportPreviewLite.dart';
 import 'package:holtersync/data/local/database.dart';
 import 'package:path/path.dart' as p;
 import 'package:path_provider/path_provider.dart';
@@ -891,6 +892,38 @@ class _HomeState extends State<Home> {
                   setState(() {
                     _cancelImport = true;
                   });
+                },
+              ),
+            if (_totalSamples > 0)
+              _toolbarButton(
+                icon: Icons.picture_as_pdf,
+                label: 'Report',
+                onPressed: () {
+                  // Build minimal patient and recording info for report headers
+                  final patient = Provider.of<DefaultPatientModal>(
+                    context,
+                    listen: false,
+                  ).patient ?? <String, dynamic>{};
+                  final totalSec = (_totalSamples / sr).floor();
+                  String two(int n) => n.toString().padLeft(2, '0');
+                  final dur = '${two(totalSec ~/ 3600)}:${two((totalSec % 3600) ~/ 60)}:${two(totalSec % 60)}';
+                  final info = <String, dynamic>{
+                    'Samples': _totalSamples,
+                    'Sample Rate': '$sr Hz',
+                    'Duration': dur,
+                    if (_holter.fileName != null && _holter.fileName!.isNotEmpty)
+                      'File': _holter.fileName,
+                  };
+                  Navigator.of(context).push(
+                    MaterialPageRoute(
+                      builder: (_) => ReportPreviewPageLite(
+                        patient: patient,
+                        title: 'Holter Report',
+                        recordedAt: DateTime.now(),
+                        recordingInfo: info,
+                      ),
+                    ),
+                  );
                 },
               ),
             _toolbarButton(
