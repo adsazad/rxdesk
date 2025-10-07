@@ -1,4 +1,5 @@
 import 'dart:typed_data';
+import 'dart:math' as math;
 
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -7,6 +8,7 @@ import 'package:pdf/widgets.dart' as pw;
 import 'package:printing/printing.dart';
 import 'package:provider/provider.dart' as pvrd;
 import 'package:holtersync/ProviderModals/GlobalSettingsModal.dart';
+import 'package:holtersync/Services/HolterReportGenerator.dart';
 
 /// A minimal report preview page that renders only headers/infos.
 /// Graphs/tables can be added later.
@@ -15,6 +17,8 @@ class ReportPreviewPageLite extends StatefulWidget {
   final String title;
   final DateTime? recordedAt;
   final Map<String, dynamic>? recordingInfo; // optional extra info (e.g., file path)
+  // Holter analyzer with computed metrics and RR intervals
+  final HolterReportGenerator holter;
 
   const ReportPreviewPageLite({
     super.key,
@@ -22,6 +26,7 @@ class ReportPreviewPageLite extends StatefulWidget {
     this.title = 'ECG Report',
     this.recordedAt,
     this.recordingInfo,
+    required this.holter,
   });
 
   @override
@@ -34,6 +39,48 @@ class _ReportPreviewPageLiteState extends State<ReportPreviewPageLite> {
     final pdf = pw.Document();
 
     final logoBytes = await _loadLogoBytes();
+
+    // Pull metrics from the Holter analyzer
+    final holter = widget.holter;
+    final double? avgBpm = (holter.avrBpm > 0) ? holter.avrBpm : null;
+    final double? minBpm = (holter.minBpm > 0) ? holter.minBpm : null;
+    final double? maxBpm = (holter.maxBpm > 0) ? holter.maxBpm : null;
+
+    // Compute HRV metrics from RR intervals (seconds) if available
+    final List<double> rr = (holter.allRrIntervals);
+    double? sdnnMs;
+    double? rmssdMs;
+    double? pnn50;
+    double? nn50;
+    if (rr.isNotEmpty) {
+      final rrMs = rr.map((s) => s * 1000.0).toList();
+      // SDNN: standard deviation of NN intervals (ms)
+      if (rrMs.length >= 2) {
+        final m = rrMs.reduce((a, b) => a + b) / rrMs.length;
+        final varSum = rrMs.fold<double>(0.0, (sum, v) => sum + (v - m) * (v - m));
+        final v = (varSum / (rrMs.length - 1));
+        sdnnMs = math.sqrt(v < 0 ? 0 : v);
+      }
+      // RMSSD: sqrt(mean of squared successive differences)
+      if (rrMs.length >= 2) {
+        double ss = 0.0;
+        for (int i = 1; i < rrMs.length; i++) {
+          final d = rrMs[i] - rrMs[i - 1];
+          ss += d * d;
+        }
+        final v = (ss / (rrMs.length - 1));
+        rmssdMs = math.sqrt(v < 0 ? 0 : v);
+      }
+      // NN50/pNN50
+      if (rrMs.length >= 2) {
+        int count = 0;
+        for (int i = 1; i < rrMs.length; i++) {
+          if ((rrMs[i] - rrMs[i - 1]).abs() > 50.0) count++;
+        }
+        nn50 = count.toDouble();
+        pnn50 = (count / (rrMs.length - 1)) * 100.0;
+      }
+    }
 
     final patientName = (widget.patient['name'] ?? '').toString();
     final patientAge = (widget.patient['age'] ?? '').toString();
@@ -117,6 +164,27 @@ class _ReportPreviewPageLiteState extends State<ReportPreviewPageLite> {
             pw.SizedBox(height: 4),
             _infoTable(widget.recordingInfo!),
           ],
+          if (avgBpm != null || minBpm != null || maxBpm != null) ...[
+            pw.SizedBox(height: 10),
+            pw.Text('ECG Summary', style: pw.TextStyle(fontSize: 12, fontWeight: pw.FontWeight.bold)),
+            pw.SizedBox(height: 4),
+            _summaryTable({
+              if (avgBpm != null) 'Average BPM': avgBpm.toStringAsFixed(0),
+              if (minBpm != null) 'Min BPM': minBpm.toStringAsFixed(0),
+              if (maxBpm != null) 'Max BPM': maxBpm.toStringAsFixed(0),
+            }),
+          ],
+          if (sdnnMs != null || rmssdMs != null || pnn50 != null || nn50 != null) ...[
+            pw.SizedBox(height: 10),
+            pw.Text('HRV Summary', style: pw.TextStyle(fontSize: 12, fontWeight: pw.FontWeight.bold)),
+            pw.SizedBox(height: 4),
+            _summaryTable({
+              if (sdnnMs != null) 'SDNN (ms)': sdnnMs.toStringAsFixed(0),
+              if (rmssdMs != null) 'RMSSD (ms)': rmssdMs.toStringAsFixed(0),
+              if (pnn50 != null) 'pNN50 (%)': pnn50.toStringAsFixed(1),
+              if (nn50 != null) 'NN50 (#)': nn50.toStringAsFixed(0),
+            }),
+          ],
           pw.SizedBox(height: 16),
           pw.Divider(color: PdfColors.grey400),
           pw.SizedBox(height: 6),
@@ -164,6 +232,21 @@ class _ReportPreviewPageLiteState extends State<ReportPreviewPageLite> {
       headerDecoration: const pw.BoxDecoration(color: PdfColors.grey300),
       border: null,
       columnWidths: const {0: pw.FlexColumnWidth(2), 1: pw.FlexColumnWidth(3)},
+    );
+  }
+
+  pw.Widget _summaryTable(Map<String, String> summary) {
+    if (summary.isEmpty) return pw.Container();
+    final rows = summary.entries.map((e) => [e.key, e.value]).toList();
+    return pw.Table.fromTextArray(
+      headers: const ['Metric', 'Value'],
+      data: rows,
+      headerStyle: pw.TextStyle(fontWeight: pw.FontWeight.bold, fontSize: 10),
+      cellStyle: const pw.TextStyle(fontSize: 9),
+      cellAlignment: pw.Alignment.centerLeft,
+      headerDecoration: const pw.BoxDecoration(color: PdfColors.grey300),
+      border: null,
+      columnWidths: const {0: pw.FlexColumnWidth(2), 1: pw.FlexColumnWidth(1)},
     );
   }
 

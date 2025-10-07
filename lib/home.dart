@@ -921,6 +921,7 @@ class _HomeState extends State<Home> {
                         title: 'Holter Report',
                         recordedAt: DateTime.now(),
                         recordingInfo: info,
+                        holter: _holter,
                       ),
                     ),
                   );
