@@ -346,6 +346,8 @@ class _HomeState extends State<Home> {
   DateTime? _importStart;
   String _importEtaLabel = '';
   DateTime? _lastImportUiTick;
+  // Report capture cancel flag
+  bool _cancelReportCapture = false;
 
   File? importedFile;
   bool isImported = false;
@@ -787,6 +789,8 @@ class _HomeState extends State<Home> {
     String title = 'Loading',
     String message = 'Please wait...',
     ValueListenable<String>? messageListenable,
+    VoidCallback? onCancel,
+    String cancelText = 'Cancel',
   }) {
     _progressDialogOpen = true;
     showDialog(
@@ -831,6 +835,18 @@ class _HomeState extends State<Home> {
                     message,
                     style: const TextStyle(fontSize: 12, color: Colors.black54),
                   ),
+                if (onCancel != null) ...[
+                  const SizedBox(height: 12),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.end,
+                    children: [
+                      TextButton(
+                        onPressed: onCancel,
+                        child: Text(cancelText),
+                      ),
+                    ],
+                  ),
+                ],
               ],
             ),
           ),
@@ -931,23 +947,45 @@ class _HomeState extends State<Home> {
                       'File': _holter.fileName,
                   };
                   // Capture ALL overview pages as PNGs for embedding into PDF
-                  final List<Uint8List> overviewPages = [];
+                  final List<String> overviewImagePaths = [];
                   final int originalPage = _currentPage;
                   final ValueNotifier<String> msg = ValueNotifier<String>('Preparing...');
+                  _cancelReportCapture = false;
                   _showBlockingProgressDialog(
                     title: 'Preparing Report',
                     message: 'Capturing overview pages...',
                     messageListenable: msg,
+                    onCancel: () {
+                      setState(() {
+                        _cancelReportCapture = true;
+                      });
+                      _closeBlockingProgressDialog();
+                    },
                   );
                   try {
                     final totalPages = _totalPages;
-                    for (int p = 0; p < totalPages; p++) {
-                      msg.value = 'Rendering page ${p + 1} of $totalPages...';
-                      await _loadPage(p);
+                    // Prepare temp output directory for streaming images to PDF later
+                    final tmpRoot = await getTemporaryDirectory();
+                    final outDir = Directory(p.join(
+                      tmpRoot.path,
+                      'holter_report_${DateTime.now().millisecondsSinceEpoch}',
+                    ));
+                    if (!await outDir.exists()) {
+                      await outDir.create(recursive: true);
+                    }
+                    for (int pageIdx = 0; pageIdx < totalPages; pageIdx++) {
+                      if (_cancelReportCapture) break;
+                      msg.value = 'Rendering page ${pageIdx + 1} of $totalPages...';
+                      await _loadPage(pageIdx);
                       // Ensure the frame paints
                       await Future<void>.delayed(const Duration(milliseconds: 60));
+                      if (_cancelReportCapture) break;
                       final img = await _captureOverviewPng(pixelRatio: 2.5);
-                      if (img != null) overviewPages.add(img);
+                      if (img != null) {
+                        final filePath = p.join(outDir.path, 'overview_${pageIdx + 1}.png');
+                        await File(filePath).writeAsBytes(img, flush: true);
+                        overviewImagePaths.add(filePath);
+                      }
                     }
                     // Restore original page for user
                     if (_isValidPage(originalPage)) {
@@ -955,6 +993,10 @@ class _HomeState extends State<Home> {
                     }
                   } finally {
                     _closeBlockingProgressDialog();
+                  }
+                  if (_cancelReportCapture && overviewImagePaths.isEmpty) {
+                    // User canceled before any capture; do not navigate
+                    return;
                   }
                   Navigator.of(context).push(
                     MaterialPageRoute(
@@ -964,7 +1006,7 @@ class _HomeState extends State<Home> {
                         recordedAt: DateTime.now(),
                         recordingInfo: info,
                         holter: _holter,
-                        overviewPngPages: overviewPages.isEmpty ? null : overviewPages,
+                        overviewImagePaths: overviewImagePaths.isEmpty ? null : overviewImagePaths,
                       ),
                     ),
                   );

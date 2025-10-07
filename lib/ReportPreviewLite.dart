@@ -1,5 +1,6 @@
 import 'dart:typed_data';
 import 'dart:math' as math;
+import 'dart:io';
 
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -23,6 +24,8 @@ class ReportPreviewPageLite extends StatefulWidget {
   final Uint8List? overviewPng;
   // Optional multiple overview pages
   final List<Uint8List>? overviewPngPages;
+  // Optional file paths for overview images (streaming, memory-friendly)
+  final List<String>? overviewImagePaths;
 
   const ReportPreviewPageLite({
     super.key,
@@ -33,6 +36,7 @@ class ReportPreviewPageLite extends StatefulWidget {
     required this.holter,
     this.overviewPng,
     this.overviewPngPages,
+    this.overviewImagePaths,
   });
 
   @override
@@ -244,6 +248,24 @@ class _ReportPreviewPageLiteState extends State<ReportPreviewPageLite> {
                   width: availW,
                   height: imgH,
                   child: pw.Image(pw.MemoryImage(widget.overviewPngPages![i]), fit: pw.BoxFit.contain),
+                ),
+              ));
+            }
+          } else if (widget.overviewImagePaths != null && widget.overviewImagePaths!.isNotEmpty) {
+            // Memory-optimized path: read images from disk lazily and stitch
+            final availW = format.availableWidth;
+            final availH = format.availableHeight;
+            final imgH = availH * 0.55;
+            for (int i = 0; i < widget.overviewImagePaths!.length; i++) {
+              final path = widget.overviewImagePaths![i];
+              final bytes = File(path).readAsBytesSync();
+              if (i == 0) body.add(pw.SizedBox(height: 12));
+              body.add(pw.Container(
+                padding: const pw.EdgeInsets.only(bottom: 2),
+                child: pw.SizedBox(
+                  width: availW,
+                  height: imgH,
+                  child: pw.Image(pw.MemoryImage(bytes), fit: pw.BoxFit.contain),
                 ),
               ));
             }
