@@ -1,9 +1,7 @@
-import 'dart:convert';
-
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import 'package:holtersync/ProviderModals/DefaultPatientModal.dart';
-import 'package:holtersync/data/local/database.dart';
+import 'package:medicore/ProviderModals/DefaultPatientModal.dart';
+import 'package:medicore/data/local/database.dart';
 import 'package:drift/drift.dart' as drift;
 
 class PatientAdd extends StatefulWidget {

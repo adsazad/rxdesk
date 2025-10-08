@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import 'package:holtersync/Pages/patient/PatientRecords.dart';
-import 'package:holtersync/Pages/patient/patientAdd.dart';
-import 'package:holtersync/ProviderModals/DefaultPatientModal.dart';
-import 'package:holtersync/data/local/database.dart';
+import 'package:medicore/Pages/patient/PatientRecords.dart';
+import 'package:medicore/Pages/patient/patientAdd.dart';
+import 'package:medicore/ProviderModals/DefaultPatientModal.dart';
+import 'package:medicore/data/local/database.dart';
 
 class PatientsList extends StatefulWidget {
   const PatientsList({super.key});

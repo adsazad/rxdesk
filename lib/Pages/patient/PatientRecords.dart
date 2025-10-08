@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import 'package:holtersync/data/local/database.dart';
-import 'package:holtersync/ProviderModals/ImportFileProvider.dart';
+import 'package:medicore/data/local/database.dart';
+import 'package:medicore/ProviderModals/ImportFileProvider.dart';
 
 class PatientRecordingsPage extends StatelessWidget {
   final int patientId;

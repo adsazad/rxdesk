@@ -1,5 +1,5 @@
-name: holtersync
-description: "A new Flutter project."
+name: medicore
+description: "A medical records management application."
 # The following line prevents the package from being accidentally published to
 # pub.dev using `flutter pub publish`. This is preferred for private packages.
 publish_to: 'none' # Remove this line if you wish to publish to pub.dev
@@ -34,30 +34,13 @@ dependencies:
   # The following adds the Cupertino Icons font to your application.
   # Use with the CupertinoIcons class for iOS style icons.
   cupertino_icons: ^1.0.8
-  flutter_native_splash: ^2.4.6
   provider: ^6.1.5
-  animated_splash_screen: ^1.3.0
-  flutter_riverpod: ^2.6.1
-  fl_chart: ^0.71.0
   shared_preferences: ^2.5.3
-  libserialport: ^0.3.0+1
-  flutter_libserialport: ^0.5.0
-  auto_size_text: ^3.0.0
-  path_provider: ^2.1.5
-  share_plus: ^11.0.0
-  msix: ^3.16.9
-  syncfusion_flutter_xlsio: ^28.2.12
   window_manager: ^0.5.0
-  file_selector: ^1.0.3
-  file_picker: ^10.2.0
-  printing: ^5.14.2
-  pdf: ^3.11.3
   drift: ^2.27.0
   drift_flutter: ^0.2.4
-  uuid: ^4.5.1
-  flutter_svg: ^2.2.0
-  tflite_flutter: ^0.11.0
-  scidart: ^0.0.2-dev.12
+  path_provider: ^2.1.5
+  path: ^1.8.3
 
 dev_dependencies:
   flutter_test:
@@ -86,11 +69,6 @@ flutter:
   # To add assets to your application, add an assets section, like this:
   assets:
     - assets/
-    - assets/model.tflite
-    - assets/areaofinterest.tflite
-    - assets/rrglu.tflite
-    - assets/scaler_params.json
-    - assets/areaofinterestscaler.json
   # An image asset can refer to one or more resolution-specific "variants", see
   # https://flutter.dev/to/resolution-aware-images
 
@@ -111,9 +89,9 @@ fonts:
   # For details regarding fonts from package dependencies,
   # see https://flutter.dev/to/font-from-package
 msix_config:
-  display_name: HolterSync
-  publisher_display_name: BioBT
-  identity_name: com.biobt.holtersync
+  display_name: Medicore
+  publisher_display_name: Sarabit
+  identity_name: com.sarabit.medicore
   msix_version: 1.0.2.0
   logo_path: assets/bioBT-black.png
   capabilities: internetClient, location, microphone, webcam
