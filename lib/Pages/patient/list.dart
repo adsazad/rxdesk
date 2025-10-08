@@ -62,7 +62,7 @@ class _PatientsListState extends State<PatientsList> {
             children: [
               // Search Bar
               Padding(
-                padding: const EdgeInsets.fromLTRB(16, 16, 16, 0),
+                padding: const EdgeInsets.fromLTRB(12, 12, 12, 0),
                 child: TextField(
                   decoration: InputDecoration(
                     hintText: 'Search by patient name...',
@@ -80,7 +80,7 @@ class _PatientsListState extends State<PatientsList> {
               Container(
                 alignment: Alignment.centerLeft,
                 child: Padding(
-                  padding: const EdgeInsets.fromLTRB(16, 16, 16, 0),
+                  padding: const EdgeInsets.fromLTRB(12, 12, 12, 0),
                   child: ElevatedButton.icon(
                     onPressed: () async {
                       await Navigator.of(context).push(
@@ -106,7 +106,7 @@ class _PatientsListState extends State<PatientsList> {
                   ),
                 ),
               ),
-              const SizedBox(height: 12),
+              const SizedBox(height: 8),
 
               // Patient List
               Expanded(
@@ -115,11 +115,11 @@ class _PatientsListState extends State<PatientsList> {
                         ? const Center(
                           child: Text(
                             "No patients found.",
-                            style: TextStyle(fontSize: 16, color: Colors.grey),
+                            style: TextStyle(fontSize: 14, color: Colors.grey),
                           ),
                         )
                         : ListView.builder(
-                          padding: const EdgeInsets.all(16),
+                          padding: const EdgeInsets.fromLTRB(12, 6, 12, 12),
                           itemCount: filteredPatients.length,
                           itemBuilder: (context, index) {
                             final patient = filteredPatients[index];
@@ -174,7 +174,7 @@ class _PatientsListState extends State<PatientsList> {
                                                 children: [
                                                   Icon(
                                                     Icons.transgender,
-                                                    size: 16,
+                                                    size: 14,
                                                     color: Colors.grey,
                                                   ),
                                                   const SizedBox(width: 4),
@@ -184,7 +184,7 @@ class _PatientsListState extends State<PatientsList> {
                                                   const SizedBox(width: 12),
                                                   Icon(
                                                     Icons.cake,
-                                                    size: 16,
+                                                    size: 14,
                                                     color: Colors.grey,
                                                   ),
                                                   const SizedBox(width: 4),
@@ -198,7 +198,7 @@ class _PatientsListState extends State<PatientsList> {
                                                 children: [
                                                   Icon(
                                                     Icons.phone,
-                                                    size: 16,
+                                                    size: 14,
                                                     color: Colors.grey,
                                                   ),
                                                   const SizedBox(width: 4),
@@ -212,7 +212,7 @@ class _PatientsListState extends State<PatientsList> {
                                                 children: [
                                                   Icon(
                                                     Icons.height,
-                                                    size: 16,
+                                                    size: 14,
                                                     color: Colors.grey,
                                                   ),
                                                   const SizedBox(width: 4),
@@ -222,7 +222,7 @@ class _PatientsListState extends State<PatientsList> {
                                                   const SizedBox(width: 12),
                                                   Icon(
                                                     Icons.monitor_weight,
-                                                    size: 16,
+                                                    size: 14,
                                                     color: Colors.grey,
                                                   ),
                                                   const SizedBox(width: 4),
@@ -245,7 +245,7 @@ class _PatientsListState extends State<PatientsList> {
                                         ),
                                       ],
                                     ),
-                                    const SizedBox(height: 12),
+                                    const SizedBox(height: 8),
                                     Column(
                                       children: [
                                         // First row - Set as Default

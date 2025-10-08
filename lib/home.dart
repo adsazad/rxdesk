@@ -1,13 +1,15 @@
+﻿import 'dart:io';
+
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:medicore/Pages/GlobalSettings.dart';
 import 'package:medicore/Pages/patient/list.dart';
 import 'package:medicore/Pages/patient/patientAdd.dart';
+import 'package:medicore/Pages/patient/PatientRecords.dart';
 import 'package:medicore/Pages/prescription_composer.dart';
 import 'package:medicore/data/local/database.dart';
 import 'package:medicore/Services/DataSaver.dart';
-import 'dart:io';
 import 'package:path_provider/path_provider.dart';
 
 class Home extends StatefulWidget {
@@ -21,30 +23,66 @@ enum HomeView { patients, addPatient, prescription }
 
 class _HomeState extends State<Home> {
   HomeView _currentView = HomeView.patients;
+  final TextEditingController _mobileSearchController = TextEditingController();
+
+  @override
+  void dispose() {
+    _mobileSearchController.dispose();
+    super.dispose();
+  }
+
+  Future<void> _searchByMobile(String mobile) async {
+    final query = mobile.trim();
+    if (query.isEmpty) return;
+    try {
+      final db = Provider.of<AppDatabase>(context, listen: false);
+      final patient = await (db.select(db.patients)..where((t) => t.mobile.equals(query))).getSingleOrNull();
+      if (!mounted) return;
+      if (patient != null) {
+        Navigator.push(
+          context,
+          MaterialPageRoute(builder: (_) => PatientRecordingsPage(patientId: patient.id)),
+        );
+      } else {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('No patient found. Creating new with mobile $query')),
+        );
+        Navigator.push(
+          context,
+          MaterialPageRoute(builder: (_) => PatientAdd(prefillMobile: query)),
+        );
+      }
+    } catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Search error: $e')),
+      );
+    }
+  }
 
   Future<void> _clearAllData() async {
     final confirmed = await showDialog<bool>(
       context: context,
       builder: (BuildContext context) {
         return AlertDialog(
-          title: Text('Clear All Data & Reset App'),
-          content: Text(
+          title: const Text('Clear All Data & Reset App'),
+          content: const Text(
             'Are you sure you want to clear all data and reset the app? This will:\n\n'
-            '• Delete all patients and recordings\n'
-            '• Clear all stored files\n'
-            '• Reset app to first-time setup\n'
-            '• Return to setup wizard\n\n'
+            '� Delete all patients and recordings\n'
+            '� Clear all stored files\n'
+            '� Reset app to first-time setup\n'
+            '� Return to setup wizard\n\n'
             'This action cannot be undone.',
           ),
           actions: [
             TextButton(
               onPressed: () => Navigator.of(context).pop(false),
-              child: Text('Cancel'),
+              child: const Text('Cancel'),
             ),
             TextButton(
               onPressed: () => Navigator.of(context).pop(true),
               style: TextButton.styleFrom(foregroundColor: Colors.red),
-              child: Text('Reset App'),
+              child: const Text('Reset App'),
             ),
           ],
         );
@@ -53,14 +91,12 @@ class _HomeState extends State<Home> {
 
     if (confirmed == true) {
       try {
-        // Clear database
         final db = Provider.of<AppDatabase>(context, listen: false);
         await db.delete(db.medicines).go();
         await db.delete(db.prescriptions).go();
         await db.delete(db.recordings).go();
         await db.delete(db.patients).go();
-        
-        // Clear DataSaver files
+
         DataSaver().reset();
         final dir = await getApplicationDocumentsDirectory();
         final tempDir = Directory('${dir.path}/HolterSync/Temp');
@@ -68,36 +104,27 @@ class _HomeState extends State<Home> {
           await tempDir.delete(recursive: true);
         }
 
-        // Reset setup completion status
         final prefs = await SharedPreferences.getInstance();
         await prefs.setBool('setup_completed', false);
-        
-        // Clear any other stored preferences if needed
         await prefs.remove('globalSettings');
 
+        if (!mounted) return;
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
+          const SnackBar(
             content: Text('App reset successfully. Redirecting to setup...'),
             backgroundColor: Colors.green,
             duration: Duration(seconds: 2),
           ),
         );
-        
-        // Navigate to setup wizard after a short delay
-        await Future.delayed(Duration(seconds: 2));
+
+        await Future.delayed(const Duration(seconds: 2));
         if (mounted) {
-          Navigator.of(context).pushNamedAndRemoveUntil(
-            '/setup',
-            (route) => false, // Remove all routes
-          );
+          Navigator.of(context).pushNamedAndRemoveUntil('/setup', (route) => false);
         }
-        
       } catch (e) {
+        if (!mounted) return;
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('Error resetting app: $e'),
-            backgroundColor: Colors.red,
-          ),
+          SnackBar(content: Text('Error resetting app: $e'), backgroundColor: Colors.red),
         );
       }
     }
@@ -109,83 +136,93 @@ class _HomeState extends State<Home> {
       appBar: AppBar(
         title: Row(
           children: [
-            Image.asset(
-              'assets/logo.png',
-              height: 40,
-              errorBuilder: (context, error, stackTrace) {
-                return Icon(Icons.medical_services, size: 40);
-              },
+            const Text('Medicore'),
+            const SizedBox(width: 12),
+            TextButton.icon(
+              onPressed: () { setState(() { _currentView = HomeView.patients; }); },
+              icon: const Icon(Icons.people, size: 18),
+              label: const Text('Patients'),
+              style: TextButton.styleFrom(
+                foregroundColor: Colors.white,
+                backgroundColor: _currentView == HomeView.patients ? Colors.white.withOpacity(0.16) : Colors.transparent,
+                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
+                minimumSize: Size.zero,
+                tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+              ),
             ),
-            SizedBox(width: 10),
-            Text('Medicore'),
+            const SizedBox(width: 4),
+            TextButton.icon(
+              onPressed: () { setState(() { _currentView = HomeView.addPatient; }); },
+              icon: const Icon(Icons.add_box, size: 18),
+              label: const Text('Add Patient'),
+              style: TextButton.styleFrom(
+                foregroundColor: Colors.white,
+                backgroundColor: _currentView == HomeView.addPatient ? Colors.white.withOpacity(0.16) : Colors.transparent,
+                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
+                minimumSize: Size.zero,
+                tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+              ),
+            ),
+            const SizedBox(width: 4),
+            TextButton.icon(
+              onPressed: () { setState(() { _currentView = HomeView.prescription; }); },
+              icon: const Icon(Icons.receipt_long, size: 18),
+              label: const Text('Composer'),
+              style: TextButton.styleFrom(
+                foregroundColor: Colors.white,
+                backgroundColor: _currentView == HomeView.prescription ? Colors.white.withOpacity(0.16) : Colors.transparent,
+                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
+                minimumSize: Size.zero,
+                tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+              ),
+            ),
+            const SizedBox(width: 4),
+            TextButton.icon(
+              onPressed: _clearAllData,
+              icon: const Icon(Icons.delete_sweep, size: 18),
+              label: const Text('Reset'),
+              style: TextButton.styleFrom(
+                foregroundColor: Colors.red[100],
+                backgroundColor: Colors.red.withOpacity(0.08),
+                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
+                minimumSize: Size.zero,
+                tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+              ),
+            ),
           ],
         ),
         backgroundColor: Colors.blue,
         foregroundColor: Colors.white,
         actions: [
-          // Patients button
-          IconButton(
-            onPressed: () {
-              setState(() {
-                _currentView = HomeView.patients;
-              });
-            },
-            icon: Icon(Icons.people),
-            tooltip: 'Patients',
-            style: IconButton.styleFrom(
-              backgroundColor: _currentView == HomeView.patients 
-                  ? Colors.white.withOpacity(0.2) 
-                  : null,
+          SizedBox(
+            width: 280,
+            child: Padding(
+              padding: const EdgeInsets.symmetric(vertical: 8.0),
+              child: TextField(
+                controller: _mobileSearchController,
+                onSubmitted: _searchByMobile,
+                style: const TextStyle(color: Colors.black),
+                decoration: InputDecoration(
+                  hintText: 'Search by mobile',
+                  isDense: true,
+                  filled: true,
+                  fillColor: Colors.white,
+                  prefixIcon: const Icon(Icons.search),
+                  contentPadding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+                  border: OutlineInputBorder(borderRadius: BorderRadius.circular(6)),
+                ),
+              ),
             ),
           ),
-          // Add Patient button
-          IconButton(
-            onPressed: () {
-              setState(() {
-                _currentView = HomeView.addPatient;
-              });
-            },
-            icon: Icon(Icons.add_box),
-            tooltip: 'Add Patient',
-            style: IconButton.styleFrom(
-              backgroundColor: _currentView == HomeView.addPatient 
-                  ? Colors.white.withOpacity(0.2) 
-                  : null,
-            ),
-          ),
-          // Prescription Composer button (main navigation)
-          IconButton(
-            onPressed: () {
-              setState(() {
-                _currentView = HomeView.prescription;
-              });
-            },
-            icon: Icon(Icons.receipt_long),
-            tooltip: 'Prescription Composer',
-            style: IconButton.styleFrom(
-              backgroundColor: _currentView == HomeView.prescription 
-                  ? Colors.white.withOpacity(0.2) 
-                  : null,
-            ),
-          ),
-          // Clear All Data & Reset App button
-          IconButton(
-            onPressed: _clearAllData,
-            icon: Icon(Icons.delete_sweep),
-            tooltip: 'Clear All Data & Reset App',
-            style: IconButton.styleFrom(
-              foregroundColor: Colors.red[100],
-            ),
-          ),
-          // Settings button
+          const SizedBox(width: 8),
           IconButton(
             onPressed: () {
               Navigator.push(
                 context,
-                MaterialPageRoute(builder: (context) => GlobalSettings()),
+                MaterialPageRoute(builder: (context) => const GlobalSettings()),
               );
             },
-            icon: Icon(Icons.settings),
+            icon: const Icon(Icons.settings),
             tooltip: 'Settings',
           ),
         ],
@@ -197,9 +234,9 @@ class _HomeState extends State<Home> {
   Widget _buildCurrentView() {
     switch (_currentView) {
       case HomeView.patients:
-        return _KeepAlive(child: _buildPatientsTab());
+        return const _KeepAlive(child: PatientsList());
       case HomeView.addPatient:
-        return _KeepAlive(child: _buildAddPatientTab());
+        return const _KeepAlive(child: PatientAdd());
       case HomeView.prescription:
         return _KeepAlive(child: _buildPrescriptionTab());
     }
@@ -207,21 +244,13 @@ class _HomeState extends State<Home> {
 
   Widget _buildPrescriptionTab() {
     return Container(
-      padding: EdgeInsets.all(16),
+      padding: const EdgeInsets.all(16),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(
-            'Prescription Composer',
-            style: TextStyle(
-              fontSize: 24,
-              fontWeight: FontWeight.bold,
-            ),
-          ),
+        children: const [
+          Text('Prescription Composer', style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold)),
           SizedBox(height: 20),
-          Expanded(
-            child: PrescriptionComposer(),
-          ),
+          Expanded(child: PrescriptionComposer()),
         ],
       ),
     );
@@ -229,21 +258,13 @@ class _HomeState extends State<Home> {
 
   Widget _buildPatientsTab() {
     return Container(
-      padding: EdgeInsets.all(16),
+      padding: const EdgeInsets.all(16),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(
-            'Patient Management',
-            style: TextStyle(
-              fontSize: 24,
-              fontWeight: FontWeight.bold,
-            ),
-          ),
+        children: const [
+          Text('Patient Management', style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold)),
           SizedBox(height: 20),
-          Expanded(
-            child: PatientsList(),
-          ),
+          Expanded(child: PatientsList()),
         ],
       ),
     );
@@ -251,21 +272,13 @@ class _HomeState extends State<Home> {
 
   Widget _buildAddPatientTab() {
     return Container(
-      padding: EdgeInsets.all(16),
+      padding: const EdgeInsets.all(16),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(
-            'Add New Patient',
-            style: TextStyle(
-              fontSize: 24,
-              fontWeight: FontWeight.bold,
-            ),
-          ),
+        children: const [
+          Text('Add New Patient', style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold)),
           SizedBox(height: 20),
-          Expanded(
-            child: PatientAdd(),
-          ),
+          Expanded(child: PatientAdd()),
         ],
       ),
     );

@@ -1,3 +1,4 @@
+import 'package:medicore/Pages/prescription_print_preview.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:drift/drift.dart' as drift;
@@ -110,7 +111,13 @@ class _PrescriptionComposerState extends State<PrescriptionComposer> {
             backgroundColor: Colors.green,
           ),
         );
-        Navigator.pop(context);
+        // Go to print preview so it can be printed immediately
+        if (!mounted) return;
+        Navigator.of(context).push(
+          MaterialPageRoute(
+            builder: (_) => PrescriptionPrintPreview(prescriptionId: prescriptionId),
+          ),
+        );
       } catch (e) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(

@@ -5,7 +5,8 @@ import 'package:medicore/data/local/database.dart';
 import 'package:drift/drift.dart' as drift;
 
 class PatientAdd extends StatefulWidget {
-  const PatientAdd({super.key});
+  final String? prefillMobile;
+  const PatientAdd({super.key, this.prefillMobile});
 
   @override
   State<PatientAdd> createState() => _PatientAddState();
@@ -19,6 +20,14 @@ class _PatientAddState extends State<PatientAdd> {
   String _age = '';
   String _height = '';
   String _weight = '';
+
+  @override
+  void initState() {
+    super.initState();
+    if (widget.prefillMobile != null && widget.prefillMobile!.isNotEmpty) {
+      _mobile = widget.prefillMobile!;
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -91,6 +100,7 @@ class _PatientAddState extends State<PatientAdd> {
                         "Mobile",
                         Icons.phone,
                         (val) => _mobile = val,
+                        initialValue: widget.prefillMobile,
                       ),
                       const SizedBox(height: 12),
                       _buildTextField(
@@ -181,9 +191,11 @@ class _PatientAddState extends State<PatientAdd> {
   Widget _buildTextField(
     String label,
     IconData icon,
-    Function(String) onChanged,
-  ) {
+    Function(String) onChanged, {
+    String? initialValue,
+  }) {
     return TextFormField(
+      initialValue: initialValue,
       decoration: InputDecoration(
         labelText: label,
         prefixIcon: Icon(icon),

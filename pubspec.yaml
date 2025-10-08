@@ -41,6 +41,9 @@ dependencies:
   drift_flutter: ^0.2.4
   path_provider: ^2.1.5
   path: ^1.8.3
+  pdf: ^3.11.0
+  printing: ^5.13.1
+  file_picker: ^8.1.2
 
 dev_dependencies:
   flutter_test:
