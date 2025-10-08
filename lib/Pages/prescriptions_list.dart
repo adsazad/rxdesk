@@ -1,0 +1,298 @@
+import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
+import 'package:medicore/data/local/database.dart';
+import 'package:medicore/Pages/prescription_composer.dart' hide Medicine;
+
+class PrescriptionsList extends StatefulWidget {
+  final int? patientId;
+  final Patient? patient;
+  
+  const PrescriptionsList({super.key, this.patientId, this.patient});
+
+  @override
+  State<PrescriptionsList> createState() => _PrescriptionsListState();
+}
+
+class _PrescriptionsListState extends State<PrescriptionsList> {
+  List<Prescription> _prescriptions = [];
+  Map<int, List<Medicine>> _medicinesByPrescription = {};
+
+  @override
+  void initState() {
+    super.initState();
+    _loadPrescriptions();
+  }
+
+  Future<void> _loadPrescriptions() async {
+    final db = Provider.of<AppDatabase>(context, listen: false);
+    
+    List<Prescription> prescriptions;
+    if (widget.patientId != null) {
+      // Load prescriptions for specific patient
+      prescriptions = await (db.select(db.prescriptions)
+        ..where((p) => p.patientId.equals(widget.patientId!)))
+        .get();
+    } else {
+      // Load all prescriptions
+      prescriptions = await db.select(db.prescriptions).get();
+    }
+    
+    // Load medicines for each prescription
+    Map<int, List<Medicine>> medicinesMap = {};
+    for (final prescription in prescriptions) {
+      final medicines = await (db.select(db.medicines)
+        ..where((m) => m.prescriptionId.equals(prescription.id)))
+        .get();
+      medicinesMap[prescription.id] = medicines;
+    }
+
+    setState(() {
+      _prescriptions = prescriptions;
+      _medicinesByPrescription = medicinesMap;
+    });
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(
+        title: Text(widget.patient != null 
+          ? 'Prescriptions - ${widget.patient!.name}' 
+          : 'All Prescriptions'),
+        backgroundColor: Colors.blue,
+        foregroundColor: Colors.white,
+        actions: [
+          if (widget.patient != null)
+            IconButton(
+              onPressed: () async {
+                await Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) => PrescriptionComposer(
+                      patientId: widget.patientId,
+                      patient: widget.patient,
+                    ),
+                  ),
+                );
+                _loadPrescriptions(); // Reload after adding new prescription
+              },
+              icon: Icon(Icons.add),
+              tooltip: 'New Prescription',
+            ),
+        ],
+      ),
+      body: _prescriptions.isEmpty
+          ? Center(
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Icon(Icons.receipt_long, size: 80, color: Colors.grey),
+                  SizedBox(height: 16),
+                  Text(
+                    'No prescriptions found',
+                    style: TextStyle(fontSize: 18, color: Colors.grey[600]),
+                  ),
+                  if (widget.patient != null) ...[
+                    SizedBox(height: 16),
+                    ElevatedButton.icon(
+                      onPressed: () async {
+                        await Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (context) => PrescriptionComposer(
+                              patientId: widget.patientId,
+                              patient: widget.patient,
+                            ),
+                          ),
+                        );
+                        _loadPrescriptions();
+                      },
+                      icon: Icon(Icons.add),
+                      label: Text('Create First Prescription'),
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: Colors.blue,
+                        foregroundColor: Colors.white,
+                      ),
+                    ),
+                  ],
+                ],
+              ),
+            )
+          : ListView.builder(
+              padding: EdgeInsets.all(16),
+              itemCount: _prescriptions.length,
+              itemBuilder: (context, index) {
+                final prescription = _prescriptions[index];
+                final medicines = _medicinesByPrescription[prescription.id] ?? [];
+                
+                return Card(
+                  margin: EdgeInsets.only(bottom: 16),
+                  child: Padding(
+                    padding: EdgeInsets.all(16),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        // Header
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            Text(
+                              'Prescription #${prescription.id}',
+                              style: TextStyle(
+                                fontSize: 18,
+                                fontWeight: FontWeight.bold,
+                                color: Colors.blue,
+                              ),
+                            ),
+                            Text(
+                              _formatDate(prescription.createdAt),
+                              style: TextStyle(
+                                color: Colors.grey[600],
+                                fontSize: 12,
+                              ),
+                            ),
+                          ],
+                        ),
+                        SizedBox(height: 12),
+                        
+                        // Diagnosis
+                        _buildSection('Diagnosis', prescription.diagnosis),
+                        
+                        // Notes
+                        if (prescription.notes != null && prescription.notes!.isNotEmpty)
+                          _buildSection('Notes', prescription.notes!),
+                        
+                        // Vitals
+                        if (_hasVitals(prescription)) ...[
+                          SizedBox(height: 12),
+                          Text(
+                            'Vitals',
+                            style: TextStyle(fontWeight: FontWeight.bold),
+                          ),
+                          SizedBox(height: 4),
+                          _buildVitalsRow(prescription),
+                        ],
+                        
+                        // Medicines
+                        if (medicines.isNotEmpty) ...[
+                          SizedBox(height: 12),
+                          Text(
+                            'Medicines',
+                            style: TextStyle(fontWeight: FontWeight.bold),
+                          ),
+                          SizedBox(height: 4),
+                          ...medicines.map((medicine) => _buildMedicineRow(medicine)).toList(),
+                        ],
+                        
+                        // Custom Instructions
+                        if (prescription.customInstructions != null && 
+                            prescription.customInstructions!.isNotEmpty)
+                          _buildSection('Instructions', prescription.customInstructions!),
+                      ],
+                    ),
+                  ),
+                );
+              },
+            ),
+    );
+  }
+
+  Widget _buildSection(String title, String content) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          title,
+          style: TextStyle(fontWeight: FontWeight.bold),
+        ),
+        SizedBox(height: 4),
+        Text(content),
+        SizedBox(height: 8),
+      ],
+    );
+  }
+
+  Widget _buildVitalsRow(Prescription prescription) {
+    List<String> vitals = [];
+    
+    if (prescription.bpSystolic != null && prescription.bpDiastolic != null) {
+      vitals.add('BP: ${prescription.bpSystolic}/${prescription.bpDiastolic} mmHg');
+    }
+    if (prescription.heartRate != null) {
+      vitals.add('HR: ${prescription.heartRate} bpm');
+    }
+    if (prescription.temperature != null) {
+      vitals.add('Temp: ${prescription.temperature}°F');
+    }
+    if (prescription.spo2 != null) {
+      vitals.add('SpO₂: ${prescription.spo2}%');
+    }
+    
+    return Padding(
+      padding: EdgeInsets.only(left: 8),
+      child: Text(vitals.join(' | ')),
+    );
+  }
+
+  Widget _buildMedicineRow(Medicine medicine) {
+    return Padding(
+      padding: EdgeInsets.only(left: 8, bottom: 4),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text('• ', style: TextStyle(fontWeight: FontWeight.bold)),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  medicine.name,
+                  style: TextStyle(fontWeight: FontWeight.w600),
+                ),
+                if (_getMedicineDetails(medicine).isNotEmpty)
+                  Text(
+                    _getMedicineDetails(medicine),
+                    style: TextStyle(fontSize: 12, color: Colors.grey[600]),
+                  ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  String _getMedicineDetails(Medicine medicine) {
+    List<String> details = [];
+    
+    if (medicine.strength != null && medicine.strength!.isNotEmpty) {
+      details.add(medicine.strength!);
+    }
+    if (medicine.dose != null && medicine.dose!.isNotEmpty) {
+      details.add(medicine.dose!);
+    }
+    if (medicine.frequency != null && medicine.frequency!.isNotEmpty) {
+      details.add(medicine.frequency!);
+    }
+    if (medicine.duration != null && medicine.duration!.isNotEmpty) {
+      details.add('for ${medicine.duration!}');
+    }
+    if (medicine.route != null && medicine.route!.isNotEmpty) {
+      details.add('(${medicine.route!})');
+    }
+    
+    return details.join(' - ');
+  }
+
+  bool _hasVitals(Prescription prescription) {
+    return prescription.bpSystolic != null ||
+           prescription.bpDiastolic != null ||
+           prescription.heartRate != null ||
+           prescription.temperature != null ||
+           prescription.spo2 != null;
+  }
+
+  String _formatDate(DateTime date) {
+    return '${date.day}/${date.month}/${date.year} ${date.hour}:${date.minute.toString().padLeft(2, '0')}';
+  }
+}

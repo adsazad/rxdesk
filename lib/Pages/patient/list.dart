@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:medicore/Pages/patient/PatientRecords.dart';
 import 'package:medicore/Pages/patient/patientAdd.dart';
+import 'package:medicore/Pages/prescription_composer.dart';
+import 'package:medicore/Pages/prescriptions_list.dart';
 import 'package:medicore/ProviderModals/DefaultPatientModal.dart';
 import 'package:medicore/data/local/database.dart';
 
@@ -244,95 +246,170 @@ class _PatientsListState extends State<PatientsList> {
                                       ],
                                     ),
                                     const SizedBox(height: 12),
-                                    Align(
-                                      alignment: Alignment.centerRight,
-                                      child: Row(
-                                        mainAxisSize: MainAxisSize.min,
-                                        children: [
-                                          OutlinedButton.icon(
-                                            onPressed: () async {
-                                              defaultProvider.setDefault({
-                                                'id': patient.id,
-                                                'name': patient.name,
-                                                'gender': patient.gender,
-                                                'mobile': patient.mobile,
-                                                'age': patient.age.toString(),
-                                                'height':
-                                                    patient.height.toString(),
-                                                'weight':
-                                                    patient.weight.toString(),
-                                              });
+                                    Column(
+                                      children: [
+                                        // First row - Set as Default
+                                        Row(
+                                          children: [
+                                            Expanded(
+                                              child: OutlinedButton.icon(
+                                                onPressed: () async {
+                                                  defaultProvider.setDefault({
+                                                    'id': patient.id,
+                                                    'name': patient.name,
+                                                    'gender': patient.gender,
+                                                    'mobile': patient.mobile,
+                                                    'age': patient.age.toString(),
+                                                    'height':
+                                                        patient.height.toString(),
+                                                    'weight':
+                                                        patient.weight.toString(),
+                                                  });
 
-                                              ScaffoldMessenger.of(
-                                                context,
-                                              ).showSnackBar(
-                                                SnackBar(
-                                                  content: Text(
-                                                    "${patient.name} set as default patient",
+                                                  ScaffoldMessenger.of(
+                                                    context,
+                                                  ).showSnackBar(
+                                                    SnackBar(
+                                                      content: Text(
+                                                        "${patient.name} set as default patient",
+                                                      ),
+                                                    ),
+                                                  );
+                                                },
+                                                icon: Icon(
+                                                  Icons.push_pin,
+                                                  color:
+                                                      isDefault
+                                                          ? Colors.green
+                                                          : Colors.black,
+                                                  size: 18,
+                                                ),
+                                                label: Text(
+                                                  isDefault
+                                                      ? "Default Patient"
+                                                      : "Set as Default",
+                                                  style: TextStyle(
+                                                    color:
+                                                        isDefault
+                                                            ? Colors.green
+                                                            : Colors.black,
                                                   ),
                                                 ),
-                                              );
-                                            },
-                                            icon: Icon(
-                                              Icons.push_pin,
-                                              color:
-                                                  isDefault
-                                                      ? Colors.green
-                                                      : Colors.black,
-                                              size: 18,
-                                            ),
-                                            label: Text(
-                                              isDefault
-                                                  ? "Default Patient"
-                                                  : "Set as Default",
-                                              style: TextStyle(
-                                                color:
-                                                    isDefault
-                                                        ? Colors.green
-                                                        : Colors.black,
-                                              ),
-                                            ),
-                                            style: OutlinedButton.styleFrom(
-                                              side: BorderSide(
-                                                color:
-                                                    isDefault
-                                                        ? Colors.green
-                                                        : Colors.black,
-                                              ),
-                                            ),
-                                          ),
-                                          const SizedBox(width: 8),
-                                          OutlinedButton.icon(
-                                            onPressed: () {
-                                              Navigator.of(context).push(
-                                                MaterialPageRoute(
-                                                  builder:
-                                                      (context) =>
-                                                          PatientRecordingsPage(
-                                                            patientId:
-                                                                patient.id,
-                                                          ),
+                                                style: OutlinedButton.styleFrom(
+                                                  side: BorderSide(
+                                                    color:
+                                                        isDefault
+                                                            ? Colors.green
+                                                            : Colors.black,
+                                                  ),
                                                 ),
-                                              );
-                                            },
-                                            icon: Icon(
-                                              Icons.folder_open,
-                                              color: Colors.blue,
-                                            ),
-                                            label: Text(
-                                              "Recordings",
-                                              style: TextStyle(
-                                                color: Colors.blue,
                                               ),
                                             ),
-                                            style: OutlinedButton.styleFrom(
-                                              side: BorderSide(
-                                                color: Colors.blue,
+                                          ],
+                                        ),
+                                        SizedBox(height: 8),
+                                        // Second row - Action buttons
+                                        Row(
+                                          children: [
+                                            Expanded(
+                                              child: OutlinedButton.icon(
+                                                onPressed: () {
+                                                  Navigator.of(context).push(
+                                                    MaterialPageRoute(
+                                                      builder: (context) =>
+                                                          PrescriptionComposer(
+                                                        patientId: patient.id,
+                                                        patient: patient,
+                                                      ),
+                                                    ),
+                                                  );
+                                                },
+                                                icon: Icon(
+                                                  Icons.add,
+                                                  color: Colors.green,
+                                                  size: 18,
+                                                ),
+                                                label: Text(
+                                                  "New Rx",
+                                                  style: TextStyle(
+                                                    color: Colors.green,
+                                                  ),
+                                                ),
+                                                style: OutlinedButton.styleFrom(
+                                                  side: BorderSide(
+                                                    color: Colors.green,
+                                                  ),
+                                                ),
                                               ),
                                             ),
-                                          ),
-                                        ],
-                                      ),
+                                            SizedBox(width: 8),
+                                            Expanded(
+                                              child: OutlinedButton.icon(
+                                                onPressed: () {
+                                                  Navigator.of(context).push(
+                                                    MaterialPageRoute(
+                                                      builder: (context) =>
+                                                          PrescriptionsList(
+                                                        patientId: patient.id,
+                                                        patient: patient,
+                                                      ),
+                                                    ),
+                                                  );
+                                                },
+                                                icon: Icon(
+                                                  Icons.receipt_long,
+                                                  color: Colors.orange,
+                                                  size: 18,
+                                                ),
+                                                label: Text(
+                                                  "View Rx",
+                                                  style: TextStyle(
+                                                    color: Colors.orange,
+                                                  ),
+                                                ),
+                                                style: OutlinedButton.styleFrom(
+                                                  side: BorderSide(
+                                                    color: Colors.orange,
+                                                  ),
+                                                ),
+                                              ),
+                                            ),
+                                            SizedBox(width: 8),
+                                            Expanded(
+                                              child: OutlinedButton.icon(
+                                                onPressed: () {
+                                                  Navigator.of(context).push(
+                                                    MaterialPageRoute(
+                                                      builder:
+                                                          (context) =>
+                                                              PatientRecordingsPage(
+                                                                patientId:
+                                                                    patient.id,
+                                                              ),
+                                                    ),
+                                                  );
+                                                },
+                                                icon: Icon(
+                                                  Icons.folder_open,
+                                                  color: Colors.blue,
+                                                  size: 18,
+                                                ),
+                                                label: Text(
+                                                  "Records",
+                                                  style: TextStyle(
+                                                    color: Colors.blue,
+                                                  ),
+                                                ),
+                                                style: OutlinedButton.styleFrom(
+                                                  side: BorderSide(
+                                                    color: Colors.blue,
+                                                  ),
+                                                ),
+                                              ),
+                                            ),
+                                          ],
+                                        ),
+                                      ],
                                     ),
                                   ],
                                 ),
