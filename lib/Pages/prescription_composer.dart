@@ -139,73 +139,131 @@ class _PrescriptionComposerState extends State<PrescriptionComposer> {
       ),
       body: Form(
         key: _formKey,
-        child: SingleChildScrollView(
-          padding: EdgeInsets.all(16),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              // Patient Info Section (if patient provided)
-              if (widget.patient != null) ...[
-                _buildSectionTitle('Patient Information'),
-                Card(
-                  child: Padding(
-                    padding: EdgeInsets.all(16),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          'Name: ${widget.patient!.name}',
-                          style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+        child: LayoutBuilder(
+          builder: (context, constraints) {
+            final width = constraints.maxWidth;
+            final columns = width >= 700 ? 2 : 1;
+            final gap = 12.0;
+            final tileWidth = columns == 1 ? width : (width - gap) / columns;
+
+            if (columns == 1) {
+              final tiles = <Widget>[];
+              if (widget.patient != null) {
+                tiles.add(
+                  SizedBox(
+                    width: tileWidth,
+                    child: _Section(
+                      title: 'Patient Information',
+                      child: Padding(
+                        padding: const EdgeInsets.all(12),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text('Name: ${widget.patient!.name}', style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w600)),
+                            const SizedBox(height: 2),
+                            Text('Age: ${widget.patient!.age} years'),
+                            Text('Gender: ${widget.patient!.gender}'),
+                            Text('Mobile: ${widget.patient!.mobile}'),
+                            Text('Height: ${widget.patient!.height} cm'),
+                            Text('Weight: ${widget.patient!.weight} kg'),
+                          ],
                         ),
-                        SizedBox(height: 4),
-                        Text('Age: ${widget.patient!.age} years'),
-                        Text('Gender: ${widget.patient!.gender}'),
-                        Text('Mobile: ${widget.patient!.mobile}'),
-                        Text('Height: ${widget.patient!.height} cm'),
-                        Text('Weight: ${widget.patient!.weight} kg'),
-                      ],
+                      ),
+                    ),
+                  ),
+                );
+              }
+
+              tiles.addAll([
+                SizedBox(width: tileWidth, child: _Section(title: 'Vitals', child: _buildVitalsSectionBody())),
+                SizedBox(width: tileWidth, child: _Section(title: 'Diagnosis & Notes', child: _buildDiagnosisSectionBody())),
+                SizedBox(width: tileWidth, child: _Section(title: 'Custom Instructions', child: _buildCustomInstructionsBody())),
+                SizedBox(width: tileWidth, child: _buildMedicinesSectionCompact()),
+              ]);
+
+              return SingleChildScrollView(
+                padding: const EdgeInsets.all(12),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    for (int i = 0; i < tiles.length; i++) ...[
+                      tiles[i],
+                      if (i != tiles.length - 1) SizedBox(height: gap),
+                    ],
+                  ],
+                ),
+              );
+            }
+
+            // Two-column: keep Medicines on the right side
+            final leftCol = <Widget>[];
+            if (widget.patient != null) {
+              leftCol.add(
+                SizedBox(
+                  width: tileWidth,
+                  child: _Section(
+                    title: 'Patient Information',
+                    child: Padding(
+                      padding: const EdgeInsets.all(12),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text('Name: ${widget.patient!.name}', style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w600)),
+                          const SizedBox(height: 2),
+                          Text('Age: ${widget.patient!.age} years'),
+                          Text('Gender: ${widget.patient!.gender}'),
+                          Text('Mobile: ${widget.patient!.mobile}'),
+                          Text('Height: ${widget.patient!.height} cm'),
+                          Text('Weight: ${widget.patient!.weight} kg'),
+                        ],
+                      ),
                     ),
                   ),
                 ),
-                SizedBox(height: 20),
-              ],
+              );
+            }
+            leftCol.addAll([
+              SizedBox(width: tileWidth, child: _Section(title: 'Vitals', child: _buildVitalsSectionBody())),
+              SizedBox(width: tileWidth, child: _Section(title: 'Diagnosis & Notes', child: _buildDiagnosisSectionBody())),
+              SizedBox(width: tileWidth, child: _Section(title: 'Custom Instructions', child: _buildCustomInstructionsBody())),
+            ]);
 
-              // Vitals Section
-              _buildSectionTitle('Vitals'),
-              _buildVitalsSection(),
-              SizedBox(height: 20),
+            final rightCol = <Widget>[
+              SizedBox(width: tileWidth, child: _buildMedicinesSectionCompact()),
+            ];
 
-              // Diagnosis Section
-              _buildSectionTitle('Diagnosis & Notes'),
-              _buildDiagnosisSection(),
-              SizedBox(height: 20),
-
-              // Medicines Section
-              _buildSectionTitle('Medicines'),
-              _buildMedicinesSection(),
-              SizedBox(height: 20),
-
-              // Custom Instructions Section
-              _buildSectionTitle('Custom Instructions'),
-              _buildCustomInstructionsSection(),
-              SizedBox(height: 30),
-
-              // Save Button
-              SizedBox(
-                width: double.infinity,
-                child: ElevatedButton.icon(
-                  onPressed: _savePrescription,
-                  icon: Icon(Icons.save),
-                  label: Text('Save Prescription'),
-                  style: ElevatedButton.styleFrom(
-                    padding: EdgeInsets.symmetric(vertical: 15),
-                    backgroundColor: Colors.blue,
-                    foregroundColor: Colors.white,
+            return SingleChildScrollView(
+              padding: const EdgeInsets.all(12),
+              child: Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        for (int i = 0; i < leftCol.length; i++) ...[
+                          leftCol[i],
+                          if (i != leftCol.length - 1) SizedBox(height: gap),
+                        ],
+                      ],
+                    ),
                   ),
-                ),
+                  SizedBox(width: gap),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        for (int i = 0; i < rightCol.length; i++) ...[
+                          rightCol[i],
+                          if (i != rightCol.length - 1) SizedBox(height: gap),
+                        ],
+                      ],
+                    ),
+                  ),
+                ],
               ),
-            ],
-          ),
+            );
+          },
         ),
       ),
     );
@@ -221,6 +279,150 @@ class _PrescriptionComposerState extends State<PrescriptionComposer> {
           fontWeight: FontWeight.bold,
           color: Colors.blue,
         ),
+      ),
+    );
+  }
+
+  // Compact input style used across fields to reduce vertical space
+  InputDecoration _compactDecoration(String label, {String? hint}) {
+    return InputDecoration(
+      labelText: label,
+      hintText: hint,
+      isDense: true,
+      border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
+      contentPadding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+    );
+  }
+
+  // Vitals content (used inside a section card)
+  Widget _buildVitalsSectionBody() {
+    return Padding(
+      padding: const EdgeInsets.all(12),
+      child: Column(
+        children: [
+          Row(
+            children: [
+              Expanded(
+                child: TextFormField(
+                  controller: _bpSystolicController,
+                  decoration: _compactDecoration('BP Systolic (mmHg)'),
+                  keyboardType: TextInputType.number,
+                ),
+              ),
+              const SizedBox(width: 8),
+              const Text('/', style: TextStyle(fontSize: 18, fontWeight: FontWeight.w600)),
+              const SizedBox(width: 8),
+              Expanded(
+                child: TextFormField(
+                  controller: _bpDiastolicController,
+                  decoration: _compactDecoration('BP Diastolic (mmHg)'),
+                  keyboardType: TextInputType.number,
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 8),
+          Row(
+            children: [
+              Expanded(
+                child: TextFormField(
+                  controller: _heartRateController,
+                  decoration: _compactDecoration('Heart Rate (bpm)'),
+                  keyboardType: TextInputType.number,
+                ),
+              ),
+              const SizedBox(width: 8),
+              Expanded(
+                child: TextFormField(
+                  controller: _temperatureController,
+                  decoration: _compactDecoration('Temperature (°F)'),
+                  keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 8),
+          TextFormField(
+            controller: _spo2Controller,
+            decoration: _compactDecoration('SpO₂ (%)'),
+            keyboardType: TextInputType.number,
+          ),
+        ],
+      ),
+    );
+  }
+
+  // Diagnosis & notes content
+  Widget _buildDiagnosisSectionBody() {
+    return Padding(
+      padding: const EdgeInsets.all(12),
+      child: Column(
+        children: [
+          TextFormField(
+            controller: _diagnosisController,
+            decoration: _compactDecoration('Diagnosis', hint: 'Enter primary diagnosis'),
+            maxLines: 2,
+            validator: (value) {
+              if (value == null || value.isEmpty) {
+                return 'Please enter a diagnosis';
+              }
+              return null;
+            },
+          ),
+          const SizedBox(height: 8),
+          TextFormField(
+            controller: _notesController,
+            decoration: _compactDecoration('Clinical Notes', hint: 'Additional notes, observations, recommendations...'),
+            maxLines: 3,
+          ),
+        ],
+      ),
+    );
+  }
+
+  // Custom instructions content
+  Widget _buildCustomInstructionsBody() {
+    return Padding(
+      padding: const EdgeInsets.all(12),
+      child: TextFormField(
+        controller: _customInstructionsController,
+        decoration: _compactDecoration(
+          'Custom Instructions',
+          hint: 'Additional instructions... e.g., Take after meals',
+        ),
+        maxLines: 3,
+      ),
+    );
+  }
+
+  // Compact medicines section (header + list/add)
+  Widget _buildMedicinesSectionCompact() {
+    return _Section(
+      title: 'Medicines',
+      trailing: TextButton.icon(
+        onPressed: _addMedicine,
+        icon: const Icon(Icons.add),
+        label: const Text('Add'),
+      ),
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+        child: _medicines.isEmpty
+            ? Padding(
+                padding: const EdgeInsets.all(8.0),
+                child: Text(
+                  'No medicines added yet. Tap Add to start.',
+                  textAlign: TextAlign.center,
+                  style: TextStyle(color: Colors.grey[600], fontStyle: FontStyle.italic),
+                ),
+              )
+            : ListView.builder(
+                shrinkWrap: true,
+                physics: const NeverScrollableScrollPhysics(),
+                itemCount: _medicines.length,
+                itemBuilder: (context, index) {
+                  return _buildMedicineCard(index);
+                },
+              ),
       ),
     );
   }
@@ -392,34 +594,27 @@ class _PrescriptionComposerState extends State<PrescriptionComposer> {
     final medicine = _medicines[index];
     
     return Card(
-      margin: EdgeInsets.only(bottom: 12),
-      elevation: 2,
+      margin: const EdgeInsets.only(bottom: 10),
+      elevation: 1,
       child: Padding(
-        padding: EdgeInsets.all(12),
+        padding: const EdgeInsets.all(10),
         child: Column(
           children: [
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                Text(
-                  'Medicine ${index + 1}',
-                  style: TextStyle(fontWeight: FontWeight.bold),
-                ),
+                Text('Medicine ${index + 1}', style: const TextStyle(fontWeight: FontWeight.w600)),
                 IconButton(
                   onPressed: () => _removeMedicine(index),
-                  icon: Icon(Icons.delete, color: Colors.red),
+                  icon: const Icon(Icons.delete, color: Colors.red),
                   tooltip: 'Remove Medicine',
                 ),
               ],
             ),
-            SizedBox(height: 8),
+            const SizedBox(height: 6),
             TextFormField(
               controller: medicine.nameController,
-              decoration: InputDecoration(
-                labelText: 'Generic Name *',
-                border: OutlineInputBorder(),
-                hintText: 'e.g., Paracetamol',
-              ),
+              decoration: _compactDecoration('Generic Name *', hint: 'e.g., Paracetamol'),
               validator: (value) {
                 if (value == null || value.isEmpty) {
                   return 'Medicine name is required';
@@ -427,66 +622,46 @@ class _PrescriptionComposerState extends State<PrescriptionComposer> {
                 return null;
               },
             ),
-            SizedBox(height: 8),
+            const SizedBox(height: 6),
             Row(
               children: [
                 Expanded(
                   child: TextFormField(
                     controller: medicine.strengthController,
-                    decoration: InputDecoration(
-                      labelText: 'Strength',
-                      border: OutlineInputBorder(),
-                      hintText: 'e.g., 500mg',
-                    ),
+                    decoration: _compactDecoration('Strength', hint: 'e.g., 500mg'),
                   ),
                 ),
-                SizedBox(width: 8),
+                const SizedBox(width: 6),
                 Expanded(
                   child: TextFormField(
                     controller: medicine.doseController,
-                    decoration: InputDecoration(
-                      labelText: 'Dose',
-                      border: OutlineInputBorder(),
-                      hintText: 'e.g., 1 tablet',
-                    ),
+                    decoration: _compactDecoration('Dose', hint: 'e.g., 1 tablet'),
                   ),
                 ),
               ],
             ),
-            SizedBox(height: 8),
+            const SizedBox(height: 6),
             Row(
               children: [
                 Expanded(
                   child: TextFormField(
                     controller: medicine.frequencyController,
-                    decoration: InputDecoration(
-                      labelText: 'Frequency',
-                      border: OutlineInputBorder(),
-                      hintText: 'e.g., TID (3 times daily)',
-                    ),
+                    decoration: _compactDecoration('Frequency', hint: 'e.g., TID'),
                   ),
                 ),
-                SizedBox(width: 8),
+                const SizedBox(width: 6),
                 Expanded(
                   child: TextFormField(
                     controller: medicine.durationController,
-                    decoration: InputDecoration(
-                      labelText: 'Duration',
-                      border: OutlineInputBorder(),
-                      hintText: 'e.g., 7 days',
-                    ),
+                    decoration: _compactDecoration('Duration', hint: 'e.g., 7 days'),
                   ),
                 ),
               ],
             ),
-            SizedBox(height: 8),
+            const SizedBox(height: 6),
             TextFormField(
               controller: medicine.routeController,
-              decoration: InputDecoration(
-                labelText: 'Route',
-                border: OutlineInputBorder(),
-                hintText: 'e.g., Oral, IV, IM',
-              ),
+              decoration: _compactDecoration('Route', hint: 'e.g., Oral, IV, IM'),
             ),
           ],
         ),
@@ -508,6 +683,38 @@ class _PrescriptionComposerState extends State<PrescriptionComposer> {
           ),
           maxLines: 4,
         ),
+      ),
+    );
+  }
+}
+
+class _Section extends StatelessWidget {
+  final String title;
+  final Widget child;
+  final Widget? trailing;
+
+  const _Section({required this.title, required this.child, this.trailing});
+
+  @override
+  Widget build(BuildContext context) {
+    return Card(
+      clipBehavior: Clip.antiAlias,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+            color: Colors.blue.withOpacity(0.06),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Text(title, style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w700, color: Colors.blue)),
+                if (trailing != null) trailing!,
+              ],
+            ),
+          ),
+          child,
+        ],
       ),
     );
   }
